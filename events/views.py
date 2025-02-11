@@ -87,8 +87,10 @@ def cart_page(request):
     """Render the user's cart."""
     cart = Cart.objects.prefetch_related('cart_items__event').filter(user=request.user).first()
 
-    if not cart:
-        return render(request, 'events/cart.html', {'cart_items': [], 'total': 0})
+    if not cart or cart.cart_items.count() == 0:
+        # Ensure that cart count is set to 0 and session is updated
+        request.session['cart_count'] = 0
+        return render(request, 'events/cart.html', {'cart_items': [], 'total': 0, 'cart_count': 0})
 
     event_groups = {}
 
@@ -116,12 +118,14 @@ def cart_page(request):
 
     cart_count = cart.cart_items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
 
+    # Update session with correct cart count
+    request.session['cart_count'] = cart_count
+
     return render(request, 'events/cart.html', {
         'event_groups': event_groups,
         'total_price': total_price,
         'cart_count': cart_count,
     })
-
 
 
 from django.http import JsonResponse
@@ -162,16 +166,24 @@ def update_cart(request, event_id):
             cart_item.save()
         else:
             cart_item.delete()
+
+            # If the last item was removed, recalculate total price and set cart count to 0
+            if cart.cart_items.count() == 0:
+                cart.cart_count = 0
+                cart.total_price = 0
+                cart.save()
+
+            # Update cart count in session
             update_cart_count_in_session(request, user)
 
-            # If the last item was removed, recalculate total price
+            # Recalculate the total price
             new_total_price = calculate_cart_total(cart)
             return JsonResponse({
                 "success": True,
                 "new_quantity": 0,
                 "new_subtotal": 0,
                 "new_total_price": new_total_price,
-                "new_cart_count": get_cart_count(cart)
+                "new_cart_count": 0
             })
 
     # Calculate new subtotal for this event
@@ -192,6 +204,8 @@ def update_cart(request, event_id):
         "new_total_price": new_total_price,
         "new_cart_count": new_cart_count
     })
+
+
 
 
 def update_cart_count_in_session(request, user):
@@ -396,7 +410,7 @@ def single_event(request, event_id):
     # Fetch sponsors associated with the event
     sponsors = event.sponsorers.all()
 
-    return render(request, 'events/single-post.html', {
+    return render(request, 'events/single-event.html', {
         'event': event,
         'tickets': tickets,
         'cart_count': cart_count,

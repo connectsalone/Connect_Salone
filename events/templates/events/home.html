@@ -247,38 +247,35 @@
   <!-- /Slider Section -->
 
   <!-- Trending Category Section -->
-  <section id="upcoming-category" class="upcoming-category section">
-    <!-- Section Title -->
-    <div class="container section-title" data-aos="fade-up">
-      <div
-        class="section-title-container d-flex align-items-center justify-content-between"
-      >
-        <h1>Upcomonig Highlighted Events</h1>
-        <p><a href="categories.html">See All Events</a></p>
-      </div>
+<!-- Trending Category Section -->
+<section id="upcoming-category" class="upcoming-category section">
+  <!-- Section Title -->
+  <div class="container section-title" data-aos="fade-up">
+    <div class="section-title-container d-flex align-items-center justify-content-between">
+      <h1>Upcoming Highlighted Events</h1>
+      <p><a href="categories.html">See All Events</a></p>
     </div>
-    <!-- End Section Title -->
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <div
-        class="row g-5"
-        style="display: flex; justify-content: space-between; gap: 20px"
-      >
-        {% if upcoming_events %} {% for event in upcoming_events %}
+  </div>
+  <!-- End Section Title -->
+
+  <!-- Events Container -->
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row g-5" style="display: flex; justify-content: space-between; gap: 20px">
+      {% if upcoming_events %}
+        {% for event in upcoming_events %}
         <div class="post-entry col-lg-4" style="flex: 0 0 30%">
-          <span
-            class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}"
-          >
+          <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
             <a href="{% url 'single-event' event.id %}">
-              <img src="{{ event.event_image.url}}" alt="" class="img-fluid" />
+              <img src="{{ event.event_image.url }}" alt="Event Image" class="img-fluid" />
             </a>
           </span>
           <h2>
-            <a href="blog-details.html">{{ event.event_name }}</a>
+            <a href="{% url 'single-event' event.id %}">{{ event.event_name }}</a>
           </h2>
           <div class="post-meta">
-            <span class="location">{{ event.event_location}}</span>
-            <span class="mx-1">•</span>
             <span class="date">{{ event.event_date|date:"l, F d, Y" }}</span>
+            <span class="location">{{ event.event_location }}</span>
+            
             <span>
               {% if event.early_bird_price %}
               <p class="early-bird">
@@ -293,9 +290,7 @@
 
           <div class="d-flex align-items-center author">
             <div class="name text-center">
-              <span
-                class="{% if request.resolver_match.url_name == 'event_details' %}active{% endif %}"
-              >
+              <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
                 <a href="{% url 'single-event' event.id %}">
                   <h5 class="btn">Buy Ticket</h5>
                 </a>
@@ -303,12 +298,16 @@
             </div>
           </div>
         </div>
-        {% endfor %} {% else %}
+        {% endfor %}
+      {% else %}
         <h4>No upcoming events</h4>
-        {% endif %}
-      </div>
+      {% endif %}
     </div>
-  </section>
+  </div>
+</section>
+<!-- /Trending Category Section -->
+
+
   <!-- /Trending Category Section -->
 
   <!-- Culture Category Section -->

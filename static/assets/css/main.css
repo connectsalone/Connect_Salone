@@ -942,6 +942,23 @@ section,
   background-color: #9da005d6; /* Slightly darker on hover */
 }
 
+/* Mobile responsiveness: 1 event per row */
+@media (max-width: 768px) {
+  .upcoming-category .container {
+    display: block; /* Stack events vertically */
+    width: 100%;
+  }
+
+  .upcoming-category .post-entry {
+    width: 100%; /* Event takes full width */
+    margin-bottom: 30px; /* Adds space between cards */
+  }
+
+  .upcoming-category .section-title .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 /*--------------------------------------------------------------
 # Culture Category Section
 --------------------------------------------------------------*/
