@@ -2,6 +2,14 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
+from decouple import config
+
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
+
+
+
+
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,14 +19,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #DEBUG = env.bool('DEBUG', default=True)
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-SECRET_KEY = 'django-insecure-$22!q%zr!xu84m7(-7$itet-b!vr(v=01oz(t+)wysvi*navh-'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+
 
 ALLOWED_HOSTS = []
 
-SITE_ID = 1  # or the ID of the site you want to be the default
+SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
 
 
 # Installed Apps
@@ -109,7 +116,7 @@ LOGOUT_REDIRECT_URL = '/'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 AUTH_USER_MODEL = 'accounts.User'
-SITE_ID = 1
+
 
 # JWT settings
 SIMPLE_JWT = {
@@ -147,21 +154,24 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'connectsalone25@gmail.com'
-EMAIL_HOST_PASSWORD = 'ghghbkbjbjkjkjkj'
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
-# Security settings for production
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_PRELOAD = True
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+
+
+
+if not config("DEBUG", default=False, cast=bool):  # Ensure DEBUG is False in production
+    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
+    SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
+    SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)
+    SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)
+
 
 # REST Framework
 REST_FRAMEWORK = {
