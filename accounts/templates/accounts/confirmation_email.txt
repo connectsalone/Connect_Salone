@@ -1,0 +1,2 @@
+Please confirm your email by clicking the link below:
+http://127.0.0.1:8000/confirm-email/?token_id={{ token_id }}&user_id={{ user_id }}

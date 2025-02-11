@@ -1,0 +1,5 @@
+<form method="POST" action="/scan_ticket/">
+  {% csrf_token %}
+  <input type="text" id="qr_data" name="qr_data" placeholder="Scan QR code" />
+  <button type="submit">Submit</button>
+</form>

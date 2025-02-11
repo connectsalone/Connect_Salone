@@ -1,0 +1,147 @@
+{% extends "events/base.html" %} {% block content %}
+<style>
+  .card-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .event-section-page {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .event-section-page h1 {
+    font-weight: bold;
+    font-size: 50px;
+    margin-left: 20px;
+    font-family: var(--nav-font);
+  }
+  hr {
+    margin: 20px auto;
+    width: 100%;
+  }
+  .event-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .event-description {
+    flex: 0 0 55%;
+    text-align: left;
+    font-family: var(--nav-font);
+  }
+  .event-image {
+    flex: 0 0 40%;
+    text-align: center;
+  }
+  .event-logo {
+    max-width: 120px;
+    height: auto;
+  }
+  .event-description h1 {
+    margin: 10px 0;
+    font-size: 35px;
+    font-weight: 800;
+  }
+  .event-description h3 {
+    margin: 10px 0;
+    font-size: 25px;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .event-description p {
+    margin: 10px 0;
+    font-size: 20px;
+  }
+  .event-image img {
+    width: 50%;
+    height: auto;
+    max-height: 400px;
+  }
+</style>
+
+<div class="card-container">
+  <div class="event-section-page">
+    <h1>{{ event.event_name }}</h1>
+  </div>
+  <hr />
+
+  <div class="event-details">
+    <div class="event-description">
+      <h1>{{ event.event_date }}</h1>
+      <h3>{{ event.event_location }}</h3>
+      <p>{{ event.event_description }}</p>
+
+      <h5>Ticket Price: {{ event.get_ticket_price }}</h5>
+      <h5>{{ event.view_count }} Views</h5>
+    </div>
+
+    <div class="event-image">
+      <img
+        src="{{ event.event_image.url|default_if_none:'/static/default-event.png' }}"
+        alt="Image of {{ event.event_name }}"
+      />
+    </div>
+  </div>
+</div>
+
+<!-- Ticket Purchase Section -->
+<div class="card-container">
+  <h2>Add Tickets to Cart</h2>
+
+  {% if request.user.is_authenticated %}
+  <label for="ticket-quantity">Quantity:</label>
+  <input type="number" id="ticket-quantity" name="quantity" value="1" min="1" />
+
+  <button onclick="addToCart({{ event.id }})">Add to Cart</button>
+
+  <p id="cart-message" style="color: green; display: none">Added to cart!</p>
+
+  {% else %}
+  <p>
+    <a href="{% url 'login' %}?next={{ request.path }}">Log in</a> to purchase
+    tickets.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+  function addToCart(eventId) {
+    let quantity = document.getElementById("ticket-quantity").value;
+
+    fetch(`/cart/add/${eventId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: JSON.stringify({quantity: quantity}),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("cart-message").style.display = "block";
+          updateCartBadge(data.cart_count);
+        } else {
+          alert("Error adding to cart.");
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  function updateCartBadge(count) {
+    const cartBadge = document.getElementById("cart-badge");
+    if (cartBadge) {
+      cartBadge.textContent = count > 0 ? count : "";
+      cartBadge.classList.toggle("d-none", count === 0);
+    }
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,154 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Salone Connect - Website</title>
+
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+
+    <!-- Favicons -->
+    <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+    <link
+      href="{% static 'assets/img/apple-touch-icon.png' %}"
+      rel="apple-touch-icon"
+    />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=EB+Garamond:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}"
+      rel="stylesheet"
+    />
+
+    <!-- Additional Vendor CSS -->
+    <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+    <link
+      href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}"
+      rel="stylesheet"
+    />
+
+    <!-- FullCalendar CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css"
+    />
+
+    <!-- Main CSS File -->
+    <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  </head>
+
+  <body class="index-page">
+    {% include "events/header.html" %} {% block content %}{% endblock %} &nbsp;
+    &nbsp; {% include "events/footer.html" %}
+
+    <!-- Scroll to Top -->
+    <a
+      href="#"
+      id="scroll-top"
+      class="scroll-top d-flex align-items-center justify-content-center"
+    >
+      <i class="bi bi-arrow-up-short"></i>
+    </a>
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- jQuery (Load first for dependencies) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Vendor JS Files -->
+    <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+    <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+    <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+
+    <!-- FullCalendar JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.2/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5.11.2/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.11.2/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.2/locales-all.min.js"></script>
+
+    <!-- Main JS File -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <!-- CSRF Token Setup for AJAX -->
+    <script>
+      function getCSRFToken() {
+        return document
+          .querySelector('meta[name="csrf-token"]')
+          .getAttribute("content");
+      }
+
+      $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+          if (!this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCSRFToken());
+          }
+        },
+      });
+    </script>
+
+    <!-- Cart Badge Update Script -->
+    <script>
+      function updateCartBadge(count) {
+          const cartBadge = document.getElementById('cart-badge');
+          if (cartBadge) {
+              cartBadge.textContent = count > 0 ? count : '';
+              cartBadge.classList.toggle('d-none', count === 0);
+          }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+          const cartCount = {{ cart_count|default:0 }};
+          updateCartBadge(cartCount);
+      });
+
+      $(document).on('click', '.add-to-cart-btn', function (e) {
+          e.preventDefault();
+
+          const eventId = $(this).data('event-id');
+          const ticketName = $(this).data('ticket-name');
+          const ticketPrice = $(this).data('ticket-price');
+
+          $.ajax({
+              url: `/cart/add/${eventId}/`,
+              method: 'POST',
+              data: {
+                  ticket_name: ticketName,
+                  ticket_price: ticketPrice,
+              },
+              success: function (response) {
+                  updateCartBadge(response.cart_count || 0);
+              },
+              error: function () {
+                  alert('Failed to add the ticket to the cart. Please try again.');
+              },
+          });
+      });
+
+      console.log('Cart count:', {{ cart_count|default:0 }});
+    </script>
+  </body>
+</html>

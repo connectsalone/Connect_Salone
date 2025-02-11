@@ -1,0 +1,272 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+<!-- Custom CSS -->
+<style>
+  /* Calendar container */
+  #calendar {
+    margin-top: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 1000px;
+    font-size: 1.5rem;
+    font-family: var(
+      --nav-font
+    ); /* Ensures you are using your specified font */
+  }
+
+  /* Weekday Labels (Mon, Tues, etc.) */
+  .fc-col-header-cell {
+    background-color: #808080; /* Gray background for the weekday labels */
+    color: #ffffff; /* White text for better contrast */
+    font-weight: bold; /* Bold text for visibility */
+  }
+
+  /* Hover effect for weekday labels */
+  .fc-col-header-cell:hover {
+    background-color: #6c6c6c; /* Slightly darker gray on hover */
+  }
+
+  /* Calendar Grid (The area where dates and events are displayed) */
+  .fc-daygrid-day {
+    background-color: #f7f7f7; /* Light background for the calendar grid */
+    color: #1b1c1c; /* Dark text color for better contrast */
+    font-size: 1.5rem;
+    padding: 10px; /* Padding inside each grid cell */
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  /* Day number color for each grid day */
+  .fc-daygrid-day-number {
+    color: #1b1c1c; /* Dark color for the day numbers */
+    font-size: 1.4rem; /* Adjusted font size for the day number */
+  }
+
+  /* Today's date (highlight it with a different color) */
+  .fc-daygrid-day.fc-day-today {
+    background-color: #003366; /* Darker blue for today’s date */
+    color: #fggggg; /* White text for today's date */
+    font-weight: bold; /* Bold font for better visibility */
+  }
+
+  /* Optional: Add a custom hover effect for today */
+  .fc-daygrid-day.fc-day-today:hover {
+    background-color: #004c8c; /* Slightly lighter blue when hovering over today */
+  }
+
+  .event-card {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #044745;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Ensure card takes up full width of the calendar cell */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+    word-wrap: break-word; /* Allow wrapping of long words */
+    word-break: break-word; /* Force breaking of long words */
+  }
+
+  .event-card h5 {
+    margin-bottom: 5px;
+    font-size: 1rem;
+    color: #f7fafa;
+    word-wrap: break-word; /* Allow text to wrap */
+    word-break: break-word; /* Force long words to break */
+    margin: 0; /* Remove extra margins */
+    font-family: var(--nav-font);
+  }
+
+  .event-card .event-location {
+    font-weight: bold;
+    color: #d3e3e2;
+    word-wrap: break-word; /* Allow text to wrap */
+    word-break: break-word; /* Force long words to break */
+    font-size: rem;
+    margin: 0; /* Remove extra margins */
+    font-family: var(--nav-font);
+  }
+
+  .event-card p {
+    margin-top: 5px;
+    color: #d3e3e2;
+    word-wrap: break-word; /* Allow text to wrap */
+    word-break: break-word; /* Force long words to break */
+  }
+
+  @media (max-width: 768px) {
+    .event-card {
+      width: 100%; /* Full width for small screens */
+    }
+
+    .event-card h5 {
+      font-size: 1.2rem; /* Smaller title font size on smaller screens */
+    }
+
+    .event-card .event-location {
+      font-size: 1rem; /* Smaller location font size on smaller screens */
+    }
+  }
+
+  .fc-event-2 {
+    background-color: #91c8f0; /* Light Blue */
+  }
+
+  .fc-event-3 {
+    background-color: #a0e2a1; /* Light Green */
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-header {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .modal-footer {
+    border-top: none;
+  }
+
+  .event-image {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 15px;
+  }
+
+  .event-time {
+    font-weight: bold;
+    color: #333;
+  }
+</style>
+
+<div class="container">
+  <h1 class="text-center mb-4 mt-5">CALENDAR</h1>
+  <div id="calendar"></div>
+</div>
+
+<!-- Event Modal (hidden by default) -->
+<div
+  class="modal"
+  id="eventModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="eventModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eventModalLabel">Event Details</h5>
+        <button type="button" class="close" id="closeModal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="eventDetails">
+        <!-- Event details will be populated here -->
+        events: [ {% for event in events %} { title: "{{ event.event_name }}",
+        start: "{{ event.start }}", // Ensure the date is in ISO format end: "{{
+        event.end }}", // End date also in ISO format location: "{{
+        event.event_location }}", }, {% endfor %} ]
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="closeModalFooter">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FullCalendar CSS -->
+<link
+  href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css"
+  rel="stylesheet"
+/>
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+<!-- FullCalendar Script -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var calendarEl = document.getElementById("calendar");
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,timeGridDay",
+      },
+      events: '{% url "get_events" %}', // URL to fetch event data in JSON format
+      editable: true,
+      droppable: true,
+
+      events: '{% url "get_events" %}', // URL to fetch event data
+      eventContent: function (info) {
+        let event = info.event;
+        let startTime = event.start.toLocaleString();
+        let location = event.extendedProps.location || "No location available";
+
+        // Create event card structure
+        let eventCard = `
+    <div class="event-card">
+      <h5>${event.title}</h5>
+      <p class="event-location">${location}</p>
+    </div>
+  `;
+        return {html: eventCard};
+      },
+
+      eventClick: function (info) {
+        // Populate and show the modal with detailed event information
+        var eventDetails = `
+            <h5>${info.event.title}</h5>
+            <img src="${
+              info.event.extendedProps.image || "/static/default_image.jpg"
+            }" alt="Event Image" class="event-image" />
+            <p><strong>Description:</strong> ${
+              info.event.extendedProps.description || "No description available"
+            }</p>
+            <p><strong>Location:</strong> ${
+              info.event.extendedProps.location || "No location available"
+            }</p>
+            <p><strong>Date:</strong> ${info.event.start.toLocaleString()}</p>
+            <p><strong>Time:</strong> ${info.event.start.toLocaleString()} - ${
+          info.event.end ? info.event.end.toLocaleString() : "Ongoing"
+        }</p>
+          `;
+        document.getElementById("eventDetails").innerHTML = eventDetails;
+
+        // Show the modal with event details
+        $("#eventModal").modal("show"); // Bootstrap method to show the modal
+      },
+
+      eventRender: function (info) {
+        let eventCategory = info.event.extendedProps.category || 1; // Default category 1
+        info.el.classList.add(`fc-event-${eventCategory}`);
+      },
+    });
+
+    calendar.render();
+
+    // Manually trigger modal close for testing
+    $("#closeModal").on("click", function () {
+      $("#eventModal").modal("hide");
+    });
+
+    // Footer close button
+    $("#closeModalFooter").on("click", function () {
+      $("#eventModal").modal("hide");
+    });
+  });
+</script>
+
+<!-- Ensure jQuery and Bootstrap JS are included -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

@@ -1,0 +1,369 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+
+<style>
+  /* Flex layout for ticket price and purchase */
+  .ticket-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .ticket-price,
+  .ticket-purchase {
+    flex: 1;
+    padding: 0 20px;
+  }
+
+  /* Increased event image size */
+  img.img-fluid {
+    width: 40%;
+    max-width: 40%;
+    height: auto;
+    object-fit: cover; /* Ensures the image covers its container without stretching */
+  }
+
+  /* Ticket Quantity Styling */
+  .ticket-quantity-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .quantity-label {
+    font-size: 22px;
+    margin-right: 10px;
+    font-weight: 500;
+  }
+
+  .quantity-input {
+    font-size: 18px; /* Increase font size for the input */
+    width: 60px;
+    padding: 5px;
+    text-align: center;
+  }
+
+  /* Full-width button */
+  .add-to-cart-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .add-to-cart-button:hover {
+    background-color: #0056b3;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .ticket-info {
+      flex-direction: column;
+    }
+
+    .ticket-price,
+    .ticket-purchase {
+      padding: 0;
+      margin-bottom: 20px;
+    }
+
+    .sponsors-row {
+      gap: 10px;
+    }
+
+    .sponsor-logo {
+      max-height: 70px;
+    }
+  }
+
+  /* Title Styling */
+
+  .title {
+    margin-bottom: 20pxpx;
+  }
+
+  .event-title {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    font-size: 45px;
+    color: black;
+  }
+
+  /* Date, Time, and Location Styling */
+  .date-time .meta-top ul li {
+    font-size: 25px;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .date-time .meta-top ul li a {
+    color: black;
+    margin-left: 20px;
+  }
+
+  /* Event Description Styling */
+  .description p {
+    font-size: 25px;
+    line-height: 1.6;
+    margin-top: 20px;
+    text-align: justify;
+    color: black;
+  }
+
+  /* Sponsors Section */
+
+  .sponsor-title {
+    margin-bottom: 15px;
+    font-size: 25px;
+  }
+
+  .sponsors-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    justify-content: start;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+
+  .sponsor-item {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+
+  .sponsor-logo {
+    max-width: 100%;
+    height: auto;
+    max-height: 100px;
+  }
+</style>
+
+<main class="main">
+  <!-- Page Title -->
+  <div class="page-title">
+    <div class="container d-lg-flex justify-content-between align-items-center">
+      <h1 class="mb-2 mb-lg-0">Single Event</h1>
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="index.html">Home</a></li>
+          <li class="current">Single Event</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Blog Details Section -->
+        <section id="blog-details" class="blog-details section">
+          <div class="container">
+            <article class="article">
+              <div class="post-img">
+                <img
+                  src="{{ event.event_image.url|default_if_none:'/static/default-event.png' }}"
+                  class="img-fluid"
+                  alt=""
+                />
+              </div>
+              <h2 class="event-title">{{ event.event_name }}</h2>
+
+              <div class="date-time">
+                <div class="meta-top">
+                  <ul>
+                    <li class="d-flex align-items-center">
+                      <time datetime="2020-01-01"> {{ event.event_date}}</time>
+                    </li>
+                    <li class="d-flex align-items-center">
+                      <a href="#"> {{event.event_location }}</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Event Description -->
+              <div class="content description">
+                <p>{{ event.event_description }}</p>
+
+                <!-- Ticket Price and Purchase -->
+                <div class="ticket-info">
+                  <div class="ticket-price">
+                    {% if event.early_bird_price %}
+                    <p class="early-bird">
+                      Early Bird: {{ event.early_bird_price }} &nbsp;
+                      &nbsp;&nbsp; {{ event.early_bird_end_date }}
+                      <blockquote>
+                        <p>
+                          <h3>{{ event.view_count }} Views</h3>
+                        </p>
+                      </blockquote>
+                    </p>
+
+                    {% else %}
+                    <p class="normal-price">
+                      Ticket Price: {{ event.normal_price }}
+                    </p>
+                    {% endif %}
+                  </div>
+
+                  <div class="ticket-purchase">
+                    {% if request.user.is_authenticated %}
+                    <div class="cart-card">
+                      <h3>Add Tickets to Cart</h3>
+                      <div class="ticket-quantity-container">
+                        <label for="ticket-quantity" class="quantity-label"
+                          >Quantity:</label
+                        >
+                        <input
+                          type="number"
+                          id="ticket-quantity"
+                          name="quantity"
+                          value="1"
+                          min="1"
+                          class="quantity-input"
+                        />
+                      </div>
+
+                      <button
+                        onclick="addToCart({{ event.id }})"
+                        class="add-to-cart-button"
+                      >
+                        Add to Cart
+                      </button>
+                      <p id="cart-message" style="color: green; display: none">
+                        Added to cart!
+                      </p>
+                    </div>
+                    {% else %}
+                    <p>
+                      <a href="{% url 'login' %}?next={{ request.path }}"
+                        >Log in</a
+                      >
+                      to purchase tickets.
+                    </p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sponsors Section -->
+              <div class="sponsorers">
+                {% if sponsors %}
+                <div class="meta-bottom">
+                  <h3 class="sponsor-title">Sponsors</h3>
+                  <hr>
+                  <div class="sponsors-row">
+                    {% for sponsor in sponsors %}
+                    <div class="sponsor-item">
+                      <img
+                        src="{{ sponsor.logo.url }}"
+                        alt="{{ sponsor.name }}"
+                        class="sponsor-logo"
+                      />
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% else %}
+                <p>No sponsors available for this event.</p>
+                {% endif %}
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4 sidebar">
+        <div class="widgets-container">
+          <!-- Blog Author Widget -->
+          <div class="blog-author-widget widget-item">
+            <div class="d-flex flex-column align-items-center">
+              <img
+                src="assets/img/blog/blog-author.jpg"
+                class="rounded-circle flex-shrink-0"
+                alt=""
+              />
+              <h4>Jane Smith</h4>
+              <p>
+                Itaque quidem optio quia voluptatibus dolorem dolor. Modi eum
+                sed possimus accusantium. Quas repellat voluptatem officia
+                numquam sint aspernatur voluptas.
+              </p>
+              <div class="social-links">
+                <a href="https://x.com/#"><i class="bi bi-twitter-x"></i></a>
+                <a href="https://facebook.com/#"
+                  ><i class="bi bi-facebook"></i
+                ></a>
+                <a href="https://instagram.com/#"
+                  ><i class="biu bi-instagram"></i
+                ></a>
+                <a href="https://linkedin.com/#"
+                  ><i class="biu bi-linkedin"></i
+                ></a>
+              </div>
+            </div>
+          </div>
+          <!-- Search Widget -->
+          <div class="search-widget widget-item">
+            <h3 class="widget-title">Search</h3>
+            <form action="">
+              <input type="text" />
+              <button type="submit" title="Search">
+                <i class="bi bi-search"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  function getCSRFToken() {
+    return document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+  }
+
+  function addToCart(eventId) {
+    let quantity = document.getElementById("ticket-quantity").value;
+
+    fetch(`/cart/add/${eventId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: JSON.stringify({quantity: quantity}),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("cart-message").style.display = "block";
+          updateCartBadge(data.cart_count);
+        } else {
+          alert("Error adding to cart.");
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  function updateCartBadge(count) {
+    const cartBadge = document.getElementById("cart-badge");
+    if (cartBadge) {
+      cartBadge.textContent = count > 0 ? count : "";
+      cartBadge.classList.toggle("visible", count > 0);
+    }
+  }
+</script>
+
+{% endblock %}

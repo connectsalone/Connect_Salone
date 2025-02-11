@@ -1,0 +1,231 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+<style>
+  .event-card {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 20px;
+    position: relative;
+    background-color: #f9f9f9;
+  }
+
+  .event-details {
+    display: flex;
+    width: 100%;
+  }
+
+  .event-column,
+  .ticket-column,
+  .price-column {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .ticket-price {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .ticket-quantity {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .remove-event {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    background: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 50%;
+  }
+
+  .remove-event:hover {
+    background: darkred;
+  }
+
+  .event-subtotal {
+    position: absolute;
+    bottom: 10px;
+    right: 20px;
+  }
+
+  .total-price-container {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .cart-buttons {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .cart-buttons a {
+    margin: 5px;
+  }
+</style>
+
+<main class="main">
+  <div class="container">
+    <h1>Your Cart</h1>
+    <h4>Please review your cart below</h4>
+
+    {% csrf_token %} {# Django automatically includes the CSRF token #} &nbsp;
+    {% if event_groups %}
+    <div class="event-list">
+      {% for event_group in event_groups.values %}
+      <div class="event-card" id="event-{{ event_group.event.id }}">
+        <div class="event-details">
+          <div class="event-column">
+            <p class="event-name">{{ event_group.event.event_name }}</p>
+            <p class="event-location">{{ event_group.event.event_location }}</p>
+            <p class="event-date">
+              {{ event_group.event.event_date|date:"F j, Y" }}
+            </p>
+            <p class="event-time">
+              {{ event_group.event.event_date|date:"H:i" }}
+            </p>
+          </div>
+
+          <div class="ticket-column">
+            <p class="ticket-price">
+              Ticket Price: NLe<span id="price-{{ event_group.event.id }}">
+                {{ event_group.event.get_ticket_price }}
+              </span>
+            </p>
+
+            <div class="ticket-quantity">
+              <button
+                class="btn btn-sm btn-outline-secondary decrease-quantity"
+                data-event-id="{{ event_group.event.id }}"
+                data-url="{% url 'update_cart' event_group.event.id %}"
+              >
+                -
+              </button>
+
+              <span
+                id="quantity-{{ event_group.event.id }}"
+                class="quantity-display"
+              >
+                {{ event_group.total_quantity }} Tickets
+              </span>
+
+              <button
+                class="btn btn-sm btn-outline-secondary increase-quantity"
+                data-event-id="{{ event_group.event.id }}"
+                data-url="{% url 'update_cart' event_group.event.id %}"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div class="price-column">
+            <button
+              class="remove-event"
+              data-event-id="{{ event_group.event.id }}"
+            >
+              X
+            </button>
+            <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
+              Sub Total: NLe<span>
+                {{ event_group.total_price|floatformat:2 }}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="total-price-container">
+        <p id="total-price">Total: NLe<span>{{ total_price }}</span></p>
+      </div>
+
+      <div class="cart-buttons">
+        <a href="/shop" class="btn btn-outline-primary">Continue Shopping</a>
+        <a href="/checkout" class="btn btn-primary">Proceed to Checkout</a>
+      </div>
+    </div>
+
+    {% else %}
+    <p>Your cart is empty.</p>
+    {% endif %}
+  </div>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  $(document).on(
+    "click",
+    ".increase-quantity, .decrease-quantity",
+    function (e) {
+      e.preventDefault();
+
+      const button = $(this);
+      const eventId = button.data("event-id");
+      const url = button.data("url");
+      const action = button.hasClass("increase-quantity")
+        ? "increase"
+        : "decrease";
+
+      console.log(`🟡 Button clicked. Event ID: ${eventId}, Action: ${action}`);
+
+      $.ajax({
+        url: url,
+        method: "POST",
+        data: {
+          action: action,
+          csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+        },
+        success: function (response) {
+          console.log("🟢 AJAX success response:", response);
+
+          if (response.success) {
+            let newSubtotal = parseFloat(response.new_subtotal);
+            let newTotalPrice = parseFloat(response.new_total_price);
+
+            // Update ticket quantity and subtotal
+            $(`#quantity-${eventId}`).text(response.new_quantity + " Tickets");
+            $(`#subtotal-${eventId} span`).text(newSubtotal.toFixed(2));
+            $("#total-price span").text(newTotalPrice.toFixed(2));
+
+            // Update cart badge dynamically
+            if (response.new_cart_count > 0) {
+              $("#cart-badge").text(response.new_cart_count).fadeIn();
+            } else {
+              $("#cart-badge").fadeOut();
+            }
+
+            // Remove event row if quantity reaches 0
+            if (response.new_quantity === 0) {
+              $(`#event-${eventId}`).fadeOut(300, function () {
+                $(this).remove();
+                if ($(".event-card").length === 0) {
+                  $(".event-list").html("<p>Your cart is empty.</p>");
+                }
+              });
+            }
+          } else {
+            console.log("❌ Error in AJAX response:", response.error);
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error("🚨 AJAX error:", status, error);
+          alert("Failed to update the cart. Please try again.");
+        },
+      });
+    }
+  );
+</script>
+{% endblock %}
