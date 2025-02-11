@@ -131,12 +131,6 @@
           </div>
 
           <div class="price-column">
-            <button
-              class="remove-event"
-              data-event-id="{{ event_group.event.id }}"
-            >
-              X
-            </button>
             <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
               Sub Total: NLe<span>
                 {{ event_group.total_price|floatformat:2 }}
@@ -152,8 +146,12 @@
       </div>
 
       <div class="cart-buttons">
-        <a href="/shop" class="btn btn-outline-primary">Continue Shopping</a>
-        <a href="/checkout" class="btn btn-primary">Proceed to Checkout</a>
+        <a href="{% url 'home' %}" class="btn btn-outline-primary"
+          >Continue Shopping</a
+        >
+        <a href="{% url 'checkout' %}" class="btn btn-primary"
+          >Proceed to Checkout</a
+        >
       </div>
     </div>
 

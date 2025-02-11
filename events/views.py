@@ -472,3 +472,40 @@ from django.contrib.auth.signals import user_logged_in
 
  
 
+
+from django.shortcuts import render
+from .models import Event, Cart, CartItem
+
+def checkout_page(request):
+    events_in_cart = []
+    total_price = 0
+    cart_count = 0
+
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+        
+        # Check if cart exists
+        if cart:
+            cart_count = cart.cart_count
+            cart_items = CartItem.objects.filter(cart=cart)
+
+            for item in cart_items:
+                event = item.event
+                quantity = item.quantity
+                ticket_price = event.get_ticket_price()  # Get ticket price
+                subtotal = ticket_price * quantity
+                events_in_cart.append({
+                    'event': event,
+                    'quantity': quantity,
+                    'subtotal': subtotal,
+                    'total': subtotal,  # You may want to calculate this properly if applicable
+                })
+                total_price += subtotal
+
+    context = {
+        'cart_count': cart_count,
+        'events_in_cart': events_in_cart,
+        'total_price': total_price,
+    }
+
+    return render(request, 'events/checkout_page.html', context)

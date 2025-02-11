@@ -1,0 +1,176 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+
+<style>
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 0 auto 20px auto;
+    width: 80%;
+    max-width: 600px;
+  }
+
+  .card-header {
+    background-color: #f8f9fa;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .card-body {
+    padding: 15px;
+  }
+
+  .card-body ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  .card-body li {
+    margin-bottom: 10px;
+  }
+
+  /* Smaller cards inside the main card */
+  .event-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .payment-deatil {
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 30px;
+    color: #354667;
+  }
+
+  .event-name {
+    font-weight: bold;
+    font-size: 20px;
+    color: #354667;
+  }
+
+  .event-subtotal {
+    font-weight: bold;
+    font-size: 20px;
+    text-align: right;
+    color: #354667;
+  }
+
+  .event-ticket-number {
+    font-weight: bold;
+    font-size: 18px;
+    color: #354667;
+  }
+
+  .event-tickets {
+    font-weight: bold;
+    font-size: 25px;
+  }
+
+  .payment-option {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .payment-logo {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+  }
+
+  .payment-logo img.payment-img {
+    width: 120px;
+    height: auto;
+  }
+
+  .grand-total {
+    font-size: 30px;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 30px;
+    color: #354667;
+  }
+
+  .payment-option {
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 30px;
+    color: #354667;
+    margin-bottom: 20px;
+  }
+</style>
+
+<main class="main">
+  <!-- Page Title -->
+  <div class="page-title">
+    <div class="container d-lg-flex justify-content-between align-items-center">
+      <h1 class="mb-2 mb-lg-0">Checkout</h1>
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="index.html">Home</a></li>
+          <li class="current">Checkout</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Checkout Section -->
+  <section id="about" class="checkout section">
+    <div class="container">
+      <!-- Main Card for Payment Details -->
+      <div class="card mb-5">
+        <div class="card-header">
+          <h4 class="payment-deatil">PAYMENT DETAILS</h4>
+        </div>
+        <div class="card-body">
+          {% for event_data in events_in_cart %}
+
+          <!-- Small Card for Each Event -->
+          <div class="event-card">
+            <ul>
+              <li class="event-name">{{ event_data.event.event_name }}</li>
+              <li>
+                <span class="event-ticket-number">Tickets :</span>
+                <span class="event-tickets">{{ event_data.quantity }}</span>
+              </li>
+              <li class="event-subtotal">
+                <strong>Subtotal:</strong> ${{ event_data.subtotal }}
+              </li>
+            </ul>
+          </div>
+          {% endfor %}
+
+          <!-- Grand Total -->
+          <div class="grand-total">
+            <strong>Grand Total:</strong> ${{ total_price }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Options -->
+      <div class="payment-option">
+        <h2 class="payment-option">Choose Payment Option</h2>
+        <div class="payment-logo">
+          <a href="#"
+            ><img
+              src="{% static 'assets/img/visa-logo.png' %}"
+              alt="Visa Logo"
+              class="payment-img"
+          /></a>
+          <a href="#"
+            ><img
+              src="{% static 'assets/img/orange-money.png' %}"
+              alt="Orange Money Logo"
+              class="payment-img"
+          /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% endblock %}

@@ -1,7 +1,7 @@
 from django.urls import path
 from events.views import (
     home, about, event_list, contact, single_event, starter_page, scan_ticket,
-    calendar_view, get_events, cart_page, add_to_cart, update_cart
+    calendar_view, get_events, cart_page, add_to_cart, update_cart, checkout_page
 )
 
 urlpatterns = [
@@ -24,6 +24,8 @@ urlpatterns = [
     path("cart/add/<int:event_id>/", add_to_cart, name="add_to_cart"),
     path("cart/update/<int:event_id>/", update_cart, name="update_cart"),
     
+
+    path('checkout/', checkout_page, name='checkout'),
     
 
 
