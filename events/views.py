@@ -1,17 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from events.models import Cart, Ticket, Event, Payment, EventView
-from django.db import transaction
+from events.models import Cart, Ticket, Event, EventView, CartItem
+from payment.models import Payment
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, F
-from django.conf import settings
-from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models import Sum
 from django.contrib.auth.signals import user_logged_in
 import json
+
+from decouple import config
+
+PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
+PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
+
 
 
 # ------------------- Cart Utility Functions -------------------
@@ -41,11 +44,7 @@ user_logged_in.connect(update_cart_count_on_login)
 
 # ------------------- Cart Views -------------------
 
-import json
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.db.models import Sum  # ✅ Import Sum function
-from .models import Cart, CartItem, Event
+
 
 def add_to_cart(request, event_id):
     if request.method == "POST":
@@ -77,10 +76,7 @@ def add_to_cart(request, event_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
-from decimal import Decimal
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import Cart
+
 
 @login_required
 def cart_page(request):
@@ -128,12 +124,7 @@ def cart_page(request):
     })
 
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F
-from .models import Cart, CartItem, Event
-from django.utils import timezone
+
  
 @login_required
 def update_cart(request, event_id):
@@ -291,10 +282,7 @@ def calendar_view(request):
     return render(request, "events/calendar.html", {"cart_count": cart_count, "events": events})
 
 
-# views.py
-from django.http import JsonResponse
-from .models import Event
-from django.utils import timezone
+
 
 def get_events(request):
     events = Event.objects.filter(event_date__gte=timezone.now())  # Only future events
@@ -472,10 +460,6 @@ from django.contrib.auth.signals import user_logged_in
 
  
 
-
-from django.shortcuts import render
-from .models import Event, Cart, CartItem
-
 def checkout_page(request):
     events_in_cart = []
     total_price = 0
@@ -509,3 +493,11 @@ def checkout_page(request):
     }
 
     return render(request, 'events/checkout_page.html', context)
+
+
+
+def my_tickets(request):
+    """Display user's purchased tickets."""
+    tickets = Ticket.objects.filter(event__event_tickets__event__cart__user=request.user, paid=True)
+    return render(request, "events/my_tickets.html", {"tickets": tickets})
+

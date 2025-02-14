@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Event, Ticket, Cart, CartItem, Payment, EventView
+from events.models import Event, Ticket, Cart, CartItem, EventView
+from payment.models import Payment
 
 from django.contrib import admin
 from .models import Event, Sponsorer
@@ -58,11 +59,6 @@ class CartItemAdmin(admin.ModelAdmin):
     list_filter = ('cart__is_paid',)
     readonly_fields = ('cart', 'event')
 
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('cart', 'amount', 'payment_status', 'payment_date')
-    search_fields = ('cart__user__username', 'payment_status')
-    list_filter = ('payment_status',)
-    readonly_fields = ('payment_date',)
 
 class EventViewAdmin(admin.ModelAdmin):
     list_display = ('event', 'user', 'session_key', 'viewed_at')
@@ -74,5 +70,4 @@ class EventViewAdmin(admin.ModelAdmin):
 admin.site.register(Ticket, TicketAdmin)
 admin.site.register(Cart, CartAdmin)
 admin.site.register(CartItem, CartItemAdmin)
-admin.site.register(Payment, PaymentAdmin)
 admin.site.register(EventView, EventViewAdmin)

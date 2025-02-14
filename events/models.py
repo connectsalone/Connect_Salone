@@ -90,9 +90,18 @@ class Event(models.Model):
         verbose_name_plural = 'Events'
 
 
+from django.db import models
+from django.core.files.base import ContentFile
+from django.core.signing import TimestampSigner
+from django.utils import timezone
+import secrets
+import hashlib
+import qrcode
+import uuid
+from io import BytesIO
 
-# Ticket Model
 class Ticket(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='event_tickets')
     ticket_name = models.CharField(max_length=200)
     ticket_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
@@ -100,10 +109,9 @@ class Ticket(models.Model):
     qr_code = models.ImageField(upload_to='qr_codes/', null=True, blank=True, editable=False)
     secret_token = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
     paid = models.BooleanField(default=False)
-    quantity = models.PositiveIntegerField()  # Track quantity
+    quantity = models.PositiveIntegerField()
 
     def save(self, *args, **kwargs):
-        """Override save to ensure price, QR code, and token are generated."""
         if not self.ticket_price:
             self.ticket_price = self.event.get_ticket_price()
         if self.paid and not self.qr_code:
@@ -123,10 +131,8 @@ class Ticket(models.Model):
             qr_image = BytesIO()
             qr.save(qr_image, format='PNG')
             qr_image.seek(0)
-            if not self.qr_code:
-                self.qr_code.save(f"ticket_{uuid.uuid4().hex}.png", ContentFile(qr_image.read()), save=False)
+            self.qr_code.save(f"ticket_{uuid.uuid4().hex}.png", ContentFile(qr_image.read()), save=False)
         except Exception as e:
-            logger.error(f"Error generating QR code: {e}")
             raise RuntimeError(f"Error generating QR code: {e}")
 
     def generate_secure_token(self):
@@ -138,14 +144,17 @@ class Ticket(models.Model):
     def generate_signed_data(self):
         """Generate signed data for the QR code."""
         signer = TimestampSigner()
-        data = f"{self.id}|{self.cart.id}|{self.payment_reference}|{timezone.now().isoformat()}"
+        data = f"{self.id}|{self.payment_reference}|{timezone.now().isoformat()}"
         return signer.sign(data)
 
     def __str__(self):
-        return f"{self.ticket_name} for {self.cart.user.username}"
+        return f"{self.ticket_name} - {self.event.name}"
 
     class Meta:
         ordering = ['-event__event_date']
+
+
+
 
 
 # Cart Model
@@ -218,41 +227,6 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.event.event_name} in {self.cart}"
 
-
-
-# Payment Model
-class Payment(models.Model):
-    cart = models.OneToOneField(Cart, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('completed', 'Completed'), ('failed', 'Failed')], default='pending')
-    payment_date = models.DateTimeField(null=True, blank=True)
-
-    def process_payment(self):
-        """Process the payment and create tickets atomically."""
-        try:
-            with transaction.atomic():
-                if self.payment_status == 'completed':
-                    self.cart.is_paid = True
-                    self.cart.save()
-
-                    ticket_objects = []
-                    for item in self.cart.cart_items.all():
-                        for _ in range(item.quantity):
-                            ticket_objects.append(Ticket(
-                                event=item.ticket.event,
-                                cart=self.cart,
-                                ticket_name=item.ticket.ticket_name,
-                                ticket_price=item.ticket.ticket_price,
-                                payment_reference=self.id,
-                            ))
-                    Ticket.objects.bulk_create(ticket_objects)
-
-        except IntegrityError as e:
-            logger.error(f"Payment processing error: {e}")
-            raise ValidationError("Payment processing failed.")
-
-    def __str__(self):
-        return f"Payment for {self.cart.user.username} - {self.payment_status}"
 
 
 # EventView Model

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scan Ticket</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
+      .scanner-container {
+        position: relative;
+        display: inline-block;
+      }
+      video {
+        width: 100%;
+        max-width: 600px;
+        border: 2px solid black;
+      }
+      canvas {
+        display: none;
+      }
+      .scanner-frame {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 70%;
+        height: 70%;
+        border: 4px dashed #00ff00;
+        pointer-events: none;
+      }
+      .instructions {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #333;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Scan Your Ticket</h2>
+
+    <div class="scanner-container">
+      <video id="video" autoplay></video>
+      <div class="scanner-frame"></div>
+    </div>
+
+    <p class="instructions">
+      Position the QR code inside the frame to scan it.
+    </p>
+    <p id="status">Initializing scanner...</p>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+      const videoElement = document.getElementById("video");
+      const canvasElement = document.getElementById("canvas");
+      const statusElement = document.getElementById("status");
+      const canvasContext = canvasElement.getContext("2d");
+
+      let scanning = true;
+      let lastScanTime = Date.now();
+      let beepTimeout;
+
+      async function startCamera() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {facingMode: "environment"},
+          });
+          videoElement.srcObject = stream;
+          videoElement.setAttribute("playsinline", true);
+          videoElement.play();
+          statusElement.innerText = "Scanning...";
+          requestAnimationFrame(scanQRCode);
+        } catch (err) {
+          console.error("Error accessing camera:", err);
+          statusElement.innerText = "Unable to access camera.";
+        }
+      }
+
+      function scanQRCode() {
+        if (!scanning) return;
+
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+          canvasElement.width = videoElement.videoWidth;
+          canvasElement.height = videoElement.videoHeight;
+          canvasContext.drawImage(
+            videoElement,
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height
+          );
+
+          // Define the scanning box region
+          const boxWidth = canvasElement.width * 0.7;
+          const boxHeight = canvasElement.height * 0.7;
+          const boxX = (canvasElement.width - boxWidth) / 2;
+          const boxY = (canvasElement.height - boxHeight) / 2;
+
+          const imageData = canvasContext.getImageData(
+            boxX,
+            boxY,
+            boxWidth,
+            boxHeight
+          );
+          const qrCode = jsQR(imageData.data, boxWidth, boxHeight);
+
+          if (qrCode) {
+            lastScanTime = Date.now(); // Reset last scan time
+            processScannedData(qrCode.data);
+          } else {
+            // Check if 5 seconds have passed without detecting a QR code
+            if (Date.now() - lastScanTime > 5000) {
+              beepThreeTimes(); // Beep after 5 seconds of no detection
+              lastScanTime = Date.now(); // Reset timer
+            }
+            requestAnimationFrame(scanQRCode);
+          }
+        } else {
+          requestAnimationFrame(scanQRCode);
+        }
+      }
+
+      function processScannedData(qrData) {
+        scanning = false;
+
+        fetch("{% url 'scan_ticket' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: JSON.stringify({qr_data: qrData}),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Server response:", data);
+            if (data.message) {
+              statusElement.innerText = "✅ Ticket is valid.";
+            } else {
+              statusElement.innerText = "❌ Invalid Ticket: " + data.error;
+              beepThreeTimes();
+            }
+            setTimeout(() => {
+              statusElement.innerText = "Scanning...";
+              scanning = true;
+              requestAnimationFrame(scanQRCode);
+            }, 1000);
+          })
+          .catch((error) => {
+            console.error("Scan error:", error);
+            statusElement.innerText = "Error scanning ticket.";
+            beepThreeTimes();
+            setTimeout(() => {
+              statusElement.innerText = "Scanning...";
+              scanning = true;
+              requestAnimationFrame(scanQRCode);
+            }, 1000);
+          });
+      }
+
+      function beepThreeTimes() {
+        let count = 0;
+        function beep() {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.start();
+          setTimeout(() => {
+            oscillator.stop();
+            count++;
+            if (count < 3) {
+              setTimeout(beep, 200);
+            }
+          }, 100);
+        }
+        beep();
+      }
+
+      startCamera();
+    </script>
+  </body>
+</html>

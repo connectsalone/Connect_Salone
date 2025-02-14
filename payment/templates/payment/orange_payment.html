@@ -1,0 +1,213 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+<style>
+  .payment-page {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .payment-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .pay-with-om {
+    font-size: 50px;
+    font-weight: 800;
+    margin-bottom: 15px;
+  }
+
+  .payemnt-method {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .payment-image,
+  .payment-form {
+    margin: 0;
+  }
+
+  .payment-image {
+    width: 40%;
+  }
+
+  .payment-image img {
+    width: 100%;
+    height: auto;
+  }
+
+  .payment-form {
+    width: 90%;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+  }
+
+  .payment-form h3 {
+    margin-bottom: 20px;
+    font-size: 25px;
+    text-align: center;
+  }
+
+  .payment-form .form-group {
+    margin-bottom: 15px;
+  }
+
+  .payment-form input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 18px;
+  }
+
+  .payment-form button {
+    padding: 12px 20px;
+    font-size: 20px;
+    background-color: #ff9800;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .payment-form button:hover {
+    background-color: #f57c00;
+  }
+
+  .payment-amount {
+    font-size: 25px;
+    text-align: center;
+  }
+
+  .payment-figure {
+    font-weight: 800;
+    font-size: 40px;
+    margin-left: 10px;
+  }
+
+  .what-happens {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .payment-container {
+      flex-direction: column;
+    }
+
+    .payment-image,
+    .payment-form {
+      width: 80%;
+    }
+  }
+
+  .message {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .message.error {
+    color: red;
+  }
+
+  .message.success {
+    color: green;
+  }
+</style>
+
+<main class="main">
+  <div class="container payment-page">
+    <h1 class="pay-with-om">Pay With Orange Money</h1>
+    <p class="payemnt-method">
+      Easily pay using your Orange Money account:<br />
+      1. Enter your Orange Money number <br />
+      2. Click "Make Payment" <br />
+      3. Dial <strong>#144#</strong> to complete the payment
+    </p>
+
+    <div class="payment-container">
+      <!-- Left column for image -->
+      <div class="payment-image">
+        <img
+          src="{% static 'assets/img/orange-money.png' %}"
+          alt="Orange Money Logo"
+          class="payment-img"
+        />
+      </div>
+
+      <!-- Right column for form inputs -->
+      <div class="payment-form">
+        <p class="payment-amount">
+          <strong>Amount:</strong>
+          <span class="payment-figure"> NLe{{ total_price }} </span>
+        </p>
+
+        <h3>Enter your Orange Money number</h3>
+
+        <form
+          method="POST"
+          action="{% url 'orange_payment' %}"
+          id="payment-form"
+        >
+          {% csrf_token %}
+          <div class="form-group">
+            <input
+              type="tel"
+              name="phone_number"
+              placeholder="07XXXXXXX"
+              pattern="07\d{7}"
+              maxlength="9"
+              required
+              autofocus
+            />
+          </div>
+          <input type="hidden" name="total_amount" value="{{ total_price }}" />
+          <button type="submit" id="pay-btn">Make Payment</button>
+        </form>
+
+        {% if messages %}
+        <div
+          class="message {% if messages.0.tags == 'error' %}error{% else %}success{% endif %}"
+        >
+          {% for message in messages %}
+          <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="what-happens">
+      <h5>What happens next?</h5>
+      <p>
+        After clicking "Make Payment," dial <strong>#144#</strong> to complete
+        the payment process.
+      </p>
+      <p><strong>Note:</strong> Make sure any pop-up blocker is disabled.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+  document
+    .getElementById("payment-form")
+    .addEventListener("submit", function () {
+      let button = document.getElementById("pay-btn");
+      button.disabled = true;
+      button.innerText = "Processing...";
+    });
+</script>
+
+{% endblock %}

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Custom apps
     'accounts',
     'events',
+    'payment',
     'googleauthentication',
 
     # AllAuth for authentication
@@ -55,6 +56,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+
+    'paypal.standard.ipn',
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -213,3 +216,15 @@ LOGGING = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# PayPal Configuration
+
+
+
+PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
+PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
+PAYPAL_MODE = config("PAYPAL_MODE", "sandbox")  # Use 'live' for production
+
+
+
+

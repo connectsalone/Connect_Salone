@@ -138,7 +138,7 @@
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
               <li class="event-subtotal">
-                <strong>Subtotal:</strong> ${{ event_data.subtotal }}
+                <strong>Subtotal:</strong> NLe{{ event_data.subtotal }}
               </li>
             </ul>
           </div>
@@ -146,7 +146,7 @@
 
           <!-- Grand Total -->
           <div class="grand-total">
-            <strong>Grand Total:</strong> ${{ total_price }}
+            <strong>Grand Total:</strong> NLe{{ total_price }}
           </div>
         </div>
       </div>
@@ -155,13 +155,13 @@
       <div class="payment-option">
         <h2 class="payment-option">Choose Payment Option</h2>
         <div class="payment-logo">
-          <a href="#"
+          <a href="3"
             ><img
               src="{% static 'assets/img/visa-logo.png' %}"
               alt="Visa Logo"
               class="payment-img"
           /></a>
-          <a href="#"
+          <a href="{% url 'orange_payment' %}"
             ><img
               src="{% static 'assets/img/orange-money.png' %}"
               alt="Orange Money Logo"

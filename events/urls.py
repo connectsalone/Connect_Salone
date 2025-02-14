@@ -1,8 +1,12 @@
-from django.urls import path
+from django.urls import path, include
 from events.views import (
     home, about, event_list, contact, single_event, starter_page, scan_ticket,
-    calendar_view, get_events, cart_page, add_to_cart, update_cart, checkout_page
-)
+    calendar_view, get_events, cart_page, add_to_cart, update_cart, checkout_page,
+    my_tickets
+) 
+
+
+
 
 urlpatterns = [
     # Traditional views for HTML form-based authentication
@@ -27,6 +31,10 @@ urlpatterns = [
 
     path('checkout/', checkout_page, name='checkout'),
     
+
+    path('my-tickets/', my_tickets, name='my_tickets'),
+    
+
 
 
 

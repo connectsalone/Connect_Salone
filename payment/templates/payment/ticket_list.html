@@ -1,0 +1,11 @@
+<h2>Your Tickets</h2>
+
+{% for ticket in tickets %}
+<div>
+  <p>Event: {{ ticket.event.event_name }}</p>
+  <p>Ticket ID: {{ ticket.id }}</p>
+  <p>Seat: {{ ticket.seat_number }}</p>
+  <a href="{% url 'ticket_view' ticket.id %}">View Ticket</a>
+  <a href="{% url 'download_ticket' ticket.id %}">Download Ticket</a>
+</div>
+{% endfor %}

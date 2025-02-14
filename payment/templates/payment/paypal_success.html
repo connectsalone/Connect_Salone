@@ -1,0 +1,13 @@
+{% extends "events/base.html" %} {% block content %}
+
+<main class="main">
+  <div class="container">
+    <h1>Payment Successful!</h1>
+    <p>
+      Thank you for your purchase. Your digital tickets have been generated.
+    </p>
+    <a href="{% url 'my_tickets' %}"><button>View My Tickets</button></a>
+  </div>
+</main>
+
+{% endblock %}
