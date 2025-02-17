@@ -88,6 +88,12 @@ def orange_payment(request):
                     # ✅ Clear cart items (but keep the cart for records)
                     cart.cart_items.all().delete()
 
+                     # Delete the cart itself
+                    cart.delete()
+
+                    request.session.pop("cart_id", None)  # Remove cart session
+                    request.session.modified = True  # Ensure session updates
+
                     logger.info(f"Payment successful: {request.user.username}, {len(tickets)} tickets created.")
                     messages.success(request, "Payment successful! Your tickets are ready.")
                     return redirect('tickets')
@@ -159,66 +165,8 @@ def generate_secure_ticket_qr(ticket):
     qr = qrcode.make(encrypted_data).resize((300, 300))  # Resized to fit the ticket
     return qr
 
-def generate_ticket_image(ticket):
-    """Generate a dynamic ticket image with secure QR code."""
-    width, height = 1000, 400
-    ticket_image = Image.new("RGB", (width, height), "white")
-    draw = ImageDraw.Draw(ticket_image)
-
-    # Load fonts
-    try:
-        title_font = ImageFont.truetype("arial.ttf", 50)
-        text_font = ImageFont.truetype("arial.ttf", 30)
-    except:
-        title_font = text_font = ImageFont.load_default()
-
-    # Define sections
-    left_section = (0, 0, width // 3, height)   # Event Image
-    middle_section = (width // 3, 0, 2 * width // 3, height)  # Event Details
-    right_section = (2 * width // 3, 0, width, height)  # QR Code
-
-    # Padding around image to separate from the border
-    image_padding = 10
-
-    # Load Event Image (if exists) with padding around it
-    if ticket.event.event_image:
-        try:
-            event_img = Image.open(ticket.event.event_image.path).resize((width // 3 - 2 * image_padding, height - 2 * image_padding))
-            ticket_image.paste(event_img, (image_padding, image_padding))
-        except:
-            pass  # Avoid crashes if the image file is missing
-
-    # Draw middle section (event details)
-    draw.rectangle(middle_section, fill="white")
-    text_x = width // 3 + 20
-    text_y = 50
-
-    def draw_centered_text(text, y_offset, font, bold=False):
-        text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
-        x_pos = middle_section[0] + (middle_section[2] - middle_section[0] - text_width) // 2
-        draw.text((x_pos, y_offset), text, font=font, fill="black")
-
-    draw_centered_text(ticket.event.event_name.upper(), text_y, title_font, bold=True)
-    draw_centered_text(f"{ticket.event.event_date.strftime('%B %d, %Y')}", text_y + 70, text_font)
-    draw_centered_text(f"{ticket.event.event_date.strftime('%I:%M %p')}", text_y + 120, text_font)
-    draw_centered_text(f"{ticket.event.event_location}", text_y + 170, text_font)
-    draw_centered_text(f"Price: NLe{ticket.event.get_ticket_price():.2f}", text_y + 220, text_font)
-
-    # Generate secure QR code with encrypted ticket data
-    qr = generate_secure_ticket_qr(ticket)
-    ticket_image.paste(qr, (2 * width // 3 + 20, 20))
-
-    # Draw border and finalize image (same as before)
-    border_width = 5
-    draw.rectangle([(0, 0), (width, height)], outline="green", width=border_width)
-    draw.rectangle([(border_width, border_width), (width - border_width, height - border_width)], outline="white", width=border_width)
-    draw.rectangle([(2 * border_width, 2 * border_width), (width - 2 * border_width, height - 2 * border_width)], outline="blue", width=border_width)
-
-    # Save to BytesIO
-    img_io = BytesIO()
-    ticket_image.save(img_io, format="PNG")
-    img_io.seek(0)
-    return img_io
+from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
 
 def generate_ticket_image(ticket):
     """Generate a dynamic ticket image with secure QR code."""
@@ -226,50 +174,52 @@ def generate_ticket_image(ticket):
     ticket_image = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(ticket_image)
 
-    # Load fonts
+    # Load fonts with fallback
     try:
         title_font = ImageFont.truetype("arial.ttf", 50)
         text_font = ImageFont.truetype("arial.ttf", 30)
-    except:
+    except IOError:
         title_font = text_font = ImageFont.load_default()
 
     # Define sections
-    left_section = (0, 0, width // 3, height)   # Event Image
+    left_section = (0, 0, width // 3, height)  # Event Image
     middle_section = (width // 3, 0, 2 * width // 3, height)  # Event Details
     right_section = (2 * width // 3, 0, width, height)  # QR Code
 
-    # Padding around image to separate from the border
-    image_padding = 10
+    image_padding = 10  # Padding around images
 
-    # Load Event Image (if exists) with padding around it
+    # Load Event Image with padding
     if ticket.event.event_image:
         try:
-            event_img = Image.open(ticket.event.event_image.path).resize((width // 3 - 2 * image_padding, height - 2 * image_padding))
+            event_img = Image.open(ticket.event.event_image.path)
+            event_img = event_img.resize((width // 3 - 2 * image_padding, height - 2 * image_padding))
             ticket_image.paste(event_img, (image_padding, image_padding))
-        except:
-            pass  # Avoid crashes if the image file is missing
+        except Exception as e:
+            print(f"Error loading event image: {e}")
 
     # Draw middle section (event details)
-    draw.rectangle(middle_section, fill="white")
-    text_x = width // 3 + 20
     text_y = 50
 
-    def draw_centered_text(text, y_offset, font, bold=False):
+    def draw_centered_text(text, y_offset, font):
         text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
         x_pos = middle_section[0] + (middle_section[2] - middle_section[0] - text_width) // 2
         draw.text((x_pos, y_offset), text, font=font, fill="black")
 
-    draw_centered_text(ticket.event.event_name.upper(), text_y, title_font, bold=True)
-    draw_centered_text(f"{ticket.event.event_date.strftime('%B %d, %Y')}", text_y + 70, text_font)
-    draw_centered_text(f"{ticket.event.event_date.strftime('%I:%M %p')}", text_y + 120, text_font)
-    draw_centered_text(f"{ticket.event.event_location}", text_y + 170, text_font)
+    draw_centered_text(ticket.event.event_name.upper(), text_y, title_font)
+    draw_centered_text(ticket.event.event_date.strftime('%B %d, %Y'), text_y + 70, text_font)
+    draw_centered_text(ticket.event.event_date.strftime('%I:%M %p'), text_y + 120, text_font)
+    draw_centered_text(ticket.event.event_location, text_y + 170, text_font)
     draw_centered_text(f"Price: NLe{ticket.event.get_ticket_price():.2f}", text_y + 220, text_font)
 
-    # Generate secure QR code with encrypted ticket data
+    # Generate secure QR code
     qr = generate_secure_ticket_qr(ticket)
-    ticket_image.paste(qr, (2 * width // 3 + 20, 20))
 
-    # Draw border and finalize image (same as before)
+    # Center the QR code in the right section
+    qr_x = right_section[0] + (right_section[2] - right_section[0] - qr.size[0]) // 2
+    qr_y = (height - qr.size[1]) // 2
+    ticket_image.paste(qr, (qr_x, qr_y))
+
+    # Draw border for aesthetics
     border_width = 5
     draw.rectangle([(0, 0), (width, height)], outline="green", width=border_width)
     draw.rectangle([(border_width, border_width), (width - border_width, height - border_width)], outline="white", width=border_width)

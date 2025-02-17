@@ -148,7 +148,7 @@ class Ticket(models.Model):
         return signer.sign(data)
 
     def __str__(self):
-        return f"{self.ticket_name} - {self.event.name}"
+        return f"Ticket for {self.event.event_name}"  # Use event_name instead of name
 
     class Meta:
         ordering = ['-event__event_date']

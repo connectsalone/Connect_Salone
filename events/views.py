@@ -18,28 +18,16 @@ PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
 
 
 # ------------------- Cart Utility Functions -------------------
-
 def get_cart_count_for_session(request):
-    """Get cart count for session and authenticated users."""
-    cart_count = 0
+    """Retrieve cart count for an authenticated user."""
     if request.user.is_authenticated:
-        cart = Cart.objects.filter(user=request.user).first()
-        if cart:
-            cart_count = cart.cart_items.count()  # Use cart_items instead of tickets
-    return cart_count
-
+        return request.user.cart.cart_count if hasattr(request.user, 'cart') else 0
+    return 0  # For guests
 
 def update_cart_count_on_login(sender, request, user, **kwargs):
-    """Update cart count when a user logs in."""
-    if user.is_authenticated:
-        cart = Cart.objects.filter(user=user).first()
-        # Use cart.cart_items.count() to get the number of cart items
-        request.session['cart_count'] = cart.cart_items.count() if cart else 0
-    else:
-        request.session['cart_count'] = 0  # For guests
+    """Sync cart count to session when a user logs in."""
+    request.session['cart_count'] = user.cart.cart_count if hasattr(user, 'cart') else 0
 
-
-user_logged_in.connect(update_cart_count_on_login)
 
 
 # ------------------- Cart Views -------------------
