@@ -2,34 +2,237 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
+    <style>
+      /* General Styles */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f7fc;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      /* Container for the form */
+      .container {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+      }
+
+      .container:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      /* Heading */
+      h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      /* Form Group */
+      .form-group {
+        margin-bottom: 20px;
+        position: relative; /* Required for positioning the toggle button */
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .form-group input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+        outline: none;
+      }
+
+      /* Show Password Button */
+      .toggle-password {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #007bff;
+        font-size: 14px;
+        padding: 5px;
+        transition: color 0.3s ease;
+      }
+
+      .toggle-password:hover {
+        color: #0056b3;
+      }
+
+      /* Button */
+      button[type="submit"] {
+        width: 100%;
+        padding: 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+
+      button[type="submit"]:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+      }
+
+      button[type="submit"]:active {
+        transform: translateY(0);
+      }
+
+      /* Link */
+      p {
+        text-align: center;
+        margin-top: 20px;
+        color: #555;
+      }
+
+      p a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      p a:hover {
+        text-decoration: underline;
+      }
+
+      /* Error Messages */
+      .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+        color: #721c24;
+        background-color: #f8d7da;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #f5c6cb;
+      }
+
+      .errorlist li {
+        margin: 5px 0;
+      }
+    </style>
   </head>
   <body>
-    <h2>Register</h2>
-    <form method="POST">
-      {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    <div class="container">
+      <h2>Register</h2>
+
+      <!-- Display Form Errors -->
+      {% if form.errors %}
+      <ul class="errorlist">
+        {% for field, errors in form.errors.items %} {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %} {% endfor %}
+      </ul>
+      {% endif %}
+
+      <!-- Registration Form -->
+      <form method="POST" id="register-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          {{ form.username }}
+        </div>
+        <div class="form-group">
+          <label for="id_email">Email</label>
+          {{ form.email }}
+        </div>
+        <div class="form-group">
+          <label for="id_password1">Password</label>
+          {{ form.password1 }}
+          <button
+            type="button"
+            class="toggle-password"
+            data-target="id_password1"
+          >
+            Show
+          </button>
+        </div>
+        <div class="form-group">
+          <label for="id_password2">Confirm Password</label>
+          {{ form.password2 }}
+          <button
+            type="button"
+            class="toggle-password"
+            data-target="id_password2"
+          >
+            Show
+          </button>
+        </div>
+        <button type="submit">Register</button>
+      </form>
+
+      <!-- Login Link -->
+      <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    </div>
+
+    <script>
+      // Toggle Password Visibility
+      document.querySelectorAll(".toggle-password").forEach((button) => {
+        button.addEventListener("click", function () {
+          const targetId = this.getAttribute("data-target");
+          const passwordInput = document.getElementById(targetId);
+          const type =
+            passwordInput.getAttribute("type") === "password"
+              ? "text"
+              : "password";
+          passwordInput.setAttribute("type", type);
+
+          // Toggle button text
+          this.textContent = type === "password" ? "Show" : "Hide";
+        });
+      });
+
+      // Fetch for form submission
+      function getCSRFToken() {
+        return document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("csrftoken="))
+          ?.split("=")[1];
+      }
+
+      fetch("/accountsregister/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: new URLSearchParams(
+          new FormData(document.getElementById("register-form"))
+        ),
+      });
+    </script>
   </body>
 </html>
-
-<script>
-  function getCSRFToken() {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken="))
-      ?.split("=")[1];
-  }
-
-  fetch("/accountsregister/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "X-CSRFToken": getCSRFToken(),
-    },
-    body: new URLSearchParams(
-      new FormData(document.getElementById("register-form"))
-    ),
-  });
-</script>

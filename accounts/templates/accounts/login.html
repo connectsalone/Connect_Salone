@@ -5,84 +5,212 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
     <style>
+      /* General Styles */
       body {
         font-family: Arial, sans-serif;
         background-color: #f4f7fc;
         margin: 0;
         padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
       }
+
+      /* Header */
+      header {
+        width: 100%;
+        background-color: #032a54;
+        color: white;
+        padding: 20px 0;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      /* Container for the form */
       .container {
         width: 100%;
         max-width: 400px;
-        margin: 50px auto;
         background: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        margin-top: 20px;
+        margin-bottom: 20px;
       }
+
+      .container:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      /* Heading */
       h2 {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         color: #333;
+        font-size: 28px;
+        font-weight: 600;
       }
+
+      /* Form Group */
       .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
       }
-      .form-control {
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .form-group input {
         width: 100%;
-        padding: 10px;
+        padding: 12px;
         border: 1px solid #ddd;
-        border-radius: 5px;
+        border-radius: 8px;
         font-size: 16px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
       }
-      button {
+
+      .form-group input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+        outline: none;
+      }
+
+      /* Button */
+      button[type="submit"] {
         width: 100%;
-        padding: 10px;
+        padding: 12px;
         background-color: #007bff;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         font-size: 16px;
         cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
       }
-      button:hover {
+
+      button[type="submit"]:hover {
         background-color: #0056b3;
+        transform: translateY(-2px);
       }
+
+      button[type="submit"]:active {
+        transform: translateY(0);
+      }
+
+      /* Message Container */
       .message-container {
         margin-bottom: 20px;
-        padding: 10px;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .message-container.error {
         background-color: #f8d7da;
         color: #721c24;
-        border-radius: 5px;
+        border: 1px solid #f5c6cb;
       }
+
       .message-container.success {
         background-color: #d4edda;
         color: #155724;
+        border: 1px solid #c3e6cb;
       }
+
+      /* Social Login */
       .social-login {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 25px;
       }
+
+      .social-login h3 {
+        margin-bottom: 15px;
+        color: #555;
+        font-size: 18px;
+      }
+
       .social-login a {
         display: inline-block;
-        padding: 10px 20px;
+        padding: 12px 24px;
         background-color: #db4437;
         color: white;
         text-decoration: none;
-        border-radius: 5px;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
       }
+
       .social-login a:hover {
         background-color: #c1351d;
+        transform: translateY(-2px);
+      }
+
+      .social-login a:active {
+        transform: translateY(0);
+      }
+
+      /* Link */
+      p {
+        text-align: center;
+        margin-top: 20px;
+        color: #555;
+      }
+
+      p a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      p a:hover {
+        text-decoration: underline;
+      }
+
+      /* Footer */
+      footer {
+        width: 100%;
+        background-color: #032a54; /* Same color as header */
+        padding: 20px 0; /* Same height as header */
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: auto; /* Push footer to the bottom */
       }
     </style>
   </head>
   <body>
+    <!-- Header -->
+    <header>
+      <h1>Connect Salone Website</h1>
+    </header>
+
+    <!-- Login Container -->
     <div class="container">
       <h2>Login</h2>
+
+      <!-- Display Messages -->
+      {% if messages %} {% for message in messages %}
+      <div
+        class="message-container {% if message.tags %}{{ message.tags }}{% endif %}"
+      >
+        {{ message }}
+      </div>
+      {% endfor %} {% endif %}
+
+      <!-- Login Form -->
       <form method="POST">
         {% csrf_token %}
         <div class="form-group">{{ form.as_p }}</div>
-
         <button type="submit">Login</button>
       </form>
 
@@ -95,9 +223,13 @@
         >
       </div>
 
-      <p style="text-align: center">
+      <!-- Register Link -->
+      <p>
         Don't have an account? <a href="{% url 'register' %}">Register here</a>
       </p>
     </div>
+
+    <!-- Footer -->
+    <footer></footer>
   </body>
 </html>
