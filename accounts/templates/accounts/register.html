@@ -11,7 +11,25 @@
       <button type="submit">Register</button>
     </form>
     <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
-
- 
   </body>
 </html>
+
+<script>
+  function getCSRFToken() {
+    return document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+  }
+
+  fetch("/accountsregister/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCSRFToken(),
+    },
+    body: new URLSearchParams(
+      new FormData(document.getElementById("register-form"))
+    ),
+  });
+</script>

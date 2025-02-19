@@ -157,12 +157,16 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Email settings
-EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")  # REMOVE .encode("utf-8").decode("utf-8")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")  # REMOVE .encode("utf-8").decode("utf-8")
+
+
+
+
 
 
 
@@ -227,4 +231,8 @@ PAYPAL_MODE = config("PAYPAL_MODE", "sandbox")  # Use 'live' for production
 
 
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',  # React local development
+    'https://yourdomain.com'  # Production domain
+]
 

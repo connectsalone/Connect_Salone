@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/me/', UserInformationAPIView.as_view(), name='user_information'),
     path('api/send-confirmation-email/', send_confirmation_email, name='send_confirmation_email'),
     path('confirm-email/', confirm_email_view, name='confirm_email'),
+    
 ]

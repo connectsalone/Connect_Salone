@@ -9,6 +9,7 @@
     {% if is_email_confirmed == True %}
 
     <h1>Your email has been confirmed. You can now Login</h1>
+    <a href="{% url 'login' %}">Click Here to Login</a>
 
     {% else %}
 

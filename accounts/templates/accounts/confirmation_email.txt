@@ -1,2 +1,10 @@
-Please confirm your email by clicking the link below:
-http://127.0.0.1:8000/confirm-email/?token_id={{ token_id }}&user_id={{ user_id }}
+Hello {{ user_name }},
+
+Thank you for registering with Salone Connect. Please confirm your email by clicking the link below:
+
+Confirmation Link: http://127.0.0.1:8000/confirm-email/?token_id={{ token_id }}&user_id={{ user_id }}
+
+If you did not register, please ignore this email.
+
+Best regards,
+The Salone Connect Team

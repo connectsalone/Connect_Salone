@@ -1,20 +1,32 @@
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.template.loader import get_template
-
+from django.conf import settings
+from decouple import config
 
 def send_confirmation_email(email, token_id, user_id):
+    # Prepare data for the template
     data = {
         'token_id': str(token_id),
         'user_id': str(user_id),
     }
 
-    # Ensure that the path to the template is correct
+    # Render the template with the data
     message = get_template('accounts/confirmation_email.txt').render(data)
 
-    send_mail(
-        subject="Please confirm your email",
-        message=message,
-        from_email='admin@ourapp.com',
-        recipient_list=[email],  # Ensure the recipient list contains the user's email
-        fail_silently=False  # Set to False to raise exceptions if something goes wrong
+    # Create the email message
+    email_message = EmailMessage(
+        subject="Please confirm your email",  # Ensure subject is ASCII or properly encoded
+        body=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,  # Use a default from email from settings
+        to=[email],  # Ensure email is a valid ASCII or properly encoded string
     )
+
+    
+    
+    # Set content type and encoding
+    email_message.content_subtype = "plain"  # Ensures it's sent as plain text
+    email_message.encoding = "utf-8"  # Explicitly set UTF-8 encoding
+
+    # Send the email
+    email_message.send()
+
