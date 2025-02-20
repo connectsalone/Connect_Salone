@@ -4,17 +4,15 @@
   .card {
     border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     margin: 0 auto 20px auto;
     width: 80%;
     max-width: 600px;
   }
 
   .card-header {
-    background-color: #f8f9fa;
-    padding: 15px;
-    font-size: 18px;
-    font-weight: bold;
+    background-color: #0471b5;
+    padding: 10px;
     text-align: center;
   }
 
@@ -42,33 +40,34 @@
 
   .payment-deatil {
     font-size: 30px;
-    font-weight: bold;
-    margin-top: 30px;
-    color: #354667;
+    font-weight: 600;
+    margin-top: 15px;
+    color: white;
   }
 
   .event-name {
     font-weight: bold;
-    font-size: 20px;
+    font-size: 25px;
     color: #354667;
   }
 
   .event-subtotal {
     font-weight: bold;
-    font-size: 20px;
+    font-size: 25px;
     text-align: right;
-    color: #354667;
+    color: green;
   }
 
   .event-ticket-number {
     font-weight: bold;
-    font-size: 18px;
+    font-size: 25px;
     color: #354667;
   }
 
   .event-tickets {
     font-weight: bold;
     font-size: 25px;
+    color: #8f1204;
   }
 
   .payment-option {
@@ -137,9 +136,7 @@
                 <span class="event-ticket-number">Tickets :</span>
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
-              <li class="event-subtotal">
-                <strong>Subtotal:</strong> NLe{{ event_data.subtotal }}
-              </li>
+              <li class="event-subtotal">NLe{{ event_data.subtotal }}</li>
             </ul>
           </div>
           {% endfor %}
@@ -164,6 +161,12 @@
           <a href="{% url 'orange_payment' %}"
             ><img
               src="{% static 'assets/img/orange-money.png' %}"
+              alt="Orange Money Logo"
+              class="payment-img"
+          /></a>
+          <a href="{% url 'orange_payment' %}"
+            ><img
+              src="{% static 'assets/img/afrimoney1.png' %}"
               alt="Orange Money Logo"
               class="payment-img"
           /></a>

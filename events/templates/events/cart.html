@@ -6,9 +6,26 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     margin-bottom: 20px;
-    padding: 20px;
+    padding: 10px;
     position: relative;
     background-color: #f9f9f9;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Added shadow */
+    transition: box-shadow 0.3s ease-in-out; /* Smooth transition for shadow */
+  }
+
+  .main {
+    margin-top: 50px;
+    margin-bottom: 20px;
+  }
+
+  .main h1 {
+    font-size: 70px;
+    font-weight: 900;
+  }
+
+  .main h4 {
+    font-size: 30px;
+    font-weight: 600;
   }
 
   .event-details {
@@ -24,9 +41,28 @@
     text-align: center;
   }
 
+  .event-name {
+    font-size: 30px;
+    font-weight: 600;
+    color: #ab2d03;
+  }
+
+  .event-date,
+  .event-time,
+  .event-location {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #01024a;
+    font-weight: 600;
+  }
+
   .ticket-price {
     font-weight: bold;
     margin-bottom: 10px;
+    font-size: 20px;
+    color: #032a54;
+    font-weight: 800;
   }
 
   .ticket-quantity {
@@ -34,6 +70,9 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    font-size: 20px;
+    color: #032a54;
+    font-weight: 800;
   }
 
   .remove-event {
@@ -41,11 +80,19 @@
     top: 5px;
     right: 10px;
     cursor: pointer;
-    background: red;
+    background: black;
     color: white;
     border: none;
     padding: 5px 10px;
     border-radius: 50%;
+  }
+
+  .decrease-quantity,
+  .increase-quantity {
+    font-size: 25px;
+    color: white;
+    background-color: black;
+    font-weight: 600;
   }
 
   .remove-event:hover {
@@ -56,13 +103,17 @@
     position: absolute;
     bottom: 10px;
     right: 20px;
+    font-size: 25px;
+    color: green;
+    font-weight: 700;
   }
 
   .total-price-container {
     text-align: right;
     margin-top: 20px;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 30px;
+    font-weight: 800;
+    color: #032a54;
   }
 
   .cart-buttons {
@@ -72,6 +123,8 @@
 
   .cart-buttons a {
     margin: 5px;
+    font-size: 25px;
+    font-weight: 600;
   }
 </style>
 
@@ -93,7 +146,7 @@
               {{ event_group.event.event_date|date:"F j, Y" }}
             </p>
             <p class="event-time">
-              {{ event_group.event.event_date|date:"H:i" }}
+              {{ event_group.event.event_date|date:"h:i A" }}
             </p>
           </div>
 
@@ -132,9 +185,7 @@
 
           <div class="price-column">
             <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
-              Sub Total: NLe<span>
-                {{ event_group.total_price|floatformat:2 }}
-              </span>
+              NLe<span> {{ event_group.total_price|floatformat:2 }} </span>
             </p>
           </div>
         </div>

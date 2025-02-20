@@ -12,9 +12,25 @@
         margin: 0;
         padding: 0;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
         min-height: 100vh;
+      }
+
+      /* Header */
+      header {
+        width: 100%;
+        background-color: #032a54;
+        color: white;
+        padding: 20px 0;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
       }
 
       /* Container for the form */
@@ -26,6 +42,8 @@
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         transition: box-shadow 0.3s ease;
+        margin-top: 20px;
+        margin-bottom: 20px;
       }
 
       .container:hover {
@@ -143,9 +161,24 @@
       .errorlist li {
         margin: 5px 0;
       }
+
+      /* Footer */
+      footer {
+        width: 100%;
+        background-color: #032a54; /* Same color as header */
+        padding: 20px 0; /* Same height as header */
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: auto; /* Push footer to the bottom */
+      }
     </style>
   </head>
   <body>
+    <!-- Header -->
+    <header>
+      <h1>Connect Salone Website</h1>
+    </header>
+
+    <!-- Registration Container -->
     <div class="container">
       <h2>Register</h2>
 
@@ -197,6 +230,9 @@
       <!-- Login Link -->
       <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
     </div>
+
+    <!-- Footer -->
+    <footer></footer>
 
     <script>
       // Toggle Password Visibility
