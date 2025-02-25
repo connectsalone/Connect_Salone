@@ -15,6 +15,8 @@
       <ul>
         <li><a href="{% url 'home' %}" class="active">Home</a></li>
         <li><a href="{% url 'event-list' %}">EVENTS & TICKETS</a></li>
+        <li><a href="{% url 'calendar_view' %}" class="active">CALENDAR</a></li>
+
         <li class="dropdown">
           <a href="#">
             <span>Categories</span>
@@ -37,8 +39,10 @@
             <li><a href="{% url 'tickets' %}">Tickets</a></li>
           </ul>
         </li>
-        <li><a href="{% url 'about' %}">About</a></li>
-        <li><a href="{% url 'contact' %}">Contact</a></li>
+        <li>
+          <a href="{% url 'my_tickets' %}" class="active">TICKETS</a>
+        </li>
+        <li><a href="{% url 'contact' %}">Contact US</a></li>
       </ul>
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>

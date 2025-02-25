@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Views</title>
+</head>
+<body>
+    <h1>Event View Counts</h1>
+    <ul>
+        {% for event_view in event_views %}
+            <li>{{ event_view.event__event_name }} - Views: {{ event_view.total_views }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'event_list' %}">Back to Events</a>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Detail - {{ event.event_name }}</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        width: 80%;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .event-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .event-details {
+        margin-bottom: 20px;
+      }
+      .event-details p {
+        margin: 10px 0;
+      }
+      .btn {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{ event.event_name }}</h1>
+
+      <!-- Event Image -->
+      {% if event.event_image %}
+      <img
+        src="{{ event.event_image.url }}"
+        alt="{{ event.event_name }}"
+        class="event-image"
+      />
+      {% endif %}
+
+      <!-- Event Details -->
+      <div class="event-details">
+        <p><strong>Description:</strong> {{ event.event_description }}</p>
+        <p><strong>Type:</strong> {{ event.get_event_type_display }}</p>
+        <p>
+          <strong>Date:</strong> {{ event.event_date|date:"F j, Y, g:i a" }}
+        </p>
+        <p><strong>Location:</strong> {{ event.event_location }}</p>
+        <p><strong>Status:</strong> {{ event.get_event_status_display }}</p>
+        <p>
+          <strong>Ticket Price:</strong> &nbsp; &nbsp;
+          NLe{{event.get_ticket_price|floatformat:"0" }}
+        </p>
+        <p>
+          <strong>Early Bird Price:</strong> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &nbsp; &nbsp; &nbsp; NLe{{ event.early_bird_price|floatformat:"0" }}
+        </p>
+        <p>
+          <strong>Early Bird End:</strong>
+          {% if event.early_bird_end %} &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &nbsp; {{ event.early_bird_end|date:"F j, Y, g:i a" }} &nbsp; &nbsp;
+          {% else %} N/A {% endif %}
+        </p>
+        <p>
+          <strong>Video URL:</strong>
+          <a href="{{ event.video_url }}" target="_blank"
+            >{{ event.video_url }}</a
+          >
+        </p>
+        <p>
+          <strong>Sponsors:</strong>
+          {% for sponsor in event.sponsorers.all %} {{ sponsor.name }} &nbsp;
+          &nbsp; {% if not forloop.last %}, {% endif %} {% endfor %}
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div>
+        <a href="{% url 'edit-event' event.pk %}" class="btn btn-warning"
+          >Edit</a
+        >
+        <a href="{% url 'delete-event' event.pk %}" class="btn btn-danger"
+          >Delete</a
+        >
+        <a href="{% url 'events-lists' %}" class="btn btn-secondary"
+          >Back to Event List</a
+        >
+      </div>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

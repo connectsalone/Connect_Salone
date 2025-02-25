@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db.models import F
 import uuid
 from django.utils import timezone
+from decimal import Decimal
 
 # Setting up a logger for the application
 logger = logging.getLogger(__name__)
@@ -61,7 +62,8 @@ class Event(models.Model):
         """Returns the ticket price based on the early bird period."""
         if self.early_bird_end and timezone.now() < self.early_bird_end:
             return self.early_bird_price
-        return self.normal_price or 0  # Default to 0 if no price is set
+        return self.normal_price or Decimal('0.00')  # Default to 0 if no price is set
+
 
     def save(self, *args, **kwargs):
         """Override save to clean description before saving."""

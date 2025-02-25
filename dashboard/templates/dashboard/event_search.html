@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Events</title>
+</head>
+<body>
+    <h1>Search Events</h1>
+
+    <form method="get" action="{% url 'event_search' %}">
+        <input type="text" name="q" placeholder="Search events">
+        <input type="text" name="event_type" placeholder="Event Type">
+        <input type="date" name="start_date">
+        <input type="date" name="end_date">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+    <ul>
+        {% for event in events %}
+            <li>{{ event.event_name }} - Date: {{ event.event_date }}</li>
+        {% empty %}
+            <p>No events found matching your criteria.</p>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'event_list' %}">Back to Events</a>
+</body>
+</html>

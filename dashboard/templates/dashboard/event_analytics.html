@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Analytics</title>
+</head>
+<body>
+    <h1>Event Analytics</h1>
+
+    <h2>Overall Views</h2>
+    <ul>
+        {% for event in events %}
+            <li>{{ event.event_name }} - Total Views: {{ event.total_views }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Views by Date</h2>
+    <ul>
+        {% for view in events_by_date %}
+            <li>{{ view.event }} - Views on {{ view.viewed_at|date:"Y-m-d" }}: {{ view.daily_views }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'event_list' %}">Back to Events</a>
+</body>
+</html>

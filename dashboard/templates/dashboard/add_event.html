@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% if form.instance.pk %}Edit Event{% else %}Add Event{% endif %}
+    </title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .card {
+        border: 1px solid #ddd; /* Add border to the card */
+        border-radius: 8px; /* Rounded corners */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+        margin-bottom: 20px;
+      }
+      .card-header {
+        background-color: #007bff; /* Blue header background */
+        color: white; /* White text */
+        border-bottom: 1px solid #ddd; /* Add border at the bottom */
+        border-radius: 8px 8px 0 0; /* Rounded top corners */
+      }
+      .form-group {
+        margin-bottom: 1rem; /* Space between form fields */
+      }
+      .btn {
+        margin-right: 10px; /* Space between buttons */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="card">
+        <!-- Card Header -->
+        <div class="card-header">
+          <h3 class="mb-0">
+            {% if form.instance.pk %}Edit Event{% else %}Add Event{% endif %}
+          </h3>
+        </div>
+        <!-- Card Body -->
+        <div class="card-body">
+          <form
+            method="post"
+            enctype="multipart/form-data"
+            class="needs-validation"
+            novalidate
+          >
+            {% csrf_token %} {% for field in form %}
+            <div class="form-group">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }} {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %} {% for error in field.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+            <!-- Form Buttons -->
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary">Save</button>
+              <a href="{% url 'event-list' %}" class="btn btn-secondary"
+                >Cancel</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

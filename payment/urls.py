@@ -1,15 +1,15 @@
 from django.urls import path
-from . import views
+from payment.views import orange_payment, ticket_view, download_ticket, scan_ticket, tickets_view
 
 urlpatterns = [
     # Payment views
-    path('payment/orange/', views.orange_payment, name='orange_payment'),
+    path('payment/orange/', orange_payment, name='orange_payment'),
 
     # Ticket views
-    path('ticket/view/<int:ticket_id>/', views.ticket_view, name='ticket_view'),
-    path('ticket/download/<int:ticket_id>/', views.download_ticket, name='download_ticket'),
+    path('ticket/view/<int:ticket_id>/', ticket_view, name='ticket_view'),
+    path('ticket/download/<int:ticket_id>/', download_ticket, name='download_ticket'),
 
     # Add a view for displaying all the user's tickets
-    path('tickets/', views.tickets_view, name='tickets'),  # New tickets list page
-    path('scan_ticket/', views.scan_ticket, name='scan_ticket'),
+    path('tickets/', tickets_view, name='tickets'),  # New tickets list page
+    path('scan_ticket/', scan_ticket, name='scan_ticket'),
 ]

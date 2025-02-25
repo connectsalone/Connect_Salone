@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Delete Sponsor</title>
+  </head>
+  <body>
+    <h1>Delete Sponsor</h1>
+    <p>Are you sure you want to delete "{{ sponsor.name }}"?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Yes, delete</button>
+    </form>
+    <a href="{% url 'sponsor-list' %}">Cancel</a>
+  </body>
+</html>

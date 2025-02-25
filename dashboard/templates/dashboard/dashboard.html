@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        width: 80%;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 15px;
+        padding: 20px;
+      }
+      .card h2 {
+        margin-top: 0;
+      }
+      .card ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .card ul li {
+        margin: 10px 0;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+      .card ul li:last-child {
+        border-bottom: none;
+      }
+      .card a {
+        text-decoration: none;
+        color: white;
+        padding: 8px 12px;
+        background-color: #007bff;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-size: 14px;
+      }
+      .card a:hover {
+        background-color: #0056b3;
+      }
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .stats .stat {
+        background-color: #007bff;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+        width: 30%;
+      }
+      .stats .stat p {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .sponsor-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 15px;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Admin Dashboard</h1>
+
+      <!-- Event Overview -->
+      <div class="card">
+        <h2>Events</h2>
+        <div class="stats">
+          <div class="stat">
+            <a
+              href="{% url 'events-lists' %}"
+              style="text-decoration: none; color: white"
+            >
+              <p>Total Events: {{ events.count }}</p>
+            </a>
+          </div>
+          <div class="stat">
+            <p>Total Tickets Sold: {{ total_tickets_sold }}</p>
+          </div>
+          <div class="stat">
+            <p>Total Views: {{ total_event_views }}</p>
+          </div>
+        </div>
+        <ul>
+          <ul>
+            {% for event in events %}
+              <li>
+                {{ event.event_name }} - NLe{{ event.get_ticket_price|floatformat:"0" }}
+                <a href="{% url 'edit-event' event.id %}">Edit</a>
+                <a href="{% url 'delete-event' event.id %}">Delete</a>
+              </li>
+            {% endfor %}
+          </ul>
+        <a href="{% url 'add-event' %}">Add New Event</a>
+      </div>
+
+      
+      <!-- Sponsors Overview -->
+      <div class="card">
+        <h2>Sponsors</h2>
+        <ul>
+          {% for sponsor in sponsors %}
+          <li>
+            <!-- Sponsor Logo -->
+            {% if sponsor.logo %}
+              <img src="{{ sponsor.logo.url }}" alt="{{ sponsor.name }}" class="sponsor-logo">
+            {% else %}
+              <div class="sponsor-logo" style="background-color: #ccc; display: flex; align-items: center; justify-content: center;">
+                <span>No Logo</span>
+              </div>
+            {% endif %}
+            <!-- Sponsor Name -->
+            {{ sponsor.name }}
+            <!-- Action Buttons -->
+            <div style="margin-left: auto;">
+              <a href="{% url 'sponsor-edit' sponsor.id %}">Edit</a>
+              <a href="{% url 'sponsor-delete' sponsor.id %}">Delete</a>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'sponsor-add' %}">Add New Sponsor</a>
+      </div>
+
+
+      <!-- Event View Count -->
+      <div class="card">
+        <h2>Event Views</h2>
+        <ul>
+          {% for event_view in event_views %}
+          <li>
+            {{ event_view.event__event_name }} - {{ event_view.total_views }}
+            views
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Ticket Statistics -->
+      <div class="card">
+        <h2>Ticket Statistics</h2>
+        <ul>
+          {% for ticket in tickets %}
+          <li>
+            {{ ticket.event.event_name }} - {{ ticket.quantity }} tickets sold
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Payment Overview -->
+      <div class="card">
+        <h2>Payments</h2>
+        <div class="stats">
+          <div class="stat">
+            <p>Total Payments: {{ total_payments }}</p>
+          </div>
+          <div class="stat">
+            <p>Total Revenue: NLe{{ total_revenue|floatformat:"0" }}</p>
+          </div>
+        </div>
+        <h3>Recent Payments</h3>
+        <ul>
+          {% for payment in recent_payments %}
+          <li>
+            {{ payment.user.username }} - NLe{{ payment.amount|floatformat:"0"
+            }} ({{ payment.status }})
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

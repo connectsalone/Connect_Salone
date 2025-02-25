@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'accounts',
     'events',
     'payment',
+    'dashboard',
     'googleauthentication',
 
     # AllAuth for authentication
@@ -165,12 +166,6 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")  # REMOVE .encode("utf-8").decode("u
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")  # REMOVE .encode("utf-8").decode("utf-8")
 
 
-
-
-
-
-
-
 if not config("DEBUG", default=False, cast=bool):  # Ensure DEBUG is False in production
     SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
     SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
@@ -236,3 +231,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://yourdomain.com'  # Production domain
 ]
 
+
+# settings.py
+PAYMENT_SECRET_KEY = b'_R0Xpv30gHZE0HJm9XTjLQTQh-7_xihxFb6aP7_D3bI='  # Replace with your actual secret key
+WEBSITE_URL = "https://www.yourwebsite.com"
