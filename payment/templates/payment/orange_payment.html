@@ -1,222 +1,258 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 <style>
   .payment-page {
-    margin-top: 30px;
+    margin: 30px auto;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    padding: 10px;
+    padding: 20px;
     width: 100%;
-    max-width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   }
 
   .payment-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 30px;
-    gap: 10px;
+    gap: 40px;
     flex-wrap: wrap;
     width: 100%;
+    max-width: 1200px;
+    margin: 30px 0;
   }
 
   .pay-with-om {
-    font-size: 40px;
-    font-weight: 800;
-    margin-bottom: 15px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
     text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
   }
 
   .payemnt-method {
-    font-size: 18px;
+    font-size: 1.1rem;
     text-align: center;
+    color: #4a5568;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0 auto 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
   }
 
   .payment-image,
   .payment-form {
-    margin: 0;
-    width: 100%;
+    flex: 1;
+    min-width: 300px;
     max-width: 500px;
+    margin: 20px;
+    text-align: center;
   }
 
   .payment-image img {
-    width: 90%;
+    width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: 15px;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
+
+  .payment-image img:hover {
+    transform: translateY(-5px);
   }
 
   .payment-form {
-    width: 90%;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
   }
 
-  .payment-form h3 {
-    margin-bottom: 20px;
-    font-size: 22px;
-    text-align: center;
-  }
-
-  .payment-form .form-group {
-    margin-bottom: 15px;
-  }
-
-  .payment-form input {
-    width: 50%;
-    padding: 12px;
-    margin: 5px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 25px;
-    font-weight: 800;
-    text-align: center;
-  }
-
-  .payment-form button {
-    padding: 12px 20px;
-    font-size: 25px;
-    font-weight: 600;
-    background-color: #f08e32;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s ease;
-  }
-
-  .payment-form button:hover {
-    background-color: #bd5d04;
+  .payment-form:hover {
+    transform: translateY(-5px);
   }
 
   .payment-amount {
-    font-size: 22px;
-    text-align: center;
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 30px;
   }
 
   .payment-figure {
-    font-weight: 800;
-    font-size: 36px;
-    margin-left: 10px;
+    color: #e67e22;
+    font-weight: 700;
+    font-size: 2.2rem;
+  }
+
+  .form-group {
+    margin-bottom: 25px;
+  }
+
+  input[type="tel"] {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  input[type="tel"]:focus {
+    border-color: #e67e22;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3);
   }
 
   .what-happens {
-    margin-top: 40px;
     text-align: center;
-    font-size: 20px;
-  }
-
-  /* Mobile Optimization */
-  @media (max-width: 768px) {
-    .payment-page {
-      padding: 15px;
-    }
-
-    .payment-container {
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .pay-with-om {
-      font-size: 32px;
-    }
-
-    .payment-image,
-    .payment-form {
-      width: 90%;
-      max-width: 400px;
-    }
-
-    .payment-form input {
-      font-size: 16px;
-      padding: 10px;
-    }
-
-    .payment-form button {
-      font-size: 16px;
-      padding: 10px;
-    }
-
-    .payment-amount {
-      font-size: 20px;
-    }
-
-    .payment-figure {
-      font-size: 30px;
-    }
-
-    .what-happens {
-      font-size: 16px;
-    }
+    margin-top: 40px;
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
   }
 
   .message {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 18px;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    font-weight: 500;
   }
 
   .message.error {
-    color: red;
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
   }
 
   .message.success {
-    color: green;
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #86efac;
+  }
+
+  @media (max-width: 768px) {
+    .payment-page {
+      padding: 20px;
+      min-height: auto;
+    }
+
+    .pay-with-om {
+      font-size: 2rem;
+    }
+
+    .payment-form {
+      padding: 25px;
+    }
+
+    .payment-figure {
+      font-size: 1.8rem;
+    }
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
 
 <main class="main">
   <div class="container payment-page">
-    <h1 class="pay-with-om">Pay With Orange Money</h1>
+    <h1 class="pay-with-om">Secure Orange Money Payment</h1>
+
     <p class="payemnt-method">
-      Easily pay using your Orange Money account:<br />
-      1. Enter your Orange Money number <br />
-      2. Click "Make Payment" <br />
-      3. Dial <strong>#144#</strong> to complete the payment
+      <strong>Simple 3-Step Process:</strong><br /><br />
+      1️⃣ Enter your Orange Money number below<br />
+      2️⃣ Click "Initiate Payment" button<br />
+      3️⃣ Complete transaction via <strong>#144#</strong> USSD menu
     </p>
 
     <div class="payment-container">
-      <!-- Left column for image -->
       <div class="payment-image">
         <img
           src="{% static 'assets/img/orange-money.png' %}"
-          alt="Orange Money Logo"
+          alt="Mobile Money Payment"
           class="payment-img"
         />
       </div>
 
-      <!-- Right column for form inputs -->
       <div class="payment-form">
-        <p class="payment-amount">
-          <strong>Amount:</strong>
-          <span class="payment-figure"> NLe{{ total_price }} </span>
-        </p>
-
-        <h3>Enter your Orange Money number</h3>
+        <div class="payment-amount">
+          Total Amount:
+          <span class="payment-figure">NLe{{ total_price|floatformat:2 }}</span>
+        </div>
 
         <form
           method="POST"
           action="{% url 'orange_payment' %}"
           id="payment-form"
+          novalidate
         >
           {% csrf_token %}
           <div class="form-group">
+            <label for="phone-input" class="visually-hidden"
+              >Mobile Number</label
+            >
             <input
               type="tel"
+              id="phone-input"
               name="phone_number"
-              placeholder="07XXXXXXX"
-              pattern="07\d{7}"
+              placeholder="Enter Orange Money Number"
+              pattern="0[78]\d{7}"
               maxlength="9"
               required
-              autofocus
+              autocomplete="tel"
+              aria-describedby="phone-help"
             />
+            <small id="phone-help" class="form-text"> Format: 07xxxxxxx </small>
           </div>
           <input type="hidden" name="total_amount" value="{{ total_price }}" />
-          <button type="submit" id="pay-btn">Make Payment</button>
+
+          <button type="submit" id="pay-btn">
+            Initiate Payment
+            <span class="spinner" aria-hidden="true" hidden></span>
+          </button>
         </form>
 
         {% if messages %}
@@ -232,24 +268,45 @@
     </div>
 
     <div class="what-happens">
-      <h5>What happens next?</h5>
-      <p>
-        After clicking "Make Payment," dial <strong>#144#</strong> to complete
-        the payment process.
+      <h2 class="h5">What Happens Next?</h2>
+      <div class="process-steps">
+        <p>1. You'll receive a payment request on your phone</p>
+        <p>2. Open your Orange Money app or dial <strong>#144#</strong></p>
+        <p>3. Confirm the transaction to complete payment</p>
+      </div>
+      <p class="text-muted mt-3">
+        <small>Note: Transactions typically complete within 2-3 minutes</small>
       </p>
-      <p><strong>Note:</strong> Make sure any pop-up blocker is disabled.</p>
     </div>
   </div>
 </main>
 
 <script>
-  document
-    .getElementById("payment-form")
-    .addEventListener("submit", function () {
-      let button = document.getElementById("pay-btn");
+  (function () {
+    const form = document.getElementById("payment-form");
+    const button = document.getElementById("pay-btn");
+    const spinner = button.querySelector(".spinner");
+
+    form.addEventListener("submit", function (e) {
+      if (!form.checkValidity()) return;
+
       button.disabled = true;
-      button.innerText = "Processing...";
+      button.innerHTML = "Processing Payment ";
+      spinner.hidden = false;
     });
+
+    form.addEventListener(
+      "invalid",
+      function (e) {
+        setTimeout(() => {
+          button.disabled = false;
+          button.innerHTML = "Initiate Payment";
+          spinner.hidden = true;
+        }, 1000);
+      },
+      true
+    );
+  })();
 </script>
 
 {% endblock %}

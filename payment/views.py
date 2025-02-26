@@ -88,7 +88,7 @@ def orange_payment(request):
                     print("Tickets created.")
 
             messages.success(request, "Payment successful! Tickets have been issued.")
-            return redirect('payment_success')  # Redirect to a success page
+            return redirect('tickets')  # Redirect to a success page
 
         except DatabaseError as e:
             logger.error(f"Database error occurred while saving payment details: {e}")
