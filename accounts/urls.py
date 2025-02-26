@@ -2,12 +2,17 @@ from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 from accounts.views import (
     register_view, login_view, RegisterUser, LoginUser, 
-    send_confirmation_email, UserInformationAPIView, confirm_email_view, logout_view
+    send_confirmation_email, UserInformationAPIView, confirm_email_view, logout_view,
+    check_user_type
 )
 
 urlpatterns = [
     # Traditional views for HTML form-based authentication
+
     path('register/', register_view, name='register'),
+
+    path('check_user_type/', check_user_type, name='check_user_type'),
+
     path('login/', login_view, name='login'),  # Added login URL for clarity
     path('logout/', logout_view, name='logout'),  # Logout URL
 

@@ -8,19 +8,12 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 
-
-
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 #SECRET_KEY = env('SECRET_KEY')  # Move to .env
 #DEBUG = env.bool('DEBUG', default=True)
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
-
-
-
 
 
 ALLOWED_HOSTS = []
@@ -110,11 +103,9 @@ DATABASES = {
     }
 }
 
+
 # Authentication and AllAuth
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+AUTHENTICATION_BACKENDS = ["accounts.authentication.CustomAuthBackend", "django.contrib.auth.backends.ModelBackend", 'allauth.account.auth_backends.AuthenticationBackend',]
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -159,10 +150,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = config("EMAIL_BACKEND")
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")  # REMOVE .encode("utf-8").decode("utf-8")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")  # REMOVE .encode("utf-8").decode("utf-8")
 
@@ -234,5 +225,5 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # settings.py
-PAYMENT_SECRET_KEY = b'_R0Xpv30gHZE0HJm9XTjLQTQh-7_xihxFb6aP7_D3bI='  # Replace with your actual secret key
+PAYMENT_SECRET_KEY = config("PAYMENT_SECRET_KEY")  # Replace with your actual secret key
 WEBSITE_URL = "https://www.yourwebsite.com"

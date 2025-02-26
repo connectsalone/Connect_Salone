@@ -27,6 +27,7 @@ import uuid
 from accounts.utils import send_confirmation_email  # Import your email utility
 
 
+
 # Constants for rate limiting
 MAX_FAILED_ATTEMPTS = 5
 BLOCK_TIME = 15 * 60  # 15 minutes
@@ -66,6 +67,11 @@ def is_email_verified(user):
     """Check if a user's email is verified."""
     return EmailAddress.objects.filter(user=user, verified=True).exists()
 
+from django.http import JsonResponse
+
+def check_user_type(request):
+    return JsonResponse({'is_admin': request.user.is_authenticated and request.user.is_staff})
+
 
 def login_view(request):
     """Traditional login view."""
@@ -81,7 +87,8 @@ def login_view(request):
 
             user = authenticate(request, email=email, password=password)  # Ensure email is used
             if user:
-                if not user.is_email_confirmed:
+                # Allow admins to log in without email verification
+                if not user.is_email_confirmed and not user.is_staff:
                     messages.error(request, 'Your email is not verified. Please verify your email to log in.')
                     return redirect('login')
 
@@ -93,14 +100,24 @@ def login_view(request):
 
                 reset_failed_attempts(email)
 
-                return redirect('home')  # After successful login, redirect to home or desired page
+                # Redirect admins to the dashboard, others to home
+                if user.is_staff:
+                    return redirect('dashboard')  # Change to your actual dashboard URL name
+                else:
+                    return redirect('home')  # Regular users go to home page
+
             else:
                 increment_failed_attempts(email)
                 messages.error(request, 'Invalid credentials. Please try again.')
     else:
         form = LoginForm()
 
-    return render(request, 'accounts/login.html', {'form': form})
+    # Pass the user type (is_admin) to the template
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'is_admin': request.user.is_staff  # Pass the is_admin status to the template
+    })
+
 
 
 class RegisterUser(APIView):

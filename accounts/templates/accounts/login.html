@@ -1,3 +1,5 @@
+{% load socialaccount %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -41,7 +43,6 @@
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.3s ease;
         margin-top: 20px;
         margin-bottom: 20px;
       }
@@ -181,10 +182,10 @@
       /* Footer */
       footer {
         width: 100%;
-        background-color: #032a54; /* Same color as header */
-        padding: 20px 0; /* Same height as header */
+        background-color: #032a54;
+        padding: 20px 0;
         box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-        margin-top: auto; /* Push footer to the bottom */
+        margin-top: auto;
       }
     </style>
   </head>
@@ -210,17 +211,33 @@
       <!-- Login Form -->
       <form method="POST">
         {% csrf_token %}
-        <div class="form-group">{{ form.as_p }}</div>
+        <div class="form-group">
+          <label for="id_username">Email</label>
+          <input
+            type="email"
+            name="username"
+            id="id_username"
+            autocomplete="email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" required />
+        </div>
         <button type="submit">Login</button>
       </form>
 
       <!-- Google Login -->
       <div class="social-login">
-        {% load socialaccount %}
+        {% if not is_admin %}
         <h3>Or log in with Google</h3>
-        <a href="{% provider_login_url 'google' %}?next={% url 'home' %}"
+        <a
+          id="google-login"
+          href="{% provider_login_url 'google' %}?next={% url 'home' %}"
           >Login with Google</a
         >
+        {% endif %}
       </div>
 
       <!-- Register Link -->
@@ -231,5 +248,21 @@
 
     <!-- Footer -->
     <footer></footer>
+
+    <!-- Script for Admin Google Login Redirect -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const googleLoginButton = document.getElementById("google-login");
+        if (googleLoginButton) {
+          {% if is_admin %}
+            // Redirect admins directly to the dashboard
+            googleLoginButton.href = "{% url 'dashboard' %}";
+          {% else %}
+            // Redirect non-admins to the home page (if needed)
+            googleLoginButton.href = "{% url 'home' %}";
+          {% endif %}
+        }
+      });
+    </script>
   </body>
 </html>

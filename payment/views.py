@@ -1,30 +1,44 @@
 import logging
-import uuid  # ✅ For unique transaction IDs
-import qrcode
+import uuid
+import hashlib
+import json
+from datetime import datetime
 from io import BytesIO
+
+
+import qrcode
 from PIL import Image, ImageDraw, ImageFont
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction, IntegrityError, DatabaseError
-from django.http import HttpResponse
+from django.db import transaction, DatabaseError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from reportlab.pdfgen import canvas
-from events.models import Cart, Ticket
-from payment.models import  Payment
-from django.contrib.auth.decorators import login_required
 
-import logging
-import uuid
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db import transaction, IntegrityError, DatabaseError
-from django.shortcuts import render, redirect
-from django.utils import timezone
+
+from django.utils.crypto import get_random_string
+from django.core.files.base import ContentFile
+
+
 from events.models import Cart, Ticket
 from payment.models import Payment
 
 logger = logging.getLogger(__name__)
+
+from cryptography.fernet import Fernet
+from django.conf import settings  # Ensure settings is imported
+
+
+# Use the same secret key as in the ticket generation
+from django.conf import settings
+
+SECRET_KEY = settings.PAYMENT_SECRET_KEY.encode()  # Convert string to bytes
+cipher_suite = Fernet(SECRET_KEY)
+
+WEBSITE_URL = settings.WEBSITE_URL
 
 def generate_unique_transaction_id():
     """Generate a unique transaction ID."""
@@ -104,9 +118,6 @@ def orange_payment(request):
 
 
 
-import uuid
-import hashlib
-from datetime import datetime
 
 def generate_secure_qr_reference(ticket):
     """Generate a secure, unique reference for the QR code."""
@@ -119,19 +130,6 @@ def generate_secure_qr_reference(ticket):
     
     return secure_reference
 
-
-
-import qrcode
-from cryptography.fernet import Fernet
-from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
-
-# Secret key for encryption and decryption (should be kept secret and safe)
-SECRET_KEY = Fernet.generate_key()
-cipher_suite = Fernet(SECRET_KEY)
-
-# Website URL for added security
-WEBSITE_URL = "https://www.yourwebsite.com"
 
 def generate_secure_ticket_qr(ticket):
     """Generate a secure QR code with encrypted ticket data and website URL."""
@@ -154,8 +152,7 @@ def generate_secure_ticket_qr(ticket):
     qr = qrcode.make(encrypted_data).resize((300, 300))  # Resized to fit the ticket
     return qr
 
-from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
+
 
 def generate_ticket_image(ticket):
     """Generate a dynamic ticket image with secure QR code."""
@@ -235,8 +232,7 @@ def tickets_view(request):
     tickets = Ticket.objects.filter(user=request.user)
     return render(request, 'payment/ticket_list.html', {'tickets': tickets})
 
-from django.http import HttpResponse
-from io import BytesIO
+
 
 @login_required
 def download_ticket(request, ticket_id):
@@ -252,20 +248,6 @@ def download_ticket(request, ticket_id):
 
     return response
 
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from cryptography.fernet import Fernet
-from .models import Ticket
-from django.contrib.auth.decorators import login_required
-
-# Use the same secret key as in the ticket generation
-from django.conf import settings
-
-SECRET_KEY = settings.PAYMENT_SECRET_KEY
-WEBSITE_URL = settings.WEBSITE_URL  # Replace with your actual secret key
-cipher_suite = Fernet(SECRET_KEY)
-
-import json
 
 @login_required
 def scan_ticket(request):
@@ -296,15 +278,6 @@ def scan_ticket(request):
     return render(request, 'payment/scan_ticket.html')
 
 
-from django.db import transaction
-from django.utils.crypto import get_random_string
-import qrcode
-from io import BytesIO
-from django.core.files.base import ContentFile
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 @transaction.atomic()
 def create_payment_and_tickets(user, event, phone_number, amount, transaction_id):

@@ -4,6 +4,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 from events.models import Event, EventView, Sponsorer, Ticket
 from dashboard.forms import EventForm, SponsorerForm
+from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render
 from events.models import Event
@@ -140,6 +141,14 @@ from django.shortcuts import render
 from django.db.models import Count, Sum
 from events.models import Event, EventView, Sponsorer, Ticket
 from payment.models import Payment  # Import the Payment model
+
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(user):
+    return user.is_staff
+
+@login_required
+@user_passes_test(admin_required)
 
 def dashboard(request):
     # Event data
