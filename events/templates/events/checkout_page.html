@@ -58,6 +58,13 @@
     color: green;
   }
 
+  .event-service-fee {
+    font-weight: bold;
+    font-size: 25px;
+    text-align: right;
+    color: #8f1204;
+  }
+
   .event-ticket-number {
     font-weight: bold;
     font-size: 25px;
@@ -137,6 +144,9 @@
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
               <li class="event-subtotal">NLe{{ event_data.subtotal }}</li>
+              <li class="event-service-fee">
+                Service Fee: NLe{{ event_data.service_fee }}
+              </li>
             </ul>
           </div>
           {% endfor %}

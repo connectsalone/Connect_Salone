@@ -456,10 +456,12 @@ def scan_ticket(request, secret_token):
         return JsonResponse({"status": "error", "message": "Ticket not found."})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)})
-    
-from django.contrib.auth.signals import user_logged_in
+
+
+        
 from django.shortcuts import render
 from .models import Cart, CartItem, Ticket
+from payment.models import ServiceFee
 
 def checkout_page(request):
     events_in_cart = []
@@ -478,20 +480,29 @@ def checkout_page(request):
                 quantity = item.quantity
                 ticket_price = event.get_ticket_price()  # Get ticket price
                 subtotal = ticket_price * quantity
+                
+                # Fetch service fee for the event
+                service_fee = event.service_fee.fee_amount if event.service_fee else 0.00
+                
+                # Add the service fee to the total price
+                total_price += subtotal + (service_fee * quantity)
+
+                # Add event info to events_in_cart
                 events_in_cart.append({
                     'event': event,
                     'quantity': quantity,
                     'subtotal': subtotal,
+                    'service_fee': service_fee * quantity,
                 })
-                total_price += subtotal
 
     context = {
         'cart_count': cart_count,
         'events_in_cart': events_in_cart,
-        'total_price': total_price,
+        'total_price': total_price,  # Include total price with service fee
     }
 
     return render(request, 'events/checkout_page.html', context)
+
 
 def my_tickets(request):
     """Display user's purchased tickets."""

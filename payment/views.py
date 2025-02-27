@@ -75,6 +75,10 @@ def process_orange_money_payment(phone_number, amount):
     else:
         return False, None
 
+
+
+from payment.models import ServiceFee  # Import the ServiceFee model
+
 @login_required
 def orange_payment(request):
     """Handles Orange Money payment processing and creates tickets upon success."""
@@ -85,6 +89,14 @@ def orange_payment(request):
         return redirect('cart_view')  # Redirect to cart page if no active cart
 
     total_price = calculate_cart_total(cart)
+
+    # Add service fee to the total price (service fee * ticket quantity)
+    for item in cart.cart_items.all():
+        event = item.event
+        quantity = item.quantity
+        service_fee = ServiceFee.objects.filter(event=event).first()
+        if service_fee:
+            total_price += service_fee.fee_amount * quantity  # Multiply service fee by ticket quantity
 
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number', '').strip()
@@ -142,6 +154,8 @@ def orange_payment(request):
             messages.error(request, "Payment failed. Please try again.")
 
     return render(request, 'payment/orange_payment.html', {'total_price': total_price})
+
+
 
 @transaction.atomic()
 def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id, existing_payment):

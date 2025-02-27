@@ -9,6 +9,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class ServiceFee(models.Model):
+    """Model to store service fee for each event ticket."""
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="service_fee")
+    fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
+    
+    def __str__(self):
+        return f"Service Fee for {self.event.event_name}: {self.fee_amount}"
+
 class Payment(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -31,14 +39,33 @@ class Payment(models.Model):
 
     @property
     def calculated_amount(self):
-        """Calculate the total payment amount based on cart items."""
-        return sum(ticket.price for ticket in Ticket.objects.filter(cart=self.cart))
+        """Calculate the total payment amount based on cart items and add service fee from ServiceFee model."""
+        # Sum of ticket prices
+        ticket_prices = Ticket.objects.filter(cart=self.cart).values_list('price', flat=True)
+        total_ticket_price = sum(ticket_prices)
+
+        # Fetch service fee for the event
+        service_fee = self.event.service_fee.fee_amount if self.event and self.event.service_fee else 0.00
+
+        # Service fee for each ticket (multiply by the number of tickets)
+        total_service_fee = service_fee * len(ticket_prices)
+
+        # Total amount
+        total_amount = total_ticket_price + total_service_fee
+        return total_amount
 
     def save(self, *args, **kwargs):
-        """Set payment date when the payment is completed."""
-        if self.status == "completed" and not self.payment_date:
-            self.payment_date = timezone.now()
-        super().save(*args, **kwargs)
+        """Handle transaction and set payment date."""
+        try:
+            if self.status == "completed" and not self.payment_date:
+                self.payment_date = timezone.now()
+
+            super().save(*args, **kwargs)
+            logger.info(f"Payment {self.transaction_id} saved for {self.user.username}.")
+        except IntegrityError as e:
+            logger.error(f"Error saving payment {self.transaction_id}: {e}")
+            raise ValidationError("Payment could not be processed due to a database error.")
+
 
     def __str__(self):
         event_name = self.event.event_name if self.event else "No Event"
