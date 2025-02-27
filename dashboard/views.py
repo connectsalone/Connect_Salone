@@ -182,3 +182,5 @@ def dashboard(request):
         'total_revenue': total_revenue,
         'recent_payments': recent_payments,
     })
+
+

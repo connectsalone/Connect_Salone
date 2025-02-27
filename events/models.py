@@ -18,6 +18,7 @@ import uuid
 from django.utils import timezone
 from decimal import Decimal
 
+
 # Setting up a logger for the application
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,6 @@ class Sponsorer(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Event(models.Model):
     event_name = models.CharField(max_length=200)
@@ -43,15 +43,6 @@ class Event(models.Model):
         choices=[('upcoming', 'Upcoming'), ('sold_out', 'Sold Out'), ('canceled', 'Canceled'), ('normal', 'Normal')],
         default='upcoming'
     )
-
-
-    admin = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="admin_events"
-    )  # Associate each event with an admin
-
-
     event_image = models.ImageField(upload_to='event_images/', null=True, blank=True)
     early_bird_price = models.DecimalField(max_digits=10, decimal_places=2)
     normal_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -63,8 +54,6 @@ class Event(models.Model):
     event_updated_at = models.DateTimeField(auto_now=True)
     sponsorers = models.ManyToManyField(Sponsorer, related_name="events", blank=True)
     view_count = models.PositiveIntegerField(default=0)  # Corrected
-
-
 
     def increment_count(self):
         """Increase the view count for the event."""
@@ -96,9 +85,8 @@ class Event(models.Model):
         """Returns True if the event is neither upcoming nor trending."""
         return self.event_status == 'normal'
 
-        
     def __str__(self):
-        return f"{self.event_name} - {self.admin.username}"  # Show event with admin name
+        return f"{self.event_name} at {self.event_location} on {self.event_date.strftime('%Y-%m-%d')}"
 
     class Meta:
         verbose_name = 'Event'
@@ -115,11 +103,9 @@ import qrcode
 import uuid
 from io import BytesIO
 
-
 class Ticket(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='event_tickets')
-    admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="admin_tickets")
     ticket_name = models.CharField(max_length=200)
     ticket_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
     payment_reference = models.CharField(max_length=128, null=True, blank=True, default="", editable=False)
@@ -165,7 +151,7 @@ class Ticket(models.Model):
         return signer.sign(data)
 
     def __str__(self):
-        return f"Ticket for {self.event.event_name} by {self.admin.username}"
+        return f"Ticket for {self.event.event_name}"  # Use event_name instead of name
 
     class Meta:
         ordering = ['-event__event_date']
@@ -236,12 +222,9 @@ class CartItem(models.Model):
         if not self.cart.pk:
             self.cart.save()  # Ensure cart exists before saving item
         super().save(*args, **kwargs)
-
-        # Update cart fields in one atomic operation
-        with transaction.atomic():
-            self.cart.cart_count = sum(item.quantity for item in self.cart.cart_items.all())
-            self.cart.total_price = self.cart.get_total_price()
-            self.cart.save(update_fields=["cart_count", "total_price"])
+        self.cart.update_cart_count()  # Update count
+        self.cart.total_price = self.cart.get_total_price()  # Update total price
+        self.cart.save()
 
 
     def __str__(self):
@@ -266,11 +249,23 @@ class EventView(models.Model):
 
 
 # Signal to Update View Count
+_is_signal_running = False
+
 @receiver(post_save, sender=EventView)
 def update_event_view_count(sender, instance, created, **kwargs):
-    if created:
-        with transaction.atomic():
-            Event.objects.filter(id=instance.event.id).update(view_count=F('view_count') + 1)
+    global _is_signal_running
+    if _is_signal_running:
+        return
+    _is_signal_running = True
+    try:
+        if created:
+            with transaction.atomic():
+                event = instance.event
+                event.view_count = F('view_count') + 1
+                event.save(update_fields=['view_count'])
+    finally:
+        _is_signal_running = False
+
 
 
 

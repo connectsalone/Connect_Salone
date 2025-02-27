@@ -260,6 +260,7 @@
             if (response.new_quantity === 0) {
               $(`#event-${eventId}`).fadeOut(300, function () {
                 $(this).remove();
+                // Check if cart is empty and display message
                 if ($(".event-card").length === 0) {
                   $(".event-list").html("<p>Your cart is empty.</p>");
                 }
@@ -277,4 +278,5 @@
     }
   );
 </script>
+
 {% endblock %}

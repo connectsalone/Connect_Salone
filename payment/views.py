@@ -1,44 +1,46 @@
-import logging
-import uuid
-import hashlib
-import json
-from datetime import datetime
-from io import BytesIO
-
-
+import uuid  # ✅ For unique transaction IDs
 import qrcode
+import json
+import requests
+import hashlib
+import logging
+from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
-from cryptography.fernet import Fernet
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction, DatabaseError
-from django.http import HttpResponse, JsonResponse
+from django.db import transaction, IntegrityError, DatabaseError
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from reportlab.pdfgen import canvas
-
-
+from events.models import Cart, Ticket
+from payment.models import  Payment
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from cryptography.fernet import Fernet
+from django.conf import settings
+from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+from payment.models import Payment
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.crypto import get_random_string
 from django.core.files.base import ContentFile
 
-
-from events.models import Cart, Ticket
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from events.models import Cart, Ticket, Event
 from payment.models import Payment
+from datetime import datetime
+
+SECRET_KEY = settings.PAYMENT_SECRET_KEY
+WEBSITE_URL = settings.WEBSITE_URL  # Replace with your actual secret key
+cipher_suite = Fernet(SECRET_KEY)
+
+
 
 logger = logging.getLogger(__name__)
 
-from cryptography.fernet import Fernet
-from django.conf import settings  # Ensure settings is imported
-
-
-# Use the same secret key as in the ticket generation
-from django.conf import settings
-
-SECRET_KEY = settings.PAYMENT_SECRET_KEY.encode()  # Convert string to bytes
-cipher_suite = Fernet(SECRET_KEY)
-
-WEBSITE_URL = settings.WEBSITE_URL
 
 def generate_unique_transaction_id():
     """Generate a unique transaction ID."""
@@ -46,77 +48,148 @@ def generate_unique_transaction_id():
 
 def calculate_cart_total(cart):
     """Calculates the total amount of the cart."""
-    return sum(item.event.get_ticket_price() * item.quantity for item in cart.cart_items.all())
+    try:
+        return sum(item.event.get_ticket_price() * item.quantity for item in cart.cart_items.all())
+    except Exception as e:
+        logger.error(f"Error calculating cart total: {e}")
+        return 0  # Default to 0 if any error occurs
+
+
+
+def generate_payment_reference(user, transaction_id, unique_code):
+    # Get the current date and time for extra uniqueness
+    current_time = datetime.now().strftime('%Y%m%d%H%M%S')  # e.g. '20250227123045'
+    # Return a unique reference using time, transaction_id, user email, and unique_code
+    unique_reference = f"{current_time}-{transaction_id}-{user.email}-{unique_code}"
+    return unique_reference
+
+
+def process_orange_money_payment(phone_number, amount):
+    """Simulates Orange Money payment processing for testing purposes."""
+    # Simulate a successful payment response
+    success = True
+    transaction_id = generate_unique_transaction_id()  # Use the unique transaction ID generator
+    
+    if success:
+        return True, transaction_id
+    else:
+        return False, None
 
 @login_required
 def orange_payment(request):
-    """Handles the payment process."""
+    """Handles Orange Money payment processing and creates tickets upon success."""
+    cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+    
+    if not cart:
+        messages.error(request, "No active cart found.")
+        return redirect('cart_view')  # Redirect to cart page if no active cart
+
+    total_price = calculate_cart_total(cart)
+
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number', '').strip()
 
         # Validate phone number format
-        if not phone_number.isdigit() or len(phone_number) < 9:
+        if not phone_number.isdigit() or not phone_number.startswith('07') or len(phone_number) != 9:
             messages.error(request, "Invalid phone number format.")
             return redirect('orange_payment')
 
-        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-        if not cart:
-            messages.error(request, "No active cart found.")
-            return redirect('orange_payment')
+        # Generate the payment reference
+        unique_code = get_random_string(16)  # Example of random code
+        payment_reference = generate_payment_reference(request.user, '', unique_code)
 
-        total_amount = calculate_cart_total(cart)
-        transaction_id = generate_unique_transaction_id()
+        # Create payment record
+        payment = Payment.objects.create(
+            user=request.user,
+            amount=total_price,
+            phone_number=phone_number,
+            status='pending',
+            cart=cart,
+            payment_reference=payment_reference,
+        )
 
-        try:
-            # Create Payment (outside atomic)
-            payment = Payment.objects.create(
-                user=request.user,
-                cart=cart,
-                amount=total_amount,
-                phone_number=phone_number,
-                status='pending',
-                transaction_id=transaction_id,
-            )
-            print(f"Payment created: {payment}")
+        # Simulate payment success with a unique transaction ID
+        success, transaction_id = process_orange_money_payment(phone_number, total_price)
 
-            with transaction.atomic():  # Atomic block for critical updates
-                payment.status = 'completed'
-                payment.payment_date = timezone.now()
-                payment.save()
-                print("Payment updated successfully.")
+        if success:
+            try:
+                # Start the database transaction
+                with transaction.atomic():
+                    payment.status = 'completed'
+                    payment.transaction_id = transaction_id
+                    payment.save()
 
-                cart.is_paid = True
-                cart.save()
+                    # Call the function to create tickets (pass the existing payment)
+                    payment, tickets = create_payment_and_tickets(request.user, cart, phone_number, total_price, transaction_id, payment)
 
-                for item in cart.cart_items.all():
-                    for _ in range(item.quantity):
-                        Ticket.objects.create(
-                            user=request.user,
-                            event=item.event,
-                            ticket_name=f"{item.event.event_name} Ticket",
-                            ticket_price=item.event.get_ticket_price(),
-                            payment_reference=transaction_id,
-                            paid=True,
-                            quantity=1
-                        )
-                    print("Tickets created.")
+                    if payment and tickets:
+                        # Mark cart as paid and clear items
+                        cart.is_paid = True
+                        cart.save()
+                        cart.cart_items.all().delete()
 
-            messages.success(request, "Payment successful! Tickets have been issued.")
-            return redirect('tickets')  # Redirect to a success page
+                        messages.success(request, "Payment successful and tickets have been created!")
+                        return redirect('tickets')
+                    else:
+                        raise Exception("Error occurred while creating tickets")
 
-        except DatabaseError as e:
-            logger.error(f"Database error occurred while saving payment details: {e}")
-            messages.error(request, "A database error occurred. Please try again.")
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            messages.error(request, "An unexpected error occurred during payment processing.")
+            except Exception as e:
+                logger.error(f"Payment processing error: {e}")
+                messages.error(request, "Payment was successful, but an error occurred while creating tickets.")
+        else:
+            payment.status = 'failed'
+            payment.save()
+            messages.error(request, "Payment failed. Please try again.")
 
-    # Fetch cart details for display
-    cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-    total_price = calculate_cart_total(cart) if cart else 0
     return render(request, 'payment/orange_payment.html', {'total_price': total_price})
 
+@transaction.atomic()
+def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id, existing_payment):
+    try:
+        # Use the existing payment object passed as an argument
+        payment = existing_payment
+        payment_reference = generate_payment_reference(user, transaction_id, get_random_string(16))
 
+        # Check if the payment reference already exists
+        if Payment.objects.filter(payment_reference=payment_reference).exists():
+            logger.error(f"Duplicate payment reference: {payment_reference}")
+            return None, "Duplicate payment reference"
+
+        # Proceed with creating tickets based on the cart items
+        tickets = []
+        for item in cart.cart_items.all():
+            event = item.event
+            ticket_count = item.quantity  # Number of tickets for this event
+
+            for _ in range(ticket_count):
+                unique_code = get_random_string(16)
+                qr = qrcode.make(unique_code)
+                qr_io = BytesIO()
+                qr.save(qr_io, format='PNG')
+                qr_image = ContentFile(qr_io.getvalue(), f"qr_{unique_code}.png")
+
+                # Create ticket with payment reference
+                ticket = Ticket.objects.create(
+                    user=user,
+                    event=event,
+                    ticket_name=event.event_name,
+                    ticket_price=event.get_ticket_price(),
+                    payment_reference=payment_reference,
+                    qr_code=qr_image,
+                    quantity=1,  # Assuming 1 ticket per transaction here
+                    paid=True  # Mark the ticket as paid since the payment was successful
+                )
+                tickets.append(ticket)
+
+        # Return the payment and the tickets
+        return payment, tickets
+
+    except ObjectDoesNotExist:
+        logger.error("Cart not found for user: %s", user.username)
+        return None, "Cart not found"
+    except Exception as e:
+        logger.error("Error creating payment and tickets: %s", str(e))
+        return None, f"An error occurred: {str(e)}"
 
 
 def generate_secure_qr_reference(ticket):
@@ -129,6 +202,11 @@ def generate_secure_qr_reference(ticket):
     secure_reference = hash_object.hexdigest()
     
     return secure_reference
+
+
+
+
+
 
 
 def generate_secure_ticket_qr(ticket):
@@ -249,6 +327,7 @@ def download_ticket(request, ticket_id):
     return response
 
 
+
 @login_required
 def scan_ticket(request):
     if request.method == "POST":
@@ -278,51 +357,6 @@ def scan_ticket(request):
     return render(request, 'payment/scan_ticket.html')
 
 
-
-@transaction.atomic()
-def create_payment_and_tickets(user, event, phone_number, amount, transaction_id):
-    try:
-        cart = Cart.objects.select_for_update().get(user=user)
-        payment, created = Payment.objects.get_or_create(
-            transaction_id=transaction_id,
-            defaults={
-                'user': user,
-                'event': event,
-                'phone_number': phone_number,
-                'amount': amount,
-                'status': 'SUCCESS'
-            }
-        )
-        
-        if not created:
-            payment.status = 'SUCCESS'
-            payment.save()
-
-        tickets = []
-        for _ in range(cart.get_ticket_count(event)):
-            unique_code = get_random_string(16)
-            qr = qrcode.make(unique_code)
-            qr_io = BytesIO()
-            qr.save(qr_io, format='PNG')
-            qr_image = ContentFile(qr_io.getvalue(), f"qr_{unique_code}.png")
-            
-            ticket = Ticket.objects.create(
-                user=user,
-                event=event,
-                payment=payment,
-                qr_code=qr_image
-            )
-            tickets.append(ticket)
-        
-        cart.clear_event(event)
-        return payment, tickets
-
-    except Cart.DoesNotExist:
-        logger.error("Cart not found for user: %s", user.username)
-        return None, "Cart not found"
-    except Exception as e:
-        logger.error("Error creating payment and tickets: %s", str(e))
-        return None, str(e)
 
 
  

@@ -227,3 +227,8 @@ CSRF_TRUSTED_ORIGINS = [
 # settings.py
 PAYMENT_SECRET_KEY = config("PAYMENT_SECRET_KEY")  # Replace with your actual secret key
 WEBSITE_URL = "https://www.yourwebsite.com"
+
+
+
+
+ORANGE_MONEY_API_KEY = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc'

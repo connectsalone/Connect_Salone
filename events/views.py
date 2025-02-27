@@ -19,10 +19,15 @@ PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
 
 # ------------------- Cart Utility Functions -------------------
 def get_cart_count_for_session(request):
-    """Retrieve cart count for an authenticated user."""
     if request.user.is_authenticated:
-        return request.user.cart.cart_count if hasattr(request.user, 'cart') else 0
-    return 0  # For guests
+        active_cart = Cart.objects.filter(
+            user=request.user,
+            is_paid=False
+        ).first()
+        return active_cart.cart_count if active_cart else 0
+    return 0
+
+
 
 def update_cart_count_on_login(sender, request, user, **kwargs):
     """Sync cart count to session when a user logs in."""
@@ -69,7 +74,13 @@ def add_to_cart(request, event_id):
 @login_required
 def cart_page(request):
     """Render the user's cart."""
-    cart = Cart.objects.prefetch_related('cart_items__event').filter(user=request.user).first()
+    """Render the user's cart."""
+    # Only fetch active (unpaid) carts
+    cart = Cart.objects.prefetch_related('cart_items__event').filter(
+        user=request.user, 
+        is_paid=False
+    ).first()  # 👈 Added is_paid=False filter
+    
 
     if not cart or cart.cart_items.count() == 0:
         # Ensure that cart count is set to 0 and session is updated
@@ -112,7 +123,6 @@ def cart_page(request):
     })
 
 
-
  
 @login_required
 def update_cart(request, event_id):
@@ -130,7 +140,10 @@ def update_cart(request, event_id):
     event_price = event.get_ticket_price()  # Ensure the correct price is used
 
     # Get or create the cart
-    cart, _ = Cart.objects.get_or_create(user=user)
+    cart, _ = Cart.objects.get_or_create(
+        user=user, 
+        is_paid=False  # 👈 Critical fix here
+    )
 
     # Get or create cart item
     cart_item, created = CartItem.objects.get_or_create(cart=cart, event=event)
@@ -445,8 +458,8 @@ def scan_ticket(request, secret_token):
         return JsonResponse({"status": "error", "message": str(e)})
     
 from django.contrib.auth.signals import user_logged_in
-
- 
+from django.shortcuts import render
+from .models import Cart, CartItem, Ticket
 
 def checkout_page(request):
     events_in_cart = []
@@ -455,8 +468,7 @@ def checkout_page(request):
 
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-        
-        # Check if cart exists
+
         if cart:
             cart_count = cart.cart_count
             cart_items = CartItem.objects.filter(cart=cart)
@@ -470,7 +482,6 @@ def checkout_page(request):
                     'event': event,
                     'quantity': quantity,
                     'subtotal': subtotal,
-                    'total': subtotal,  # You may want to calculate this properly if applicable
                 })
                 total_price += subtotal
 
@@ -482,10 +493,7 @@ def checkout_page(request):
 
     return render(request, 'events/checkout_page.html', context)
 
-
-
 def my_tickets(request):
     """Display user's purchased tickets."""
     tickets = Ticket.objects.filter(event__event_tickets__event__cart__user=request.user, paid=True)
     return render(request, "events/my_tickets.html", {"tickets": tickets})
-
