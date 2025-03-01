@@ -11,3 +11,8 @@ def cart_count(request):
             request.session.create()
         count = request.session.get('cart_count', 0)
     return {'cart_count': count}
+
+
+
+
+

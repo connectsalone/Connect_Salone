@@ -47,22 +47,27 @@
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
 
-    <!-- Header Right Section -->
-    <div class="header-social-links d-flex align-items-center">
-      <!-- Cart Link -->
-      <a href="{% url 'cart_page' %}" class="cart position-relative">
-        <i class="bi bi-cart"></i>
+    
+            <!-- Header Right Section -->
+        <div class="header-social-links d-flex align-items-center">
+          <!-- Cart Link -->
+          <a href="{% url 'cart_page' %}" class="cart position-relative">
+            <i class="bi bi-cart"></i>
 
-        <span
-          id="cart-badge"
-          class="badge position-absolute {% if cart_count|default:0 == 0 %}d-none{% endif %}"
-        >
-          <!-- Cart Badge showing total ticket count -->
-          {{ cart_count }}
-        </span>
-      </a>
+            <!-- Cart Badge showing total ticket count -->
+            <span
+              id="cart-badge"
+              class="badge position-absolute {% if cart_count|default:0 == 0 %}d-none{% endif %}"
+            >
+              {{ cart_count }}
+            </span>
+          </a>
+        </div>
 
-      {% if user.is_authenticated %}
+    
+
+    
+    {% if user.is_authenticated %}
       <!-- Logout Link (Only if logged in) -->
       <a href="{% url 'logout' %}" class="logout">
         <i class="bi bi-box-arrow-right ml-4"></i> Logout

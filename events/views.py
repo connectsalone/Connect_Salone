@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 from django.contrib.auth.signals import user_logged_in
 import json
+from django.db.models import Sum
 
 from decouple import config
 
@@ -37,41 +38,75 @@ def update_cart_count_on_login(sender, request, user, **kwargs):
 
 # ------------------- Cart Views -------------------
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import Event, TicketPrice, Cart, CartItem
+import json
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 
-def add_to_cart(request, event_id):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            quantity = int(data.get('quantity', 1))  # Convert to integer, default 1
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum
+import json
 
-            event = get_object_or_404(Event, id=event_id)
-            cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
-
-            # Get or create the cart item
-            cart_item, created = CartItem.objects.get_or_create(cart=cart, event=event)
-
-            if not created:
-                cart_item.quantity += quantity  # Update existing quantity
-            else:
-                cart_item.quantity = quantity  # Set quantity for a new cart item
-
-            cart_item.save()
-
-            # ✅ Calculate total quantity across all cart items correctly
-            total_cart_quantity = CartItem.objects.filter(cart=cart).aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
-
-            return JsonResponse({'success': True, 'cart_count': total_cart_quantity})
-
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-
-
+@require_POST
 @login_required
+def add_to_cart(request, event_id):
+    try:
+        print("\n=== RAW REQUEST DATA ===")
+        print("Request body:", request.body.decode('utf-8'))  # Decode for clarity
+
+        data = json.loads(request.body)
+
+        ticket_price_id = data.get('ticket_price_id')
+        quantity = int(data.get('quantity', 1))
+
+        print(f"\n=== PARSED DATA ===")
+        print(f"Ticket Price ID: {ticket_price_id}, Type: {type(ticket_price_id)}")
+        print(f"Quantity: {quantity}, Type: {type(quantity)}")
+
+        if not ticket_price_id or quantity < 1:
+            return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+        event = get_object_or_404(Event, pk=event_id)
+        ticket_type = get_object_or_404(TicketPrice, pk=int(ticket_price_id), event=event)  # ✅ Get TicketPrice instance
+
+        cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
+
+        # Check if CartItem with the same cart and ticket_price already exists
+        cart_item = CartItem.objects.filter(cart=cart, ticket_price=ticket_type).first()
+
+        if cart_item:
+            # If CartItem already exists, update the quantity
+            cart_item.quantity += quantity
+            cart_item.save()
+        else:
+            # If CartItem doesn't exist, create a new one
+            CartItem.objects.create(cart=cart, event=event, ticket_price=ticket_type, quantity=quantity)
+
+        # ✅ Calculate total cart quantity correctly
+        total_cart_quantity = CartItem.objects.filter(cart=cart).aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
+
+        return JsonResponse({
+            'success': True,
+            'cart_count': total_cart_quantity,
+            'item_price': ticket_type.ticket_price,  # Use the price from TicketPrice instance
+            'item_name': ticket_type.get_name_display()
+        })
+
+    except (ValueError, json.JSONDecodeError) as e:
+        print(f"Error: {e}")
+        return JsonResponse({'success': False, 'error': 'Invalid data format'}, status=400)
+
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
 def cart_page(request):
     """Render the user's cart."""
     """Render the user's cart."""
@@ -211,9 +246,20 @@ def calculate_cart_total(cart):
     return sum(item.quantity * item.event.get_ticket_price() for item in cart.cart_items.all())
 
 
-def get_cart_count(cart):
-    """Helper function to count the total number of tickets in the cart."""
-    return sum(item.quantity for item in cart.cart_items.all())
+def get_cart_count(request):
+    """Calculate the total number of tickets in the cart for both authenticated and non-authenticated users."""
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+        if cart:
+            cart_count = cart.cart_count
+    else:
+        # Handle cart count for non-authenticated users via session-based cart
+        session_cart = request.session.get('cart', {})
+        cart_count = sum(item['quantity'] for item in session_cart.values())
+    
+    return cart_count
+
 
 
 
@@ -304,22 +350,40 @@ def get_events(request):
 # ------------------- Other Pages -------------------
 
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from events.models import  TicketPrice  # Assuming TicketType is the ticket model
+from events.models import Cart, Event
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Event, Cart, TicketPrice
+
 @login_required
 def home(request):
-    events = Event.objects.all()
+    events = Event.objects.all()  # Fetch all events
 
-    # Categorize events
+    # Categorize events using Python
     upcoming_events = [event for event in events if event.is_upcoming()]
     trending_events = [event for event in events if event.is_trending()]
     normal_events = [event for event in events if event.is_normal()]
 
     # Get cart count for authenticated users
-    
     cart_count = 0
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
         if cart:
             cart_count = cart.cart_count
+
+    # Fetch all ticket prices for each event
+    event_ticket_data = {}
+    for event in events:
+        ticket_prices = TicketPrice.objects.filter(event=event)
+        event_ticket_data[event.id] = [
+            {"ticket_type": ticket.name, "price": ticket.get_price()}
+            for ticket in ticket_prices
+        ]
 
     # Prepare context data
     context = {
@@ -327,10 +391,10 @@ def home(request):
         'trending_events': trending_events,
         'normal_events': normal_events,
         'cart_count': cart_count,
+        'event_ticket_data': event_ticket_data,  # Pass ticket price data
     }
 
     return render(request, 'events/home.html', context)
-
 
 def about(request):
 
@@ -358,9 +422,14 @@ def contact(request):
     context = {'cart_count': cart_count}
     return render(request, 'events/contact.html', context)
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Event, TicketPrice, EventView, Sponsorer
+from events.views import get_cart_count  # Assuming you have a utility function for cart count
+
 @login_required
 def single_event(request, event_id):
-    """Display event details, update view count, and show sponsors."""
+    """Display event details, update view count, show sponsors, and handle ticket selection."""
     event = get_object_or_404(Event, id=event_id)
 
     # Ensure a valid session key exists for anonymous users
@@ -382,19 +451,12 @@ def single_event(request, event_id):
             session_key=request.session.session_key if not request.user.is_authenticated else None
         )
 
-    # Fetch tickets for the event
+    # Fetch tickets and prices for the event
     tickets = event.event_tickets.all()
+    ticket_prices = TicketPrice.objects.filter(event=event)  # Fetch ticket prices for the event
 
     # Cart count calculation (optimized for session-based and user-based carts)
-    cart_count = 0
-    if request.user.is_authenticated:
-        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-        if cart:
-            cart_count = cart.cart_count
-    else:
-        # Handle cart count for non-authenticated users via session-based cart (if needed)
-        session_cart = request.session.get('cart', {})
-        cart_count = sum(item['quantity'] for item in session_cart.values())
+    cart_count = get_cart_count(request)
 
     # Fetch sponsors associated with the event
     sponsors = event.sponsorers.all()
@@ -402,6 +464,7 @@ def single_event(request, event_id):
     return render(request, 'events/single-event.html', {
         'event': event,
         'tickets': tickets,
+        'ticket_prices': ticket_prices,  # Pass ticket prices to the template
         'cart_count': cart_count,
         'sponsors': sponsors,  # Pass the sponsors to the template
     })

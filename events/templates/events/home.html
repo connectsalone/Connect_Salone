@@ -1,4 +1,5 @@
-{% extends "events/base.html" %} {% load static %} {% block content %}
+{% extends "events/base.html" %} {% load static %} {% load custom_filters %}
+{% block content %}
 
  <style>
   /* Event Slider Container */
@@ -293,65 +294,73 @@
   <!-- /Slider Section -->
 
   <!-- Trending Category Section -->
-<!-- Trending Category Section -->
-<section id="upcoming-category" class="upcoming-category section">
-  <!-- Section Title -->
-  <div class="container section-title" data-aos="fade-up">
-    <div class="section-title-container d-flex align-items-center justify-content-between">
-      <h1>Upcoming Highlighted Events</h1>
-      <p><a href="categories.html">See All Events</a></p>
+
+
+  <!-- Upcoming Category Section -->
+  <section id="upcoming-category" class="upcoming-category section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+      <div class="section-title-container d-flex align-items-center justify-content-between">
+        <h1>Upcoming Highlighted Events</h1>
+        <p><a href="categories.html">See All Events</a></p>
+      </div>
     </div>
-  </div>
-  <!-- End Section Title -->
-
-  <!-- Events Container -->
-  <div class="container" data-aos="fade-up" data-aos-delay="100">
-    <div class="row g-5" style="display: flex; justify-content: space-between; gap: 20px">
-      {% if upcoming_events %}
-        {% for event in upcoming_events %}
-        <div class="post-entry col-lg-4" style="flex: 0 0 30%">
-          <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
-            <a href="{% url 'single-event' event.id %}">
-              <img src="{{ event.event_image.url }}" alt="Event Image" class="img-fluid" />
-            </a>
-          </span>
-          <h2>
-            <a href="{% url 'single-event' event.id %}">{{ event.event_name }}</a>
-          </h2>
-          <div class="post-meta">
-            <span class="date">{{ event.event_date|date:"l, F d, Y" }}</span>
-            <span class="location">{{ event.event_location }}</span>
-            
-            <span>
-              {% if event.early_bird_price %}
-              <p class="early-bird">
-                Early Bird Price: {{ event.early_bird_price }} &nbsp; &nbsp;
-              </p>
-              <p class="normal-price">Normal Price: {{ event.normal_price }}</p>
-              {% else %}
-              <p class="normal-price">Ticket Price: {{ event.normal_price }}</p>
-              {% endif %}
+    <!-- End Section Title -->
+  
+    <!-- Events Container -->
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <div class="row g-5" style="display: flex; justify-content: space-between; gap: 20px">
+        {% if upcoming_events %}
+          {% for event in upcoming_events %}
+          <div class="post-entry col-lg-4" style="flex: 0 0 30%">
+            <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
+              <a href="{% url 'single-event' event.id %}">
+                <img src="{{ event.event_image.url }}" alt="Event Image" class="img-fluid" />
+              </a>
             </span>
-          </div>
-
-          <div class="d-flex align-items-center author">
-            <div class="name text-center">
-              <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
-                <a href="{% url 'single-event' event.id %}">
-                  <h5 class="btn">Buy Ticket</h5>
-                </a>
-              </span>
+            <h2>
+              <a href="{% url 'single-event' event.id %}">{{ event.event_name }}</a>
+            </h2>
+            <div class="post-meta">
+              <span class="date">{{ event.event_date|date:"l, F d, Y" }}</span>
+              <span class="location">{{ event.event_location }}</span>
+              
+              <!-- Ticket Prices Section -->
+              <div class="ticket-prices">
+                {% with event_ticket_data|get_item:event.id as tickets %}
+                  {% if tickets %}
+                    {% for ticket in tickets %}
+                      <p class="ticket-type">
+                        {{ ticket.ticket_type }}: <strong>{{ ticket.price }}</strong>
+                      </p>
+                    {% endfor %}
+                  {% else %}
+                    <p class="no-ticket">No tickets available</p>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+  
+            <div class="d-flex align-items-center author">
+              <div class="name text-center">
+                <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
+                  <a href="{% url 'single-event' event.id %}">
+                    <h5 class="btn">Buy Ticket</h5>
+                  </a>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <h4>No upcoming events</h4>
-      {% endif %}
+          {% endfor %}
+        {% else %}
+          <h4>No upcoming events</h4>
+        {% endif %}
+      </div>
     </div>
-  </div>
-</section>
-<!-- /Trending Category Section -->
+  </section>
+  <!-- /Upcoming Category Section -->
+  
+
 
 
   <!-- /Trending Category Section -->

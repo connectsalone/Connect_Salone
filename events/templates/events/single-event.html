@@ -1,369 +1,273 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 
+<input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}" />
+
 <style>
-  /* Flex layout for ticket price and purchase */
-  .ticket-info {
+  /* Main Layout */
+  .page-container {
     display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+    gap: 30px;
+    margin-top: 30px;
   }
 
-  .ticket-price,
-  .ticket-purchase {
-    flex: 1;
-    padding: 0 20px;
+  /* Main Content Wrapper */
+  .main-content-wrapper {
+    flex: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
   }
 
-  /* Increased event image size */
-  img.img-fluid {
-    width: 40%;
-    max-width: 40%;
-    height: auto;
-    object-fit: cover; /* Ensures the image covers its container without stretching */
-  }
-
-  /* Ticket Quantity Styling */
-  .ticket-quantity-container {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-  }
-
-  .quantity-label {
-    font-size: 22px;
-    margin-right: 10px;
-    font-weight: 500;
-  }
-
-  .quantity-input {
-    font-size: 18px; /* Increase font size for the input */
-    width: 60px;
-    padding: 5px;
-    text-align: center;
-  }
-
-  /* Full-width button */
-  .add-to-cart-button {
-    display: block;
+  /* Image Styling */
+  .image-column img {
     width: 100%;
-    padding: 10px;
+    max-height: 600px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Cart Column */
+  .cart-column {
+    position: sticky;
+    top: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Description Card */
+  .description-card {
+    grid-column: 1 / -1;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     margin-top: 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
   }
 
-  .add-to-cart-button:hover {
-    background-color: #0056b3;
+  /* Sidebar */
+  .advertising-sidebar {
+    flex: 1;
+    max-width: 350px;
+    position: sticky;
+    top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
   }
 
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .ticket-info {
+  @media (max-width: 992px) {
+    .page-container {
       flex-direction: column;
     }
-
-    .ticket-price,
-    .ticket-purchase {
-      padding: 0;
-      margin-bottom: 20px;
+    .main-content-wrapper {
+      grid-template-columns: 1fr;
     }
-
-    .sponsors-row {
-      gap: 10px;
+    .advertising-sidebar,
+    .cart-column {
+      max-width: 100%;
+      position: static;
     }
-
-    .sponsor-logo {
-      max-height: 70px;
-    }
-  }
-
-  /* Title Styling */
-
-  .title {
-    margin-bottom: 20pxpx;
-  }
-
-  .event-title {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    font-size: 45px;
-    color: black;
-  }
-
-  /* Date, Time, and Location Styling */
-  .date-time .meta-top ul li {
-    font-size: 25px;
-    margin-bottom: 10px;
-    font-weight: 700;
-  }
-
-  .date-time .meta-top ul li a {
-    color: black;
-    margin-left: 20px;
-  }
-
-  /* Event Description Styling */
-  .description p {
-    font-size: 25px;
-    line-height: 1.6;
-    margin-top: 20px;
-    text-align: justify;
-    color: black;
-  }
-
-  /* Sponsors Section */
-
-  .sponsor-title {
-    margin-bottom: 15px;
-    font-size: 25px;
-  }
-
-  .sponsors-row {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 20px;
-    justify-content: start;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-  }
-
-  .sponsor-item {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: center;
-  }
-
-  .sponsor-logo {
-    max-width: 100%;
-    height: auto;
-    max-height: 100px;
   }
 </style>
 
 <main class="main">
-  <!-- Page Title -->
-  <div class="page-title">
-    <div class="container d-lg-flex justify-content-between align-items-center">
-      <h1 class="mb-2 mb-lg-0">Single Event</h1>
-      <nav class="breadcrumbs">
-        <ol>
-          <li><a href="index.html">Home</a></li>
-          <li class="current">Single Event</li>
-        </ol>
-      </nav>
-    </div>
-  </div>
-
   <div class="container">
-    <div class="row">
-      <div class="col-lg-8">
-        <!-- Blog Details Section -->
-        <section id="blog-details" class="blog-details section">
-          <div class="container">
-            <article class="article">
-              <div class="post-img">
-                <img
-                  src="{{ event.event_image.url|default_if_none:'/static/default-event.png' }}"
-                  class="img-fluid"
-                  alt=""
-                />
-              </div>
-              <h2 class="event-title">{{ event.event_name }}</h2>
+    <div class="page-container">
+      <!-- Left Section -->
+      <div class="main-content-wrapper">
+        <div class="image-column">
+          <img
+            src="{{ event.event_image.url|default_if_none:'/static/default-event.png' }}"
+            alt="{{ event.event_name }}"
+          />
+        </div>
 
-              <div class="date-time">
-                <div class="meta-top">
-                  <ul>
-                    <li class="d-flex align-items-center">
-                      <time datetime="2020-01-01"> {{ event.event_date}}</time>
-                    </li>
-                    <li class="d-flex align-items-center">
-                      <a href="#"> {{event.event_location }}</a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+        <div class="cart-column">
+          <h1 class="event-title">{{ event.event_name }}</h1>
 
-              <!-- Event Description -->
-              <div class="content description">
-                <p>{{ event.event_description }}</p>
+          <ul class="event-details-list">
+            <li>
+              <i class="bi bi-calendar-event"></i> &nbsp; &nbsp;&nbsp; &nbsp;
+              &nbsp; {{ event.event_date|date:"F j, Y" }}
+            </li>
+            <li>
+              <i class="bi bi-clock"></i> {{ event.event_date|time:"g:i A" }}
+            </li>
+            <li><i class="bi bi-geo-alt"></i> {{ event.event_location }}</li>
+          </ul>
 
-                <!-- Ticket Price and Purchase -->
-                <div class="ticket-info">
-                  <div class="ticket-price">
-                    {% if event.early_bird_price %}
-                    <p class="early-bird">
-                      Early Bird: NLe{{ event.early_bird_price }} &nbsp;
-                      &nbsp;&nbsp; {{ event.early_bird_end_date }}
-                      <blockquote>
-                        <p>
-                          <h3>{{ event.view_count }} Views</h3>
-                        </p>
-                      </blockquote>
-                    </p>
+      
 
-                    {% else %}
-                    <p class="normal-price">
-                      Ticket Price: {{ event.normal_price }}
-                    </p>
-                    {% endif %}
-                  </div>
 
-                  <div class="ticket-purchase">
-                    {% if request.user.is_authenticated %}
-                    <div class="cart-card">
-                      <h3>Add Tickets to Cart</h3>
-                      <div class="ticket-quantity-container">
-                        <label for="ticket-quantity" class="quantity-label"
-                          >Quantity:</label
-                        >
-                        <input
-                          type="number"
-                          id="ticket-quantity"
-                          name="quantity"
-                          value="1"
-                          min="1"
-                          class="quantity-input"
-                        />
-                      </div>
 
-                      <button
-                        onclick="addToCart({{ event.id }})"
-                        class="add-to-cart-button"
-                      >
-                        Add to Cart
-                      </button>
-                      <p id="cart-message" style="color: green; display: none">
-                        Added to cart!
-                      </p>
-                    </div>
-                    {% else %}
-                    <p>
-                      <a href="{% url 'login' %}?next={{ request.path }}"
-                        >Log in</a
-                      >
-                      to purchase tickets.
-                    </p>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+          <div class="ticket-selection">
+            <select class="ticket-select" id="ticket-type">
+              {% for ticket in ticket_prices %}
+              <option
+                value="{{ ticket.id }}"
+                data-price="{{ ticket.get_price }}"
+                data-name="{{ ticket.name }}"
+              >
+                {{ ticket.name }} Ticket - NLe{{ ticket.get_price }}
+              </option>
+              {% endfor %}
+            </select>
 
-              <!-- Sponsors Section -->
-              <div class="sponsorers">
-                {% if sponsors %}
-                <div class="meta-bottom">
-                  <h3 class="sponsor-title">Sponsors</h3>
-                  <hr>
-                  <div class="sponsors-row">
-                    {% for sponsor in sponsors %}
-                    <div class="sponsor-item">
-                      <img
-                        src="{{ sponsor.logo.url }}"
-                        alt="{{ sponsor.name }}"
-                        class="sponsor-logo"
-                      />
-                    </div>
-                    {% endfor %}
-                  </div>
-                </div>
-                {% else %}
-                <p>No sponsors available for this event.</p>
-                {% endif %}
-              </div>
-            </article>
+            <div class="quantity-controls">
+              <button class="quantity-btn" onclick="adjustQuantity(-1)">
+                -
+              </button>
+              <input
+                type="number"
+                id="ticket-quantity"
+                class="quantity-input"
+                value="1"
+                min="1"
+                max="100"
+              />
+              <button class="quantity-btn" onclick="adjustQuantity(1)">
+                +
+              </button>
+            </div>
+
+            {% if request.user.is_authenticated %}
+
+            <button   onclick="addToCart({{ event.id }})"
+                        class="add-to-cart-button">
+              <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+            <p id="cart-message" style="color: green; display: none">
+              Added to cart!
+            </p>
+           
+            {% else %}
+            <div class="alert alert-info">
+              Please
+              <a
+                href="{% url 'login' %}?next={{ request.path }}"
+                class="alert-link"
+                >login</a
+              >
+              to purchase tickets.
+            </div>
+            {% endif %}
           </div>
-        </section>
+        </div>
+
+        <div class="description-card">
+          <h2>Event Description</h2>
+          <p>{{ event.event_description }}</p>
+        </div>
       </div>
 
       <!-- Sidebar -->
-      <div class="col-lg-4 sidebar">
-        <div class="widgets-container">
-          <!-- Blog Author Widget -->
-          <div class="blog-author-widget widget-item">
-            <div class="d-flex flex-column align-items-center">
-              <img
-                src="assets/img/blog/blog-author.jpg"
-                class="rounded-circle flex-shrink-0"
-                alt=""
-              />
-              <h4>Jane Smith</h4>
-              <p>
-                Itaque quidem optio quia voluptatibus dolorem dolor. Modi eum
-                sed possimus accusantium. Quas repellat voluptatem officia
-                numquam sint aspernatur voluptas.
-              </p>
-              <div class="social-links">
-                <a href="https://x.com/#"><i class="bi bi-twitter-x"></i></a>
-                <a href="https://facebook.com/#"
-                  ><i class="bi bi-facebook"></i
-                ></a>
-                <a href="https://instagram.com/#"
-                  ><i class="biu bi-instagram"></i
-                ></a>
-                <a href="https://linkedin.com/#"
-                  ><i class="biu bi-linkedin"></i
-                ></a>
-              </div>
-            </div>
-          </div>
-          <!-- Search Widget -->
-          <div class="search-widget widget-item">
-            <h3 class="widget-title">Search</h3>
-            <form action="">
-              <input type="text" />
-              <button type="submit" title="Search">
-                <i class="bi bi-search"></i>
-              </button>
-            </form>
-          </div>
-        </div>
+      <div class="advertising-sidebar">
+        <h4>Sponsored Content</h4>
+        <div class="ad-item">...</div>
+        <div class="ad-item">...</div>
+        <div class="ad-item">...</div>
       </div>
     </div>
   </div>
+</script>
 </main>
-
+ 
+ 
 <script>
   function getCSRFToken() {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken="))
-      ?.split("=")[1];
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
   }
-
+  
+  function adjustQuantity(change) {
+    const input = document.getElementById('ticket-quantity');
+    let quantity = parseInt(input.value) || 1;
+    quantity = Math.max(1, Math.min(100, quantity + change));
+    input.value = quantity;
+  }
+  
   function addToCart(eventId) {
-    let quantity = document.getElementById("ticket-quantity").value;
-
+    const ticketSelect = document.getElementById('ticket-type');
+    
+    if (!ticketSelect) {
+      alert('Please select a ticket type');
+      return;
+    }
+  
+    const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
+    if (!selectedOption) {
+      alert('Invalid ticket selection');
+      return;
+    }
+  
+    const ticketPriceId = selectedOption.value;
+    const ticketPrice = parseInt(selectedOption.getAttribute('data-price'), 10);
+    const quantityInput = document.getElementById('ticket-quantity');
+    const quantity = parseInt(quantityInput.value) || 1;
+  
+    const addButton = document.querySelector(".add-to-cart-button");
+  
+    console.log('Selected Ticket Price ID:', ticketPriceId);
+    console.log('Quantity:', quantity);
+    console.log('Event ID:', eventId);
+    console.log('Ticket Price:', ticketPrice);
+  
+    if (!ticketPriceId || isNaN(ticketPriceId)) {
+      alert('Please select a valid ticket type');
+      return;
+    }
+  
+    // Add loading state
+    addButton.innerHTML = `<i class="bi bi-arrow-repeat spin"></i> Adding...`;
+    addButton.disabled = true;
+  
     fetch(`/cart/add/${eventId}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCSRFToken(),
       },
-      body: JSON.stringify({quantity: quantity}),
+      body: JSON.stringify({
+        quantity: quantity,
+        ticket_price_id: ticketPriceId,  // Fixed JSON syntax
+        ticket_price: ticketPrice       // Fixed JSON syntax
+      }),
     })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          document.getElementById("cart-message").style.display = "block";
-          updateCartBadge(data.cart_count);
-        } else {
-          alert("Error adding to cart.");
-        }
-      })
-      .catch((error) => console.error("Error:", error));
+    .then(response => {
+      if (!response.ok) throw new Error('Network error');
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        document.getElementById("cart-message").style.display = "block";
+        updateCartBadge(data.cart_count);
+      } else {
+        alert(data.error || 'Error adding to cart');
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert('An error occurred. Please try again.');
+    })
+    .finally(() => {
+      addButton.innerHTML = `<i class="bi bi-cart-plus"></i> Add to Cart`;
+      addButton.disabled = false;
+      setTimeout(() => {
+        document.getElementById('cart-message').style.display = "none";
+      }, 3000);
+    });
   }
-
+  
   function updateCartBadge(count) {
     const cartBadge = document.getElementById("cart-badge");
     if (cartBadge) {
       cartBadge.textContent = count > 0 ? count : "";
-      cartBadge.classList.toggle("visible", count > 0);
+      cartBadge.classList.toggle("d-none", count <= 0);
     }
   }
+  
 </script>
 
 {% endblock %}
