@@ -231,4 +231,4 @@ WEBSITE_URL = "https://www.yourwebsite.com"
 
 
 
-ORANGE_MONEY_API_KEY = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc'
+ORANGE_MONEY_API_KEY = config("ORANGE_MONEY_API_KEY")
