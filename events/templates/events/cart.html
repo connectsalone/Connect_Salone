@@ -1,5 +1,39 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 <style>
+  /* Maintain your existing styles but add these additions */
+  .empty-cart-message {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.5rem;
+    color: #666;
+  }
+
+  .ticket-type {
+    margin: 10px 0;
+    padding: 8px;
+    background: #fff;
+    border-radius: 4px;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .ajax-loading {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+  }
+
+  /* Your existing styles remain the same */
   .event-card {
     display: flex;
     justify-content: space-between;
@@ -9,8 +43,8 @@
     padding: 10px;
     position: relative;
     background-color: #f9f9f9;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Added shadow */
-    transition: box-shadow 0.3s ease-in-out; /* Smooth transition for shadow */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
   }
 
   .main {
@@ -133,8 +167,7 @@
     <h1>Your Cart</h1>
     <h4>Please review your cart below</h4>
 
-    {% csrf_token %} {# Django automatically includes the CSRF token #} &nbsp;
-    {% if event_groups %}
+    {% csrf_token %} {% if event_groups %}
     <div class="event-list">
       {% for event_group in event_groups.values %}
       <div class="event-card" id="event-{{ event_group.event.id }}">
@@ -151,39 +184,54 @@
           </div>
 
           <div class="ticket-column">
-            <p class="ticket-price">
-              Ticket Price: NLe<span id="price-{{ event_group.event.id }}">
-                {{ event_group.event.get_ticket_price }}
-              </span>
-            </p>
+            <p class="ticket-price"></p>
+            <h3>Tickets</h3>
 
-            <div class="ticket-quantity">
+            <div class="ticket-list">
+              {% for ticket in event_group.tickets %}
+              <p class="ticket-price">
+                <!-- Ticket quantity updated dynamically -->
+                <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}"
+                  >{{ ticket.quantity }}</span
+                >
+                × {{ ticket.ticket_price.name }} @ NLe<span
+                  id="price-{{ event_group.event.id }}-{{ ticket.id }}"
+                >
+                  {{ ticket.ticket_price.get_price }}
+                </span>
+              </p>
+
+              <!-- Buttons to increase/decrease the quantity -->
               <button
                 class="btn btn-sm btn-outline-secondary decrease-quantity"
                 data-event-id="{{ event_group.event.id }}"
+                data-ticket-id="{{ ticket.id }}"
                 data-url="{% url 'update_cart' event_group.event.id %}"
               >
                 -
               </button>
 
+              <button
+                class="btn btn-sm btn-outline-secondary increase-quantity"
+                data-event-id="{{ event_group.event.id }}"
+                data-ticket-id="{{ ticket.id }}"
+                data-url="{% url 'update_cart' event_group.event.id %}"
+              >
+                +
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="price-column">
+            <div class="ticket-quantity">
               <span
                 id="quantity-{{ event_group.event.id }}"
                 class="quantity-display"
               >
                 {{ event_group.total_quantity }} Tickets
               </span>
-
-              <button
-                class="btn btn-sm btn-outline-secondary increase-quantity"
-                data-event-id="{{ event_group.event.id }}"
-                data-url="{% url 'update_cart' event_group.event.id %}"
-              >
-                +
-              </button>
             </div>
-          </div>
-
-          <div class="price-column">
             <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
               NLe<span> {{ event_group.total_price|floatformat:2 }} </span>
             </p>
@@ -193,7 +241,9 @@
       {% endfor %}
 
       <div class="total-price-container">
-        <p id="total-price">Total: NLe<span>{{ total_price }}</span></p>
+        <p id="total-price">
+          Total: NLe<span>{{ total_price|floatformat:2 }}</span>
+        </p>
       </div>
 
       <div class="cart-buttons">
@@ -223,18 +273,23 @@
 
       const button = $(this);
       const eventId = button.data("event-id");
+      const ticketId = button.data("ticket-id");
       const url = button.data("url");
       const action = button.hasClass("increase-quantity")
         ? "increase"
         : "decrease";
 
-      console.log(`🟡 Button clicked. Event ID: ${eventId}, Action: ${action}`);
+      console.log(
+        `🟡 Button clicked. Event ID: ${eventId}, Ticket ID: ${ticketId}, Action: ${action}`
+      );
 
       $.ajax({
         url: url,
         method: "POST",
         data: {
           action: action,
+          ticket_id: ticketId,
+          event_id: eventId,
           csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
         },
         success: function (response) {
@@ -244,9 +299,17 @@
             let newSubtotal = parseFloat(response.new_subtotal);
             let newTotalPrice = parseFloat(response.new_total_price);
 
-            // Update ticket quantity and subtotal
-            $(`#quantity-${eventId}`).text(response.new_quantity + " Tickets");
+            // Update the ticket quantity dynamically
+            $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
+
+        
+
             $(`#subtotal-${eventId} span`).text(newSubtotal.toFixed(2));
+
+            // Update the subtotal for this ticket dynamically
+            $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
+
+            // Update the total price across all tickets
             $("#total-price span").text(newTotalPrice.toFixed(2));
 
             // Update cart badge dynamically
@@ -256,13 +319,12 @@
               $("#cart-badge").fadeOut();
             }
 
-            // Remove event row if quantity reaches 0
+            // If quantity reaches 0, remove the ticket row
             if (response.new_quantity === 0) {
-              $(`#event-${eventId}`).fadeOut(300, function () {
+              $(`#ticket-${ticketId}`).fadeOut(300, function () {
                 $(this).remove();
-                // Check if cart is empty and display message
-                if ($(".event-card").length === 0) {
-                  $(".event-list").html("<p>Your cart is empty.</p>");
+                if ($(".ticket-list").length === 0) {
+                  $(".ticket-list").html("<p>Your cart is empty.</p>");
                 }
               });
             }

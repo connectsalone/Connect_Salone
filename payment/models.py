@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 from events.models import Cart, Ticket, Event
 import logging
+import uuid  # ✅ For unique transaction IDs
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class Payment(models.Model):
         validators=[RegexValidator(regex=r'^\d{9}$', message="Enter a valid 9-digit phone number.")]
     )  # Strictly 9 digits
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Kept as a field
-    transaction_id = models.CharField(max_length=100, unique=True, null=False, blank=False, default=1)
+    transaction_id = models.CharField(max_length=100, unique=True, null=False, blank=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     cart = models.OneToOneField(Cart, on_delete=models.CASCADE)
     payment_reference = models.CharField(max_length=128, unique=True)
@@ -57,6 +58,7 @@ class Payment(models.Model):
     def save(self, *args, **kwargs):
         """Handle transaction and set payment date."""
         try:
+            self.transaction_id = str(uuid.uuid4())  # Ensures uniqueness
             if self.status == "completed" and not self.payment_date:
                 self.payment_date = timezone.now()
 
@@ -73,11 +75,14 @@ class Payment(models.Model):
 
 
     def clean(self):
-        """Ensure transaction ID and payment date validation."""
         if not self.transaction_id:
             raise ValidationError("Transaction ID must be provided.")
+        
         if self.status == 'completed' and not self.payment_date:
-            raise ValidationError("Payment date is required for completed payments.")
-        if not self.event:
-            raise ValidationError("Event must be specified for the payment.")
+            self.payment_date = timezone.now()  # Auto-set if missing
+
+        # Only enforce event requirement if it’s necessary
+        if not self.event and not self.cart:
+            raise ValidationError("Either an event or a cart must be specified for the payment.")
+
 

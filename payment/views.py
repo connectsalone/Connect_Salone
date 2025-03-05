@@ -78,25 +78,53 @@ def process_orange_money_payment(phone_number, amount):
 
 
 from payment.models import ServiceFee  # Import the ServiceFee model
+from decimal import Decimal  # ✅ Add this
 
 @login_required
 def orange_payment(request):
     """Handles Orange Money payment processing and creates tickets upon success."""
-    cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-    
-    if not cart:
+    cart = Cart.objects.prefetch_related('items__event').filter(user=request.user, is_paid=False).first()
+
+    if not cart or cart.items.count() == 0:
         messages.error(request, "No active cart found.")
         return redirect('cart_view')  # Redirect to cart page if no active cart
 
-    total_price = calculate_cart_total(cart)
+    # ✅ Using the same event grouping logic as cart_page
+    event_groups = {}
 
-    # Add service fee to the total price (service fee * ticket quantity)
-    for item in cart.cart_items.all():
-        event = item.event
-        quantity = item.quantity
-        service_fee = ServiceFee.objects.filter(event=event).first()
-        if service_fee:
-            total_price += service_fee.fee_amount * quantity  # Multiply service fee by ticket quantity
+    for ticket in cart.items.all():
+        event = ticket.event
+        event_id = event.id
+
+        if event_id not in event_groups:
+            event_groups[event_id] = {
+                'event': event,
+                'tickets': [],
+                'total_price': Decimal(0),
+                'total_quantity': 0
+            }
+
+        ticket_price = ticket.ticket_price.get_price()  # ✅ Ensuring we get correct price
+        subtotal = ticket_price * ticket.quantity
+
+        event_groups[event_id]['tickets'].append(ticket)
+        event_groups[event_id]['total_price'] += subtotal
+        event_groups[event_id]['total_quantity'] += ticket.quantity
+
+    # ✅ Total ticket price
+    total_ticket_price = sum(group['total_price'] for group in event_groups.values())
+
+    # ✅ Total service fee
+    total_service_fee = sum(
+        (service_fee.fee_amount * item.quantity)
+        for item in cart.items.all()
+        if (service_fee := ServiceFee.objects.filter(event=item.event).first())
+    )
+
+    # ✅ Final total = ticket price + service fee
+    total_price = total_ticket_price + total_service_fee
+
+    print(f"Total Ticket Price: {total_ticket_price}, Total Service Fee: {total_service_fee}, Final Total: {total_price}")
 
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number', '').strip()
@@ -107,7 +135,7 @@ def orange_payment(request):
             return redirect('orange_payment')
 
         # Generate the payment reference
-        unique_code = get_random_string(16)  # Example of random code
+        unique_code = get_random_string(16)
         payment_reference = generate_payment_reference(request.user, '', unique_code)
 
         # Create payment record
@@ -125,7 +153,6 @@ def orange_payment(request):
 
         if success:
             try:
-                # Start the database transaction
                 with transaction.atomic():
                     payment.status = 'completed'
                     payment.transaction_id = transaction_id
@@ -135,10 +162,9 @@ def orange_payment(request):
                     payment, tickets = create_payment_and_tickets(request.user, cart, phone_number, total_price, transaction_id, payment)
 
                     if payment and tickets:
-                        # Mark cart as paid and clear items
                         cart.is_paid = True
                         cart.save()
-                        cart.cart_items.all().delete()
+                        cart.items.all().delete()  # ✅ Clear cart items after payment
 
                         messages.success(request, "Payment successful and tickets have been created!")
                         return redirect('tickets')
@@ -153,27 +179,38 @@ def orange_payment(request):
             payment.save()
             messages.error(request, "Payment failed. Please try again.")
 
-    return render(request, 'payment/orange_payment.html', {'total_price': total_price})
-
+    return render(request, 'payment/orange_payment.html', {
+        'total_price': total_price
+    })
 
 
 @transaction.atomic()
 def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id, existing_payment):
     try:
-        # Use the existing payment object passed as an argument
-        payment = existing_payment
+        payment = existing_payment  # Use the existing payment object
+
+        # Generate unique payment reference
         payment_reference = generate_payment_reference(user, transaction_id, get_random_string(16))
 
-        # Check if the payment reference already exists
+        # Log the payment reference
+        logger.info(f"Generated payment reference: {payment_reference}")
+
+        # Ensure the reference does not already exist
         if Payment.objects.filter(payment_reference=payment_reference).exists():
             logger.error(f"Duplicate payment reference: {payment_reference}")
             return None, "Duplicate payment reference"
 
-        # Proceed with creating tickets based on the cart items
+        # Debug Payment fields before saving
+        logger.info(f"Payment data before save: {payment.__dict__}")
+
+        payment.payment_reference = payment_reference
+        payment.save()  # Save the updated payment reference
+
+        # Process tickets
         tickets = []
-        for item in cart.cart_items.all():
+        for item in cart.items.all():  # ✅ Use `items` instead of `cart_items`
             event = item.event
-            ticket_count = item.quantity  # Number of tickets for this event
+            ticket_count = item.quantity
 
             for _ in range(ticket_count):
                 unique_code = get_random_string(16)
@@ -182,27 +219,26 @@ def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id,
                 qr.save(qr_io, format='PNG')
                 qr_image = ContentFile(qr_io.getvalue(), f"qr_{unique_code}.png")
 
-                # Create ticket with payment reference
+                # Create the ticket
                 ticket = Ticket.objects.create(
                     user=user,
                     event=event,
                     ticket_name=event.event_name,
-                    ticket_price=event.get_ticket_price(),
+                    ticket_price=ticket.ticket_price.get_price() ,
                     payment_reference=payment_reference,
                     qr_code=qr_image,
-                    quantity=1,  # Assuming 1 ticket per transaction here
-                    paid=True  # Mark the ticket as paid since the payment was successful
+                    quantity=1,
+                    paid=True
                 )
                 tickets.append(ticket)
 
-        # Return the payment and the tickets
         return payment, tickets
 
     except ObjectDoesNotExist:
-        logger.error("Cart not found for user: %s", user.username)
+        logger.error(f"Cart not found for user: {user.username}")
         return None, "Cart not found"
     except Exception as e:
-        logger.error("Error creating payment and tickets: %s", str(e))
+        logger.error(f"Error creating payment and tickets: {e}")
         return None, f"An error occurred: {str(e)}"
 
 

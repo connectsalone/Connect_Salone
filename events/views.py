@@ -5,11 +5,12 @@ from payment.models import Payment
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum
-from django.contrib.auth.signals import user_logged_in
 import json
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Cart, CartItem, Event
 
 from decouple import config
 
@@ -94,7 +95,7 @@ def add_to_cart(request, event_id):
         return JsonResponse({
             'success': True,
             'cart_count': total_cart_quantity,
-            'item_price': ticket_type.ticket_price,  # Use the price from TicketPrice instance
+            'item_price': ticket_type.get_price(),  # Use the price from TicketPrice instance
             'item_name': ticket_type.get_name_display()
         })
 
@@ -109,22 +110,22 @@ def add_to_cart(request, event_id):
 
 def cart_page(request):
     """Render the user's cart."""
-    """Render the user's cart."""
-    # Only fetch active (unpaid) carts
-    cart = Cart.objects.prefetch_related('cart_items__event').filter(
+    cart = Cart.objects.prefetch_related('items__event').filter(
         user=request.user, 
         is_paid=False
-    ).first()  # 👈 Added is_paid=False filter
-    
+    ).first()
 
-    if not cart or cart.cart_items.count() == 0:
-        # Ensure that cart count is set to 0 and session is updated
+    if not cart or cart.items.count() == 0:
         request.session['cart_count'] = 0
-        return render(request, 'events/cart.html', {'cart_items': [], 'total': 0, 'cart_count': 0})
+        return render(request, 'events/cart.html', {
+            'cart_items': [],
+            'total': 0,
+            'cart_count': 0
+        })
 
     event_groups = {}
 
-    for ticket in cart.cart_items.all():
+    for ticket in cart.items.all():  # ✅ Correctly using 'items' here
         event = ticket.event
         event_id = event.id
 
@@ -136,8 +137,7 @@ def cart_page(request):
                 'total_quantity': 0
             }
 
-        # ✅ Ensure correct ticket price (early bird or normal)
-        ticket_price = event.get_ticket_price()
+        ticket_price = ticket.ticket_price.get_price()  # Corrected 
         subtotal = ticket_price * ticket.quantity
 
         event_groups[event_id]['tickets'].append(ticket)
@@ -146,9 +146,9 @@ def cart_page(request):
 
     total_price = sum(group['total_price'] for group in event_groups.values())
 
-    cart_count = cart.cart_items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
+    # FIXED: Changed 'cart_items' to 'items' to match the related_name
+    cart_count = cart.items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
 
-    # Update session with correct cart count
     request.session['cart_count'] = cart_count
 
     return render(request, 'events/cart.html', {
@@ -158,7 +158,6 @@ def cart_page(request):
     })
 
 
- 
 @login_required
 def update_cart(request, event_id):
     if request.method != "POST":
@@ -166,24 +165,22 @@ def update_cart(request, event_id):
 
     user = request.user
     action = request.POST.get("action")
+    ticket_id = request.POST.get("ticket_id")
 
-    if not action:
-        return JsonResponse({"success": False, "error": "Action parameter is required."}, status=400)
+    if not action or not ticket_id:
+        return JsonResponse({"success": False, "error": "Action and ticket_id are required."}, status=400)
 
     # Get the event
     event = get_object_or_404(Event, id=event_id)
-    event_price = event.get_ticket_price()  # Ensure the correct price is used
+    cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)
 
-    # Get or create the cart
-    cart, _ = Cart.objects.get_or_create(
-        user=user, 
-        is_paid=False  # 👈 Critical fix here
-    )
+    # Get or create cart item for this event
+    cart_item = get_object_or_404(CartItem, cart=cart, event=event, id=ticket_id)
+    
+    # Get ticket price
+    ticket_price = cart_item.ticket_price.get_price()
 
-    # Get or create cart item
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, event=event)
-
-    # Handle increase or decrease action
+    # Handle action (increase/decrease)
     if action == "increase":
         cart_item.quantity += 1
         cart_item.save()
@@ -193,41 +190,27 @@ def update_cart(request, event_id):
             cart_item.save()
         else:
             cart_item.delete()
+            
 
-            # If the last item was removed, recalculate total price and set cart count to 0
-            if cart.cart_items.count() == 0:
-                cart.cart_count = 0
-                cart.total_price = 0
-                cart.save()
+    # Calculate new subtotal and total price
+    # Calculate new subtotal for the updated cart item
+    new_subtotal = cart_item.quantity * ticket_price
 
-            # Update cart count in session
-            update_cart_count_in_session(request, user)
+    # Calculate the total quantity for this event
+    event_total_quantity = sum(item.quantity for item in CartItem.objects.filter(cart=cart, event=event))
 
-            # Recalculate the total price
-            new_total_price = calculate_cart_total(cart)
-            return JsonResponse({
-                "success": True,
-                "new_quantity": 0,
-                "new_subtotal": 0,
-                "new_total_price": new_total_price,
-                "new_cart_count": 0
-            })
-
-    # Calculate new subtotal for this event
-    new_subtotal = cart_item.quantity * event_price
-
-    # Calculate total price and cart count
+    # Calculate the new total price for the cart
     new_total_price = calculate_cart_total(cart)
+
+    # Get the updated cart count
     new_cart_count = get_cart_count(cart)
 
-    # Update session cart count
-    update_cart_count_in_session(request, user)
-
-    # Return the updated data
+    # Return the updated values in the response
     return JsonResponse({
         "success": True,
         "new_quantity": cart_item.quantity,
         "new_subtotal": new_subtotal,
+        "new_event_quantity": event_total_quantity,  # Send the total quantity for this event
         "new_total_price": new_total_price,
         "new_cart_count": new_cart_count
     })
@@ -240,10 +223,16 @@ def update_cart_count_in_session(request, user):
     cart = Cart.objects.filter(user=user).first()
     request.session['cart_count'] = get_cart_count(cart) if cart else 0
 
-
 def calculate_cart_total(cart):
     """Helper function to calculate the total price of the cart."""
-    return sum(item.quantity * item.event.get_ticket_price() for item in cart.cart_items.all())
+    total = Decimal(0)
+
+    for item in cart.items.all():  # ✅ Use `cart.items.all()`
+        ticket_price = item.ticket_price.get_price()  # ✅ Get price from `TicketPrice` model
+        total += item.quantity * ticket_price  # ✅ Multiply by quantity
+
+    return total
+
 
 
 def get_cart_count(request):
@@ -261,6 +250,18 @@ def get_cart_count(request):
     return cart_count
 
 
+def calculate_cart_total(cart):
+    """Calculates the total price of all items in the cart."""
+    total = sum(item.quantity * item.ticket_price.get_price()  for item in cart.items.all())
+    cart.total_price = total
+    cart.save()
+    return total
+
+
+def update_cart_count_in_session(request, user):
+    """Updates the cart count in session."""
+    cart = Cart.objects.get(user=user, is_paid=False)
+    request.session['cart_count'] = cart.cart_count
 
 
 # ------------------- Event Views -------------------
@@ -520,51 +521,52 @@ def scan_ticket(request, secret_token):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)})
 
-
-        
 from django.shortcuts import render
-from .models import Cart, CartItem, Ticket
+from collections import defaultdict
+from decimal import Decimal
+from django.db.models import Sum
+from .models import Cart, CartItem
 from payment.models import ServiceFee
 
 def checkout_page(request):
-    events_in_cart = []
-    total_price = 0
+    events_in_cart = defaultdict(lambda: {"quantity": 0, "subtotal": Decimal(0), "service_fee": Decimal(0)})
+    total_price = Decimal(0)
     cart_count = 0
 
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
 
         if cart:
-            cart_count = cart.cart_count
+            cart_count = cart.items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
             cart_items = CartItem.objects.filter(cart=cart)
 
             for item in cart_items:
                 event = item.event
                 quantity = item.quantity
-                ticket_price = event.get_ticket_price()  # Get ticket price
+                ticket_price = item.ticket_price.get_price()
                 subtotal = ticket_price * quantity
-                
-                # Fetch service fee for the event
+
+                # ✅ Safe way to get service fee (avoiding RelatedObjectDoesNotExist)
                 service_fee = event.service_fee.fee_amount if event.service_fee else 0.00
                 
-                # Add the service fee to the total price
-                total_price += subtotal + (service_fee * quantity)
+                # ✅ Aggregate by event
+                events_in_cart[event]["event"] = event
+                events_in_cart[event]["quantity"] += quantity
+                events_in_cart[event]["subtotal"] += subtotal
+                events_in_cart[event]["service_fee"] += service_fee * quantity
 
-                # Add event info to events_in_cart
-                events_in_cart.append({
-                    'event': event,
-                    'quantity': quantity,
-                    'subtotal': subtotal,
-                    'service_fee': service_fee * quantity,
-                })
+                # ✅ Update total price
+                total_price += subtotal + (service_fee * quantity)
 
     context = {
         'cart_count': cart_count,
-        'events_in_cart': events_in_cart,
-        'total_price': total_price,  # Include total price with service fee
+        'events_in_cart': events_in_cart.values(),
+        'total_price': total_price,
     }
 
     return render(request, 'events/checkout_page.html', context)
+
+
 
 
 def my_tickets(request):
