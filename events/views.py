@@ -521,17 +521,17 @@ def scan_ticket(request, secret_token):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)})
 
-from django.shortcuts import render
-from collections import defaultdict
 from decimal import Decimal
+from collections import defaultdict
 from django.db.models import Sum
+from django.shortcuts import render
 from .models import Cart, CartItem
-from payment.models import ServiceFee
 
 def checkout_page(request):
     events_in_cart = defaultdict(lambda: {"quantity": 0, "subtotal": Decimal(0), "service_fee": Decimal(0)})
     total_price = Decimal(0)
     cart_count = 0
+    service_fee_total = Decimal(0)  # Initialize the service fee total
 
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
@@ -547,7 +547,7 @@ def checkout_page(request):
                 subtotal = ticket_price * quantity
 
                 # ✅ Safe way to get service fee (avoiding RelatedObjectDoesNotExist)
-                service_fee = event.service_fee.fee_amount if event.service_fee else 0.00
+                service_fee = event.service_fee.fee_amount if event.service_fee else Decimal(0.00)
                 
                 # ✅ Aggregate by event
                 events_in_cart[event]["event"] = event
@@ -558,10 +558,14 @@ def checkout_page(request):
                 # ✅ Update total price
                 total_price += subtotal + (service_fee * quantity)
 
+                # Add service fee to total service fee
+                service_fee_total += service_fee * quantity
+
     context = {
         'cart_count': cart_count,
         'events_in_cart': events_in_cart.values(),
         'total_price': total_price,
+        'service_fee_total': service_fee_total,  # Add the service fee total to context
     }
 
     return render(request, 'events/checkout_page.html', context)

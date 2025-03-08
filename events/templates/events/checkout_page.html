@@ -1,10 +1,11 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 
 <style>
+  /* General card styling */
   .card {
     border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 0 auto 20px auto;
     width: 80%;
     max-width: 600px;
@@ -29,7 +30,7 @@
     margin-bottom: 10px;
   }
 
-  /* Smaller cards inside the main card */
+  /* Styling for each event card */
   .event-card {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -38,75 +39,79 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  .payment-deatil {
-    font-size: 30px;
-    font-weight: 600;
-    margin-top: 15px;
-    color: white;
-  }
-
   .event-name {
     font-weight: bold;
-    font-size: 25px;
+    font-size: 20px;
     color: #354667;
-  }
-
-  .event-subtotal {
-    font-weight: bold;
-    font-size: 25px;
-    text-align: right;
-    color: green;
-  }
-
-  .event-service-fee {
-    font-weight: bold;
-    font-size: 25px;
-    text-align: right;
-    color: #8f1204;
   }
 
   .event-ticket-number {
     font-weight: bold;
-    font-size: 25px;
     color: #354667;
   }
 
   .event-tickets {
-    font-weight: bold;
-    font-size: 25px;
     color: #8f1204;
   }
 
-  .payment-option {
-    text-align: center;
+  .event-subtotal,
+  .event-service-fee {
+    font-weight: bold;
+    font-size: 18px;
+    text-align: right;
+  }
+
+  .event-subtotal {
+    color: green;
+  }
+
+  .event-service-fee {
+    color: #8f1204;
+  }
+
+  /* Total amounts - Service Fee and Grand Total */
+  .total-amounts {
     margin-top: 20px;
-  }
-
-  .payment-logo {
     display: flex;
-    justify-content: center;
-    gap: 50px;
+    flex-direction: column;
+    align-items: flex-end;
   }
 
-  .payment-logo img.payment-img {
-    width: 120px;
-    height: auto;
+  .total-amounts div {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+
+  .service-fee-total,
+  .grand-total {
+    color: green;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .service-fee-total {
+    color: #8f1204; /* Service Fee in red */
   }
 
   .grand-total {
-    font-size: 30px;
-    font-weight: bold;
-    text-align: right;
-    margin-top: 30px;
-    color: #354667;
+    color: green; /* Grand Total in green */
   }
 
-  .payment-option {
-    font-size: 30px;
-    font-weight: bold;
-    margin-top: 30px;
-    color: #354667;
-    margin-bottom: 20px;
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .card {
+      width: 90%;
+    }
+
+    .payment-logo {
+      gap: 20px;
+    }
+
+    .service-fee-total,
+    .grand-total {
+      font-size: 20px; /* Adjust font size on smaller screens */
+    }
   }
 </style>
 
@@ -143,24 +148,34 @@
                 <span class="event-ticket-number">Tickets :</span>
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
-              <li class="event-subtotal">NLe{{ event_data.subtotal }}</li>
-              <li class="event-service-fee">
-                Service Fee: NLe{{ event_data.service_fee }}
+              <li class="event-subtotal">NLe {{ event_data.subtotal }}</li>
+              <li>
+                <span class="event-service-fee">Service Fee:</span>
+                <span class="event-service-fee"
+                  >NLe {{ event_data.service_fee }}</span
+                >
               </li>
             </ul>
           </div>
           {% endfor %}
 
-          <!-- Grand Total -->
-          <div class="grand-total">
-            <strong>Grand Total:</strong> NLe{{ total_price }}
+          <!-- Service Fee Total and Grand Total -->
+          <div class="total-amounts">
+            <div>
+              <strong>Total Service Fee:</strong>
+              <span class="service-fee-total">NLe {{ service_fee_total }}</span>
+            </div>
+            <div>
+              <strong>Grand Total:</strong>
+              <span class="grand-total">NLe {{ total_price }}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Payment Options -->
       <div class="payment-option">
-        <h2 class="payment-option">Choose Payment Option</h2>
+        <h2>Choose Payment Option</h2>
         <div class="payment-logo">
           <a href="3"
             ><img
@@ -177,7 +192,7 @@
           <a href="{% url 'orange_payment' %}"
             ><img
               src="{% static 'assets/img/afrimoney1.png' %}"
-              alt="Orange Money Logo"
+              alt="AfriMoney Logo"
               class="payment-img"
           /></a>
         </div>
