@@ -189,36 +189,38 @@
 
             <div class="ticket-list">
               {% for ticket in event_group.tickets %}
-              <p class="ticket-price">
-                <!-- Ticket quantity updated dynamically -->
-                <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}"
-                  >{{ ticket.quantity }}</span
-                >
-                × {{ ticket.ticket_price.name }} @ NLe<span
-                  id="price-{{ event_group.event.id }}-{{ ticket.id }}"
-                >
-                  {{ ticket.ticket_price.get_price }}
-                </span>
-              </p>
+              <div id="ticket-{{ ticket.id }}" class="ticket-row">
+                <p class="ticket-price">
+                  <!-- Ticket quantity updated dynamically -->
+                  <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}"
+                    >{{ ticket.quantity }}</span
+                  >
+                  × {{ ticket.ticket_price.name }} @ NLe<span
+                    id="price-{{ event_group.event.id }}-{{ ticket.id }}"
+                  >
+                    {{ ticket.ticket_price.get_price }}
+                  </span>
 
-              <!-- Buttons to increase/decrease the quantity -->
-              <button
-                class="btn btn-sm btn-outline-secondary decrease-quantity"
-                data-event-id="{{ event_group.event.id }}"
-                data-ticket-id="{{ ticket.id }}"
-                data-url="{% url 'update_cart' event_group.event.id %}"
-              >
-                -
-              </button>
+                  <!-- Buttons to increase/decrease the quantity -->
+                  <button
+                    class="btn btn-sm btn-outline-secondary decrease-quantity"
+                    data-event-id="{{ event_group.event.id }}"
+                    data-ticket-id="{{ ticket.id }}"
+                    data-url="{% url 'update_cart' event_group.event.id %}"
+                  >
+                    -
+                  </button>
 
-              <button
-                class="btn btn-sm btn-outline-secondary increase-quantity"
-                data-event-id="{{ event_group.event.id }}"
-                data-ticket-id="{{ ticket.id }}"
-                data-url="{% url 'update_cart' event_group.event.id %}"
-              >
-                +
-              </button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary increase-quantity"
+                    data-event-id="{{ event_group.event.id }}"
+                    data-ticket-id="{{ ticket.id }}"
+                    data-url="{% url 'update_cart' event_group.event.id %}"
+                  >
+                    +
+                  </button>
+                </p>
+              </div>
               {% endfor %}
             </div>
           </div>
@@ -279,10 +281,6 @@
         ? "increase"
         : "decrease";
 
-      console.log(
-        `🟡 Button clicked. Event ID: ${eventId}, Ticket ID: ${ticketId}, Action: ${action}`
-      );
-
       $.ajax({
         url: url,
         method: "POST",
@@ -293,48 +291,47 @@
           csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
         },
         success: function (response) {
-          console.log("🟢 AJAX success response:", response);
-
           if (response.success) {
             let newSubtotal = parseFloat(response.new_subtotal);
             let newTotalPrice = parseFloat(response.new_total_price);
+            let newEventSubtotal = parseFloat(response.new_event_subtotal);
+            let newEventQuantity = response.new_event_quantity;
 
-            // Update the ticket quantity dynamically
+            // ✅ Update the ticket quantity dynamically
             $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
 
-        
-
-            $(`#subtotal-${eventId} span`).text(newSubtotal.toFixed(2));
-
-            // Update the subtotal for this ticket dynamically
+            // ✅ Update subtotal for this ticket
             $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
 
-            // Update the total price across all tickets
-            $("#total-price span").text(newTotalPrice.toFixed(2));
+            // ✅ Update total event subtotal
+            $(`#subtotal-${eventId} span`).text(newEventSubtotal.toFixed(2));
 
-            // Update cart badge dynamically
-            if (response.new_cart_count > 0) {
-              $("#cart-badge").text(response.new_cart_count).fadeIn();
-            } else {
-              $("#cart-badge").fadeOut();
-            }
+            // ✅ Update total event quantity
+            $(`#quantity-${eventId}`).text(`${newEventQuantity} Tickets`);
 
-            // If quantity reaches 0, remove the ticket row
-            if (response.new_quantity === 0) {
-              $(`#ticket-${ticketId}`).fadeOut(300, function () {
+            // ✅ Update the total price across all tickets
+            //  $("#total-price span").text(newTotalPrice.toFixed(2));
+
+            // ✅ Remove only the specific ticket row when quantity is 0
+            if (response.remove_ticket) {
+              let ticketRow = $(`#ticket-${ticketId}`);
+              ticketRow.fadeOut(300, function () {
                 $(this).remove();
-                if ($(".ticket-list").length === 0) {
+
+                // Check if any tickets remain in this event group
+                if ($(`#event-${eventId} .ticket-row`).length === 0) {
+                  $(`#event-${eventId}`).fadeOut(300, function () {
+                    $(this).remove();
+                  });
+                }
+
+                // Check if the cart is empty
+                if ($(".ticket-list .ticket-row").length === 0) {
                   $(".ticket-list").html("<p>Your cart is empty.</p>");
                 }
               });
             }
-          } else {
-            console.log("❌ Error in AJAX response:", response.error);
           }
-        },
-        error: function (xhr, status, error) {
-          console.error("🚨 AJAX error:", status, error);
-          alert("Failed to update the cart. Please try again.");
         },
       });
     }

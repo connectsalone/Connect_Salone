@@ -17,6 +17,7 @@ from django.db.models import F
 import uuid
 from django.utils import timezone
 from decimal import Decimal
+from datetime import timedelta
 
 
 # Setting up a logger for the application
@@ -113,6 +114,17 @@ class TicketPrice(models.Model):
     normal_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True )
     early_bird_start = models.DateTimeField(null=True, blank=True)
     early_bird_end = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Set early_bird_start to now if it's not set
+        if not self.early_bird_start:
+            self.early_bird_start = timezone.now()
+        
+        # Set early_bird_end to one week before the event date
+        if not self.early_bird_end and self.event.start_date:
+            self.early_bird_end = self.event.start_date - timedelta(weeks=1)
+
+        super().save(*args, **kwargs)
 
     def get_price(self):
         """Returns the correct ticket price based on the early bird period."""

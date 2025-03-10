@@ -3,9 +3,21 @@ from django.utils.translation import gettext_lazy as _
 from .models import ServiceFee, Payment
 from django.db.models import Sum
 
+from django.contrib import admin
+from .models import ServiceFee, Event, TicketPrice
+
 class ServiceFeeAdmin(admin.ModelAdmin):
-    list_display = ('event', 'fee_amount')
-    search_fields = ('event__event_name',)
+    list_display = ('event', 'ticket_price', 'fee_amount')
+    list_filter = ('event', 'ticket_price')
+    search_fields = ('event__event_name', 'ticket_price__name')
+    ordering = ('event',)
+
+    def save_model(self, request, obj, form, change):
+        """Custom save method to handle any specific logic when saving."""
+        super().save_model(request, obj, form, change)
+        
+admin.site.register(ServiceFee, ServiceFeeAdmin)
+
 
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ('transaction_id', 'user', 'event', 'amount', 'status', 'payment_date', 'payment_reference')
@@ -36,5 +48,4 @@ class PaymentAdmin(admin.ModelAdmin):
         # Annotate the total amount for each payment (including service fee)
         return queryset.annotate(total_amount=Sum('amount'))
 
-admin.site.register(ServiceFee, ServiceFeeAdmin)
 admin.site.register(Payment, PaymentAdmin)

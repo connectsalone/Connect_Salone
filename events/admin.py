@@ -1,6 +1,5 @@
 from django.contrib import admin
 from events.models import Event, Ticket, Cart, CartItem, EventView, TicketPrice, Sponsorer
-from payment.models import Payment
 
 
 # Inline admin for managing sponsorships within Event admin

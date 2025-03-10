@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
-
+import dj_database_url
 from decouple import config
 
 SECRET_KEY = config("SECRET_KEY")
@@ -16,7 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
+
 
 SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
 
@@ -72,6 +73,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS
 
+
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
     'allauth.account.middleware.AccountMiddleware',  # Add this line
 ]
 
@@ -95,13 +99,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'connect_salone.wsgi.application'
 
-# Database
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(default=config("DATABASE_URL"), conn_max_age=600),
+    #'NAME': config('DATABASE_NAME'),
+     #   'USER': config('DATABASE_USER'),
+      #  'PASSWORD': config('DATABASE_PASSWORD'),
+       # 'HOST': config('DATABASE_HOST'),
+        #'PORT': config('DATABASE_PORT'),
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': BASE_DIR / 'db.sqlite3',
 }
+
 
 
 # Authentication and AllAuth
@@ -132,7 +141,11 @@ MEDIA_URL = '/media/'
 if DEBUG:
     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    if not DEBUG:
+        STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+        STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+   
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -146,11 +159,15 @@ CACHES = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://yourdomain.com",
+    "https://www.yourwebsite.com",
+]
+
 
 
 # Email settings
-EMAIL_BACKEND = config("EMAIL_BACKEND")
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = config("EMAIL_HOST")
 EMAIL_PORT = config("EMAIL_PORT")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True)
@@ -216,6 +233,7 @@ PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
 PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
 PAYPAL_MODE = config("PAYPAL_MODE", "sandbox")  # Use 'live' for production
 
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://yourdomain.com").split(",")
 
 
 CSRF_TRUSTED_ORIGINS = [

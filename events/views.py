@@ -158,7 +158,6 @@ def cart_page(request):
     })
 
 
-@login_required
 def update_cart(request, event_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
@@ -170,15 +169,16 @@ def update_cart(request, event_id):
     if not action or not ticket_id:
         return JsonResponse({"success": False, "error": "Action and ticket_id are required."}, status=400)
 
-    # Get the event
+    # Get the event and cart
     event = get_object_or_404(Event, id=event_id)
     cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)
 
-    # Get or create cart item for this event
+    # Get the cart item
     cart_item = get_object_or_404(CartItem, cart=cart, event=event, id=ticket_id)
     
     # Get ticket price
     ticket_price = cart_item.ticket_price.get_price()
+    was_deleted = False  # Track if the item gets deleted
 
     # Handle action (increase/decrease)
     if action == "increase":
@@ -190,31 +190,44 @@ def update_cart(request, event_id):
             cart_item.save()
         else:
             cart_item.delete()
-            
+            was_deleted = True  # Mark the item as deleted
 
-    # Calculate new subtotal and total price
-    # Calculate new subtotal for the updated cart item
-    new_subtotal = cart_item.quantity * ticket_price
+    # Get the updated list of cart items for this event
+    event_cart_items = CartItem.objects.filter(cart=cart, event=event)
 
-    # Calculate the total quantity for this event
-    event_total_quantity = sum(item.quantity for item in CartItem.objects.filter(cart=cart, event=event))
+    # Calculate new subtotal for the entire event
+    new_event_subtotal = sum(item.quantity * item.ticket_price.get_price() for item in event_cart_items)
 
-    # Calculate the new total price for the cart
+    # Calculate the new total price for the entire cart
     new_total_price = calculate_cart_total(cart)
 
     # Get the updated cart count
     new_cart_count = get_cart_count(cart)
 
-    # Return the updated values in the response
+    # If the item was deleted, return quantity = 0 and instantly remove the row
+    if was_deleted:
+        return JsonResponse({
+            "success": True,
+            "new_quantity": 0,
+            "new_subtotal": 0,  # No subtotal for a deleted item
+            "new_event_quantity": sum(item.quantity for item in event_cart_items),  # Update event quantity
+            "new_event_subtotal": new_event_subtotal,  # Event subtotal
+            "new_total_price": new_total_price,
+            "new_cart_count": new_cart_count,
+            "remove_ticket": True  # Flag to remove the ticket row
+        })
+
+    # Otherwise, return updated values
     return JsonResponse({
         "success": True,
         "new_quantity": cart_item.quantity,
-        "new_subtotal": new_subtotal,
-        "new_event_quantity": event_total_quantity,  # Send the total quantity for this event
+        "new_subtotal": cart_item.quantity * ticket_price,  # Corrected subtotal calculation
+        "new_event_quantity": sum(item.quantity for item in event_cart_items),  # Update event quantity
+        "new_event_subtotal": new_event_subtotal,  # Updated event subtotal
         "new_total_price": new_total_price,
-        "new_cart_count": new_cart_count
+        "new_cart_count": new_cart_count,
+        "remove_ticket": False  # No need to remove ticket row
     })
-
 
 
 
@@ -308,43 +321,67 @@ def event_detail(request, event_id):
 
 
 # ------------------- Calendar Page -------------------
+from django.db.models import OuterRef, Subquery
+from django.utils import timezone
+from django.http import JsonResponse
+from events.models import Event, TicketPrice
 
 def calendar_view(request):
-    # Get cart count for authenticated users
-    cart_count = 0
-    if request.user.is_authenticated:
-        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-        if cart:
-            cart_count = cart.cart_count
+    # Subquery to fetch the first available normal price for each event
+    normal_price_subquery = TicketPrice.objects.filter(
+        event=OuterRef("id")
+    ).order_by("normal_price").values("normal_price")[:1]  # Get the first normal price available
 
-    # Retrieve event data and convert dates to ISO format
-    events = list(Event.objects.values("id", "event_date", "event_location", "event_name", "normal_price"))
-  
+    # Fetch events with the normal price attached
+    events = Event.objects.annotate(
+        normal_price=Subquery(normal_price_subquery)
+    ).values("id", "event_date", "event_location", "event_name", "normal_price", "event_description")
 
-    # Convert event_date to ISO string for FullCalendar
-    for event in events:
-        event["start"] = event["event_date"].isoformat()
-        event["end"] = (event["event_date"] + timezone.timedelta(hours=2)).isoformat()  # Assuming 2-hour duration
-        del event["event_date"]  # Remove the original datetime object to avoid confusion
+    # Format events for the calendar
+    event_list = [
+        {
+            "id": event["id"],
+            "title": event["event_name"],
+            "location": event["event_location"],
+            "price": event["normal_price"] if event["normal_price"] is not None else "N/A",
+            "description": event["event_description"] if event["event_description"] else "No description available",
+            "start": event["event_date"].isoformat(),
+            "end": (event["event_date"] + timezone.timedelta(hours=2)).isoformat(),  # Assuming 2-hour events
+        }
+        for event in events
+    ]
 
-    return render(request, "events/calendar.html", {"cart_count": cart_count, "events": events})
-
-
-
-
-def get_events(request):
-    events = Event.objects.filter(event_date__gte=timezone.now())  # Only future events
-    event_list = []
-    for event in events:
-        event_list.append({
-            "title": event.event_name,
-            "start": event.event_date.isoformat(),
-            "end": (event.event_date + timezone.timedelta(hours=2)).isoformat(),  # Assuming 2-hour events
-            "location": event.event_location,
-            "description": event.event_description,
-        })
     return JsonResponse(event_list, safe=False)
 
+
+
+from django.http import JsonResponse
+from django.utils import timezone
+from events.models import Event
+
+def get_events(request):
+    """Fetches and returns events in JSON format for FullCalendar."""
+    
+    # Fetch upcoming events only
+    events = Event.objects.filter(event_date__gte=timezone.now()).values(
+        "id", "event_name", "event_date", "event_location", "event_description", "event_image"
+    )
+
+    # Format data for FullCalendar
+    event_list = [
+        {
+            "id": event["id"],
+            "title": event["event_name"],
+            "start": event["event_date"].isoformat(),
+            "end": (event["event_date"] + timezone.timedelta(hours=2)).isoformat(),  # Assuming events last 2 hours
+            "location": event["event_location"] or "TBD",
+            "description": event["event_description"] or "No description available",
+            "image": event["event_image"] if event["event_image"] else None,  # Include image if available
+        }
+        for event in events
+    ]
+
+    return JsonResponse(event_list, safe=False)
 
 
 
@@ -526,6 +563,7 @@ from collections import defaultdict
 from django.db.models import Sum
 from django.shortcuts import render
 from .models import Cart, CartItem
+from payment.models import ServiceFee
 
 def checkout_page(request):
     events_in_cart = defaultdict(lambda: {"quantity": 0, "subtotal": Decimal(0), "service_fee": Decimal(0)})
@@ -547,19 +585,20 @@ def checkout_page(request):
                 subtotal = ticket_price * quantity
 
                 # ✅ Safe way to get service fee (avoiding RelatedObjectDoesNotExist)
-                service_fee = event.service_fee.fee_amount if event.service_fee else Decimal(0.00)
-                
+                service_fee = ServiceFee.objects.filter(event=event, ticket_price=item.ticket_price).first()
+                service_fee_amount = service_fee.fee_amount if service_fee else Decimal(0.00)
+
                 # ✅ Aggregate by event
                 events_in_cart[event]["event"] = event
                 events_in_cart[event]["quantity"] += quantity
                 events_in_cart[event]["subtotal"] += subtotal
-                events_in_cart[event]["service_fee"] += service_fee * quantity
+                events_in_cart[event]["service_fee"] += service_fee_amount * quantity
 
                 # ✅ Update total price
-                total_price += subtotal + (service_fee * quantity)
+                total_price += subtotal + (service_fee_amount * quantity)
 
                 # Add service fee to total service fee
-                service_fee_total += service_fee * quantity
+                service_fee_total += service_fee_amount * quantity
 
     context = {
         'cart_count': cart_count,

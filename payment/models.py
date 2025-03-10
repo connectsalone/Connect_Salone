@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.core.validators import RegexValidator
-from events.models import Cart, Ticket, Event
+from events.models import Cart, Ticket, Event, TicketPrice
 import logging
 import uuid  # ✅ For unique transaction IDs
 
@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 
 class ServiceFee(models.Model):
     """Model to store service fee for each event ticket."""
-    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="service_fee")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="service_fees")
+    ticket_price = models.ForeignKey(TicketPrice, on_delete=models.CASCADE)
     fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
     
     def __str__(self):
-        return f"Service Fee for {self.event.event_name}: {self.fee_amount}"
+        return f"Service Fee for {self.event.event_name} - {self.ticket_price.name}: {self.fee_amount}"
 
 class Payment(models.Model):
     STATUS_CHOICES = [
