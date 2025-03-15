@@ -16,7 +16,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
+#ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
+ALLOWED_HOSTS = ['web-production-8396.up.railway.app,', 'https://web-production-8396.up.railway.app']
+
+CSRF_TRUSTED_ORIGINS = ['web-production-8396.up.railway.app,', 'https://web-production-8396.up.railway.app']
 
 
 SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
