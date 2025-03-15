@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'payment',
     'dashboard',
     'googleauthentication',
+    'whitenoise.runserver_nostatic',
 
     # AllAuth for authentication
     'allauth',
@@ -71,7 +72,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
     'corsheaders.middleware.CorsMiddleware',  # CORS
+    'whitenoise.middleware.WhiteNoiseMiddleware,'
 
 
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -143,12 +146,14 @@ if DEBUG:
 else:
     if not DEBUG:
         STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-        STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+       
 
    
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# White noise static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Caching (Choose One: Memcached or File-Based)
 CACHES = {
@@ -236,10 +241,8 @@ PAYPAL_MODE = config("PAYPAL_MODE", "sandbox")  # Use 'live' for production
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://yourdomain.com").split(",")
 
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',  # React local development
-    'https://yourdomain.com'  # Production domain
-]
+CSRF_TRUSTED_ORIGINS = []
+
 
 
 # settings.py
