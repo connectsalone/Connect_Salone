@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+  
 
     'paypal.standard.ipn',
 ]
@@ -168,8 +169,7 @@ CACHES = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "https://yourdomain.com",
-    "https://www.yourwebsite.com",
+    "https://salone-connect.com",
 ]
 
 
