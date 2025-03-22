@@ -1,5 +1,4 @@
-web: gunicorn connect_salone.wsgi --log-file -
-#or works good with external database
-web: python manage.py migrate && gunicorn connect_salone.wsgi
+web: gunicorn events.wsgi --log-file 
+web: python manage.py migrate && gunicorn events.wsgi
 
 
