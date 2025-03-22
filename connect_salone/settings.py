@@ -78,7 +78,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'corsheaders.middleware.CorsMiddleware',  # CORS
-    'whitenoise.middleware.WhiteNoiseMiddleware,'
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Make sure this is correct
 
 
     "whitenoise.middleware.WhiteNoiseMiddleware",
