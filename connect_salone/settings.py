@@ -17,9 +17,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 #ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
-ALLOWED_HOSTS = ['https://conect-salone.com', 'connect-salone.com']
+ALLOWED_HOSTS =['web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
 
-CSRF_TRUSTED_ORIGINS = ['https://connect-salone.com', 'connect-salone.com']
+CSRF_TRUSTED_ORIGINS = ['web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
 
 
 SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
