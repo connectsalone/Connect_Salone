@@ -16,11 +16,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
-#ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
-ALLOWED_HOSTS =['web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
-
-CSRF_TRUSTED_ORIGINS = ['web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
-
 
 SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
 
@@ -108,15 +103,26 @@ WSGI_APPLICATION = 'connect_salone.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(default=config("DATABASE_URL"), conn_max_age=600),
-    #'NAME': config('DATABASE_NAME'),
-     #   'USER': config('DATABASE_USER'),
-      #  'PASSWORD': config('DATABASE_PASSWORD'),
-       # 'HOST': config('DATABASE_HOST'),
-        #'PORT': config('DATABASE_PORT'),
-        #'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': BASE_DIR / 'db.sqlite3',
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # Change this based on your database type
+        'NAME': config('DATABASE_NAME'),
+        'USER': config('DATABASE_USER'),
+        'PASSWORD': config('DATABASE_PASSWORD'),
+        'HOST': config('DATABASE_HOST'),
+        'PORT': config('DATABASE_PORT'),
+    }
 }
+
+
+#ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
+ALLOWED_HOSTS =['http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
+
+CSRF_TRUSTED_ORIGINS = ['http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    'http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app',
+]
 
 
 
@@ -167,10 +173,7 @@ CACHES = {
     }
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "https://salone-connect.com",
-]
+
 
 
 
