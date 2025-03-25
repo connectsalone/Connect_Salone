@@ -107,7 +107,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',  # Change this based on your database type
         'NAME': config('DATABASE_NAME'),
         'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
+        'PASSWORD': config['DATABASE_PASSWORD'],
         'HOST': config('DATABASE_HOST'),
         'PORT': config('DATABASE_PORT'),
     }
