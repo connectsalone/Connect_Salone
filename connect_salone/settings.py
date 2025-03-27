@@ -107,7 +107,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',  # Change this based on your database type
         'NAME': config('DATABASE_NAME'),
         'USER': config('DATABASE_USER'),
-        'PASSWORD': config['DATABASE_PASSWORD'],
+        'PASSWORD': config('DATABASE_PASSWORD'),
         'HOST': config('DATABASE_HOST'),
         'PORT': config('DATABASE_PORT'),
     }
@@ -115,14 +115,12 @@ DATABASES = {
 
 
 #ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
-ALLOWED_HOSTS =['http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
+ALLOWED_HOSTS =[]
 
-CSRF_TRUSTED_ORIGINS = ['http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app']
+CSRF_TRUSTED_ORIGINS = []
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    'http://web-copy-production-7b98.up.railway.app', 'https://web-copy-production-7b98.up.railway.app',
-]
+CORS_ALLOWED_ORIGINS = []
 
 
 
