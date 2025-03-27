@@ -6,8 +6,8 @@ from paypal.standard.ipn import urls as paypal_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts', include('accounts.urls')),
-    path('', include('events.urls')),
+    path('', include('accounts.urls')),
+    path('events/', include('events.urls')),
     path('accounts/', include('allauth.urls')),
     path('paypal/', include(paypal_urls)),  # Ensure this line is included
     path('payment/', include('payment.urls')),

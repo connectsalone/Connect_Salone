@@ -13,7 +13,7 @@ urlpatterns = [
 
     path('check_user_type/', check_user_type, name='check_user_type'),
 
-    path('login/', login_view, name='login'),  # Added login URL for clarity
+    path('', login_view, name='login'),  # Added login URL for clarity
     path('logout/', logout_view, name='logout'),  # Logout URL
 
     # API views for registration and login via DRF
