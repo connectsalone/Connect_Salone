@@ -115,12 +115,12 @@ DATABASES = {
 
 
 #ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
-ALLOWED_HOSTS =['connect-salone.onrender.com']
+ALLOWED_HOSTS =['salone-connect.com', 'https://salone-connect.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://connect-salone.onrender.com']
+CSRF_TRUSTED_ORIGINS = ['https://salone-connect.com']
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = ['https://connect-salone.onrender.com']
+CORS_ALLOWED_ORIGINS = ['https://salone-connect.com']
 
 
 
