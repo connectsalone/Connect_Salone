@@ -1,297 +1,180 @@
 {% extends "events/base.html" %} {% load static %} {% load custom_filters %}
 {% block content %}
 
- <style>
-  /* Event Slider Container */
-.event-slider-container {
-  display: flex;
-  overflow: hidden;
-  height: 500px; /* Adjust height as needed */
-  position: relative;
+<style>
+  /* ========== General Section Styles ========== */
+.upcoming-category {
+  padding: 20px 0;
 }
 
-/* Event Slider */
-.event-slider {
-  display: flex;
-  transition: transform 0.8s ease-in-out;
-  width: 100%;
+/* Section Title */
+.section-title h1 {
+  font-size: 36px; /* Increased font size for better prominence */
+  font-weight: bold;
+  text-align: center;
 }
 
-/* Each Event Item */
-.event-item {
+.section-title p {
+  font-size: 16px;
+  text-align: center;
+}
+
+.section-title-container a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.section-title-container a:hover {
+  text-decoration: underline;
+}
+
+/* ========== Event Grid Styles ========== */
+#upcoming-category .container {
   display: flex;
-  flex: 0 0 100%;
-  height: 100%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Centering the events within the row */
+  gap: 50px; /* Increased space between events */
+  width: 90%; /* Ensures the events container takes up 90% of the page width */
+  margin: 0 auto; /* Centering the events */
+}
+
+/* Each Event Container */
+.post-entry {
+  margin-bottom: 30px;
   position: relative;
-  overflow: hidden;
+  flex: 1 1 30%; /* Each event item now takes up 30% of the row's width */
+  min-width: 350px; /* Increased minimum width */
+  max-width: 600px; /* Increased max width */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 /* Event Image */
-.event-image {
-  flex: 1;
-  height: 100%;
-}
-
-.event-img {
+.post-entry img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-/* Event Text */
-.event-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-  position: relative;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 20px;
-  border-radius: 10px;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(16, 76, 71, 0.8);
-  border-radius: 10px;
-}
-
-.event-content {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 90%;
-}
-
-.post-meta .title {
-  font-size: 30px;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 10px;
-}
-
-.post-meta span {
-  font-size: 18px;
-  font-weight: 500;
-}
-
-/* Ticket Price Styling */
-.early-bird,
-.normal-price {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ffd700;
-  margin-top: 10px;
-}
-
-/* Buy Ticket Button */
-.buy-ticket-btn {
-  margin-top: 15px;
-  padding: 12px 25px;
-  background: #ccb718;
-  color: black;
-  border: none;
-  cursor: pointer;
+  height: auto;
   border-radius: 8px;
-  font-size: 22px;
-  font-weight: 800;
-  transition: background 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
-.buy-ticket-btn:hover {
-  background: #756805;
+.post-entry img:hover {
   transform: scale(1.05);
 }
 
-/* Navigation Buttons */
-.slider-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.6);
+/* Event Title */
+.post-entry h2 {
+  font-size: 26px; /* Increased font size */
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* Event Meta Information */
+.post-meta {
+  font-size: 14px;
+  color: #777;
+  margin-top: 10px;
+}
+
+.post-meta .date,
+.post-meta .location {
+  display: block;
+  margin: 5px 0;
+}
+
+.post-meta .date {
+  color: #28a745; /* Green color for the date */
+}
+
+.post-meta .location {
+  color: #007bff; /* Blue color for the location */
+}
+
+/* ========== Ticket Price Section ========== */
+.ticket-prices {
+  margin-top: 10px;
+  font-size: 18px; /* Increased font size */
+  text-align: center;
+}
+
+.ticket-type {
+  margin-bottom: 5px;
+}
+
+.ticket-type strong {
+  color: #ff6f61; /* Dark red color for price emphasis */
+}
+
+.no-ticket {
+  color: red;
+  font-weight: bold;
+}
+
+/* ========== Button Styles ========== */
+.author .btn {
+  background-color: #cc9e00; /* Dark yellow button */
   color: white;
-  border: none;
-  padding: 15px;
+  padding: 12px 25px;
+  font-size: 18px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 40px;
-  z-index: 10;
-  border-radius: 50%;
-  transition: background 0.3s ease, transform 0.2s ease;
+  text-decoration: none;
+  display: block;
+  margin: 15px auto 0; /* Center the button */
+  text-align: center;
 }
 
-.slider-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
-  transform: scale(1.1);
+.author .btn:hover {
+  background-color: #b38000; /* Darker yellow on hover */
 }
 
-.prev-btn {
-  left: 15px;
+.author .name {
+  margin-top: 15px;
 }
 
-.next-btn {
-  right: 15px;
+/* ========== Responsive Styles ========== */
+@media (max-width: 1024px) {
+  .post-entry {
+    flex: 1 1 45%; /* Each event item takes up 55% of the row's width for medium screens */
+  }
 }
 
-/* Responsive Styles */
 @media (max-width: 768px) {
-  .event-item {
-    flex-direction: column;
-    height: auto;
+  .post-entry {
+    flex: 1 1 100%; /* Event items take full width on mobile */
   }
 
-  .event-image, .event-text {
-    flex: none;
-    width: 100%;
+  .section-title h1 {
+    font-size: 28px;
   }
 
-  .post-meta .title {
-    font-size: 24px;
+  .ticket-prices {
+    font-size: 14px;
   }
 
-  .buy-ticket-btn {
-    font-size: 18px;
+  .author .btn {
+    font-size: 16px;
+    padding: 10px 20px;
   }
 
-  .slider-btn {
-    font-size: 30px;
-    padding: 10px;
+  .post-entry img {
+    border-radius: 10px; /* Adding rounded corners for mobile */
   }
 }
-
- </style>
 
 </style>
+
+
 <main class="main">
-  <!-- Slider Section -->
-  <section id="slider" class="slider section dark-background">
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <div class="swiper init-swiper">
-        <script type="application/json" class="swiper-config">
-          {
-            "loop": true,
-            "speed": 600,
-            "autoplay": {
-              "delay": 5000
-            },
-            "slidesPerView": "auto",
-            "centeredSlides": true,
-            "pagination": {
-              "el": ".swiper-pagination",
-              "type": "bullets",
-              "clickable": true
-            },
-            "navigation": {
-              "nextEl": ".swiper-button-next",
-              "prevEl": ".swiper-button-prev"
-            }
-          }
-        </script>
 
-        <div class="swiper-wrapper">
-          <div
-            class="swiper-slide"
-            style="
-              background-image: url('{% static 'assets/img/post-slide-1.jpg'%}');
-            "
-          >
-            <div class="content">
-              <h2>
-                <a href="single-post.html"
-                  >The Best Homemade Masks for Face (keep the Pimples Away)</a
-                >
-              </h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
-                neque est mollitia! Beatae minima assumenda repellat harum vero,
-                officiis ipsam magnam obcaecati cumque maxime inventore
-                repudiandae quidem necessitatibus rem atque.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="swiper-slide"
-            style="
-              background-image: url('{% static 'assets/img/post-slide-2.jpg' %}');
-            "
-          >
-            <div class="content">
-              <h2>
-                <a href="single-post.html"
-                  >17 Pictures of Medium Length Hair in Layers That Will Inspire
-                  Your New Haircut</a
-                >
-              </h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
-                neque est mollitia! Beatae minima assumenda repellat harum vero,
-                officiis ipsam magnam obcaecati cumque maxime inventore
-                repudiandae quidem necessitatibus rem atque.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="swiper-slide"
-            style="
-              background-image: url('{% static 'assets/img/post-slide-3.jpg'%}');
-            "
-          >
-            <div class="content">
-              <h2>
-                <a href="single-post.html"
-                  >13 Amazing Poems from Shel Silverstein with Valuable Life
-                  Lessons</a
-                >
-              </h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
-                neque est mollitia! Beatae minima assumenda repellat harum vero,
-                officiis ipsam magnam obcaecati cumque maxime inventore
-                repudiandae quidem necessitatibus rem atque.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="swiper-slide"
-            style="
-              background-image: url('{% static 'assets/img/post-slide-4.jpg' %}');
-            "
-          >
-            <div class="content">
-              <h2>
-                <a href="single-post.html"
-                  >9 Half-up/half-down Hairstyles for Long and Medium Hair</a
-                >
-              </h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
-                neque est mollitia! Beatae minima assumenda repellat harum vero,
-                officiis ipsam magnam obcaecati cumque maxime inventore
-                repudiandae quidem necessitatibus rem atque.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
-
-        <div class="swiper-pagination"></div>
-      </div>
-    </div>
-  </section>
-  <!-- /Slider Section -->
 
   <!-- Trending Category Section -->
 
@@ -309,22 +192,28 @@
   
     <!-- Events Container -->
     <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <div class="row g-5" style="display: flex; justify-content: space-between; gap: 20px">
+      <div class="row g-5">
         {% if upcoming_events %}
           {% for event in upcoming_events %}
-          <div class="post-entry col-lg-4" style="flex: 0 0 30%">
+          <!-- Event Item -->
+          <div class="post-entry col-lg-4 col-md-6 col-12">
+            <!-- Event Image -->
             <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
               <a href="{% url 'single-event' event.id %}">
                 <img src="{{ event.event_image.url }}" alt="Event Image" class="img-fluid" />
               </a>
             </span>
+  
+            <!-- Event Title -->
             <h2>
               <a href="{% url 'single-event' event.id %}">{{ event.event_name }}</a>
             </h2>
+  
+            <!-- Event Meta -->
             <div class="post-meta">
               <span class="date">{{ event.event_date|date:"l, F d, Y" }}</span>
               <span class="location">{{ event.event_location }}</span>
-              
+  
               <!-- Ticket Prices Section -->
               <div class="ticket-prices">
                 {% with event_ticket_data|get_item:event.id as tickets %}
@@ -341,6 +230,7 @@
               </div>
             </div>
   
+            <!-- Buy Ticket Button -->
             <div class="d-flex align-items-center author">
               <div class="name text-center">
                 <span class="{% if request.resolver_match.url_name == 'single-event' %}active{% endif %}">
@@ -351,15 +241,139 @@
               </div>
             </div>
           </div>
+          <!-- End Event Item -->
           {% endfor %}
         {% else %}
           <h4>No upcoming events</h4>
         {% endif %}
       </div>
     </div>
+    <!-- End Events Container -->
   </section>
   <!-- /Upcoming Category Section -->
   
+
+    <!-- Slider Section -->
+    <section id="slider" class="slider section dark-background">
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="swiper init-swiper">
+          <script type="application/json" class="swiper-config">
+            {
+              "loop": true,
+              "speed": 600,
+              "autoplay": {
+                "delay": 5000
+              },
+              "slidesPerView": "auto",
+              "centeredSlides": true,
+              "pagination": {
+                "el": ".swiper-pagination",
+                "type": "bullets",
+                "clickable": true
+              },
+              "navigation": {
+                "nextEl": ".swiper-button-next",
+                "prevEl": ".swiper-button-prev"
+              }
+            }
+          </script>
+  
+          <div class="swiper-wrapper">
+            <div
+              class="swiper-slide"
+              style="
+                background-image: url('{% static 'assets/img/post-slide-1.jpg'%}');
+              "
+            >
+              <div class="content">
+                <h2>
+                  <a href="single-post.html"
+                    >The Best Homemade Masks for Face (keep the Pimples Away)</a
+                  >
+                </h2>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
+                  neque est mollitia! Beatae minima assumenda repellat harum vero,
+                  officiis ipsam magnam obcaecati cumque maxime inventore
+                  repudiandae quidem necessitatibus rem atque.
+                </p>
+              </div>
+            </div>
+  
+            <div
+              class="swiper-slide"
+              style="
+                background-image: url('{% static 'assets/img/post-slide-2.jpg' %}');
+              "
+            >
+              <div class="content">
+                <h2>
+                  <a href="single-post.html"
+                    >17 Pictures of Medium Length Hair in Layers That Will Inspire
+                    Your New Haircut</a
+                  >
+                </h2>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
+                  neque est mollitia! Beatae minima assumenda repellat harum vero,
+                  officiis ipsam magnam obcaecati cumque maxime inventore
+                  repudiandae quidem necessitatibus rem atque.
+                </p>
+              </div>
+            </div>
+  
+            <div
+              class="swiper-slide"
+              style="
+                background-image: url('{% static 'assets/img/post-slide-3.jpg'%}');
+              "
+            >
+              <div class="content">
+                <h2>
+                  <a href="single-post.html"
+                    >13 Amazing Poems from Shel Silverstein with Valuable Life
+                    Lessons</a
+                  >
+                </h2>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
+                  neque est mollitia! Beatae minima assumenda repellat harum vero,
+                  officiis ipsam magnam obcaecati cumque maxime inventore
+                  repudiandae quidem necessitatibus rem atque.
+                </p>
+              </div>
+            </div>
+  
+            <div
+              class="swiper-slide"
+              style="
+                background-image: url('{% static 'assets/img/post-slide-4.jpg' %}');
+              "
+            >
+              <div class="content">
+                <h2>
+                  <a href="single-post.html"
+                    >9 Half-up/half-down Hairstyles for Long and Medium Hair</a
+                  >
+                </h2>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quidem
+                  neque est mollitia! Beatae minima assumenda repellat harum vero,
+                  officiis ipsam magnam obcaecati cumque maxime inventore
+                  repudiandae quidem necessitatibus rem atque.
+                </p>
+              </div>
+            </div>
+          </div>
+  
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+  
+          <div class="swiper-pagination"></div>
+        </div>
+      </div>
+    </section>
+    <!-- /Slider Section -->
 
 
 

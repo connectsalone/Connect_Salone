@@ -1,3 +1,182 @@
+<script>
+    /* General Styling */
+  .header {
+    background-color: #fff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .sitename {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  /* Logo Styling */
+  .logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo h1 {
+    margin: 0;
+  }
+
+  /* Navigation Menu */
+  .navmenu {
+    display: flex;
+    align-items: center;
+    margin: 0;
+  }
+
+  .navmenu ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .navmenu li {
+    margin-right: 20px;
+    position: relative;
+  }
+
+  .navmenu a {
+    text-decoration: none;
+    font-size: 16px;
+    color: #333;
+    padding: 10px;
+    display: block;
+  }
+
+  .navmenu .active {
+    color: #007bff;
+  }
+
+  .navmenu .dropdown:hover > ul {
+    display: block;
+  }
+
+  .navmenu .dropdown ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    padding: 10px;
+    list-style: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .navmenu .toggle-dropdown {
+    margin-left: 5px;
+  }
+
+  /* Cart and User Authentication Links */
+  .header-social-links {
+    display: flex;
+    align-items: center;
+  }
+
+  .cart {
+    position: relative;
+    margin-right: 20px;
+  }
+
+  .cart i {
+    font-size: 24px;
+    color: #333;
+  }
+
+  .cart .badge {
+    background-color: #ff0000;
+    color: white;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 50%;
+    top: -5px;
+    right: -5px;
+  }
+
+  .logout, .signup {
+    font-size: 16px;
+    color: #007bff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .logout i, .signup i {
+    margin-right: 5px;
+  }
+
+  .logout:hover, .signup:hover {
+    color: #0056b3;
+  }
+
+  /* Mobile Responsiveness */
+  @media (max-width: 767px) {
+    .navmenu {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      background-color: #fff;
+      position: absolute;
+      top: 70px;
+      left: 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .navmenu.active {
+      display: flex;
+    }
+
+    .navmenu li {
+      margin-right: 0;
+      text-align: center;
+      padding: 10px;
+      width: 100%;
+    }
+
+    .mobile-nav-toggle {
+      display: block;
+      font-size: 30px;
+      cursor: pointer;
+      color: white; /* Make mobile menu button white */
+    }
+
+    /* Adding space between logout and mobile menu button */
+    .header-social-links {
+      margin-right: 20px; /* Add space between logout and menu button */
+    }
+
+    /* Spacing between logout link and the menu button */
+    .logout {
+      margin-right: 20px; /* Space after logout on mobile */
+    }
+
+    .cart {
+      margin-right: 10px;
+    }
+
+    .logout, .signup {
+      font-size: 14px;
+    }
+  }
+
+  /* Large Screen Adjustment */
+  @media (min-width: 768px) {
+    .navmenu {
+      display: flex;
+      margin-left: auto;
+    }
+
+    .mobile-nav-toggle {
+      display: none;
+    }
+  }
+</script>
+
 <header id="header" class="header d-flex align-items-center sticky-top">
   <div
     class="container position-relative d-flex align-items-center justify-content-between"
@@ -39,45 +218,36 @@
             <li><a href="{% url 'tickets' %}">Tickets</a></li>
           </ul>
         </li>
-        <li>
-          <a href="{% url 'my_tickets' %}" class="active">TICKETS</a>
-        </li>
+        <li><a href="{% url 'my_tickets' %}" class="active">TICKETS</a></li>
         <li><a href="{% url 'contact' %}">Contact US</a></li>
       </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
 
-    
-            <!-- Header Right Section -->
-        <div class="header-social-links d-flex align-items-center">
-          <!-- Cart Link -->
-          <a href="{% url 'cart_page' %}" class="cart position-relative">
-            <i class="bi bi-cart"></i>
+    <!-- Header Right Section -->
+    <div class="header-social-links d-flex align-items-center">
+      <!-- Cart Link -->
+      <a href="{% url 'cart_page' %}" class="cart position-relative">
+        <i class="bi bi-cart"></i>
+        <span
+          id="cart-badge"
+          class="badge position-absolute {% if cart_count|default:0 == 0 %}d-none{% endif %}"
+          >{{ cart_count }}</span
+        >
+      </a>
 
-            <!-- Cart Badge showing total ticket count -->
-            <span
-              id="cart-badge"
-              class="badge position-absolute {% if cart_count|default:0 == 0 %}d-none{% endif %}"
-            >
-              {{ cart_count }}
-            </span>
-          </a>
-        </div>
-
-    
-
-    
-    {% if user.is_authenticated %}
-      <!-- Logout Link (Only if logged in) -->
+      <!-- Authentication Links -->
+      {% if user.is_authenticated %}
       <a href="{% url 'logout' %}" class="logout">
         <i class="bi bi-box-arrow-right ml-4"></i> Logout
       </a>
       {% else %}
-      <!-- Login Link (Only if not logged in) -->
       <a href="{% url 'login' %}" class="signup">
         <i class="bi bi-person-plus"></i> Sign-In
       </a>
       {% endif %}
     </div>
+
+    <!-- Mobile Menu Toggle -->
+    <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
   </div>
 </header>
