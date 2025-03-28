@@ -104,7 +104,7 @@ class TicketPrice(models.Model):
     name = models.CharField(
         max_length=50,
         choices=[
-            ('ordinary', 'Ordinary'),
+            ('rdinary', 'Ordinary'),
             ('near_stage', 'Near Stage'),
             ('vip', 'VIP'),
             ('vvip', 'VVIP'),

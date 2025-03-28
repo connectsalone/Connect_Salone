@@ -12,11 +12,25 @@
   font-size: 36px; /* Increased font size for better prominence */
   font-weight: bold;
   text-align: center;
+  margin-bottom: 5px; /* Reduced space below the title */
 }
 
+/* Remove space between section title and events */
+.section-title {
+  margin-bottom: 5px; /* Reduced bottom margin */
+  padding-bottom: 0; /* Removed any bottom padding from the section title */
+}
+
+.container {
+  padding-top: 0; /* Removes padding on top of the events container */
+  margin-top: 0; /* Removes any margin on top of the events container */
+}
+
+/* Section Title Text */
 .section-title p {
   font-size: 16px;
   text-align: center;
+  margin-top: 5px; /* Space between title and link */
 }
 
 .section-title-container a {
@@ -39,8 +53,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center; /* Centering the events within the row */
-  gap: 50px; /* Increased space between events */
-  width: 90%; /* Ensures the events container takes up 90% of the page width */
+  gap: 60px; /* Increased space between events */
+  width: 100%; /* Ensures the events container takes up 90% of the page width */
   margin: 0 auto; /* Centering the events */
 }
 
@@ -48,7 +62,7 @@
 .post-entry {
   margin-bottom: 30px;
   position: relative;
-  flex: 1 1 30%; /* Each event item now takes up 30% of the row's width */
+  flex: 1 1 50%; /* Each event item now takes up 50% of the row's width */
   min-width: 350px; /* Increased minimum width */
   max-width: 600px; /* Increased max width */
   display: flex;
@@ -72,7 +86,7 @@
 
 /* Event Title */
 .post-entry h2 {
-  font-size: 26px; /* Increased font size */
+  font-size: 30px; /* Increased font size */
   margin-top: 15px;
   font-weight: bold;
 }
@@ -91,17 +105,19 @@
 }
 
 .post-meta .date {
-  color: #28a745; /* Green color for the date */
+  color: #e3e044; 
+  font-weight: 800;
 }
 
 .post-meta .location {
-  color: #007bff; /* Blue color for the location */
+  color: #e3e044; /* Blue color for the location */
+  font-weight: 800;
 }
 
 /* ========== Ticket Price Section ========== */
 .ticket-prices {
   margin-top: 10px;
-  font-size: 18px; /* Increased font size */
+  font-size: 20px; /* Increased font size */
   text-align: center;
 }
 
@@ -128,8 +144,14 @@
   cursor: pointer;
   text-decoration: none;
   display: block;
-  margin: 15px auto 0; /* Center the button */
+  margin: 15px auto; /* Center the button */
   text-align: center;
+}
+
+.author {
+  display: flex;
+  justify-content: center; /* Ensure button container is centered */
+  align-items: center;
 }
 
 .author .btn:hover {
@@ -143,7 +165,7 @@
 /* ========== Responsive Styles ========== */
 @media (max-width: 1024px) {
   .post-entry {
-    flex: 1 1 45%; /* Each event item takes up 55% of the row's width for medium screens */
+    flex: 1 1 45%; /* Each event item takes up 45% of the row's width for medium screens */
   }
 }
 
@@ -153,7 +175,8 @@
   }
 
   .section-title h1 {
-    font-size: 28px;
+    font-size: 28px; /* Adjusted font size for smaller screens */
+    margin-bottom: 5px; /* Ensure there's less space below the title */
   }
 
   .ticket-prices {
@@ -172,7 +195,6 @@
 
 </style>
 
-
 <main class="main">
 
 
@@ -184,7 +206,7 @@
     <!-- Section Title -->
     <div class="container section-title" data-aos="fade-up">
       <div class="section-title-container d-flex align-items-center justify-content-between">
-        <h1>Upcoming Highlighted Events</h1>
+        <h1>Upcoming Events</h1>
         <p><a href="categories.html">See All Events</a></p>
       </div>
     </div>
