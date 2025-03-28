@@ -54,6 +54,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Sum
 import json
 
+
 @require_POST
 @login_required
 def add_to_cart(request, event_id):
@@ -95,7 +96,7 @@ def add_to_cart(request, event_id):
         return JsonResponse({
             'success': True,
             'cart_count': total_cart_quantity,
-            'item_price': ticket_type.get_price(),  # Use the price from TicketPrice instance
+            'item_price': ticket_type.ticket_price,  # Use the price from TicketPrice instance
             'item_name': ticket_type.get_name_display()
         })
 
@@ -106,7 +107,6 @@ def add_to_cart(request, event_id):
     except Exception as e:
         print(f"Unexpected Error: {e}")
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
 
 def cart_page(request):
     """Render the user's cart."""

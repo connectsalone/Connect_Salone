@@ -115,7 +115,7 @@ DATABASES = {
 
 
 #ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="yourdomain.com").split(",")
-ALLOWED_HOSTS =['salone-connect.com', 'https://salone-connect.com', 'connect-salone.onrender.com']
+ALLOWED_HOSTS =['salone-connect.com', 'https://salone-connect.com', 'connect-salone.onrender.com', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = ['https://salone-connect.com', 'https://connect-salone.onrender.com']
 
