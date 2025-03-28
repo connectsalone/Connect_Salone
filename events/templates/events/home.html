@@ -193,6 +193,32 @@
   }
 }
 
+@media (max-width: 480px) {
+  /* Adjust for the smallest mobile screens */
+  .post-entry {
+    flex: 1 1 100%; /* Event items take full width */
+    padding: 10px; /* Adds padding for better spacing */
+    min-width: 100%; /* Ensures no overflow */
+  }
+
+  .post-entry h2 {
+    font-size: 24px; /* Decrease font size for smaller screens */
+  }
+
+  .ticket-prices {
+    font-size: 12px; /* Decrease font size for mobile */
+  }
+
+  .author .btn {
+    font-size: 14px; /* Decrease button font size */
+    padding: 8px 16px; /* Adjust button padding */
+  }
+
+  .post-entry img {
+    border-radius: 8px; /* Rounded corners for mobile */
+  }
+}
+
 </style>
 
 <main class="main">
