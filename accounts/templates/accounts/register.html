@@ -22,85 +22,80 @@
         width: 100%;
         background-color: #032a54;
         color: white;
-        padding: 20px 0;
+        padding: 15px 0;
         text-align: center;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       header h1 {
         margin: 0;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 600;
       }
 
-      /* Container for the form */
+      /* Container */
       .container {
-        width: 100%;
+        width: 90%;
         max-width: 400px;
         background: #fff;
-        padding: 30px;
+        padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.3s ease;
-        margin-top: 20px;
-        margin-bottom: 20px;
-      }
-
-      .container:hover {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        margin: 20px auto;
       }
 
       /* Heading */
       h2 {
         text-align: center;
-        margin-bottom: 25px;
-        color: #333;
-        font-size: 28px;
+        margin-bottom: 20px;
+        color: #040775;
+        font-size: 24px;
         font-weight: 600;
       }
 
       /* Form Group */
       .form-group {
-        margin-bottom: 20px;
-        position: relative; /* Required for positioning the toggle button */
+        margin-bottom: 15px;
+        position: relative;
+        width: 100%;
       }
 
       .form-group label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: #555;
         font-size: 14px;
-        font-weight: 500;
       }
 
       .form-group input {
-        width: 100%;
+        width: 90%;
         padding: 12px;
         border: 1px solid #ddd;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 16px;
         transition: border-color 0.3s ease, box-shadow 0.3s ease;
       }
 
       .form-group input:focus {
-        border-color: #007bff;
+        border-color: #040775;
         box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
         outline: none;
       }
 
-      /* Show Password Button */
+      /* Toggle Password */
       .toggle-password {
         position: absolute;
-        right: 10px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         background: none;
         border: none;
         cursor: pointer;
-        color: #007bff;
+        color: #040775;
         font-size: 14px;
         padding: 5px;
         transition: color 0.3s ease;
+        margin-right: 5px;
       }
 
       .toggle-password:hover {
@@ -109,15 +104,17 @@
 
       /* Button */
       button[type="submit"] {
-        width: 100%;
-        padding: 12px;
-        background-color: #007bff;
+        width: auto; /* Do not force the button to take up full width */
+        padding: 12px 24px; /* Set padding to match original size */
+        background-color: #040775;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 16px;
         cursor: pointer;
         transition: background-color 0.3s ease, transform 0.2s ease;
+        margin: 20px auto 0; /* Center the button */
+        display: block;
       }
 
       button[type="submit"]:hover {
@@ -125,19 +122,26 @@
         transform: translateY(-2px);
       }
 
-      button[type="submit"]:active {
-        transform: translateY(0);
+      /* Error Messages */
+      .errorlist {
+        list-style: none;
+        padding: 10px;
+        margin: 0 0 15px;
+        color: #721c24;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 6px;
       }
 
       /* Link */
       p {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 15px;
         color: #555;
       }
 
       p a {
-        color: #007bff;
+        color: #040775;
         text-decoration: none;
         font-weight: 500;
       }
@@ -146,41 +150,40 @@
         text-decoration: underline;
       }
 
-      /* Error Messages */
-      .errorlist {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 20px 0;
-        color: #721c24;
-        background-color: #f8d7da;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #f5c6cb;
-      }
-
-      .errorlist li {
-        margin: 5px 0;
-      }
-
       /* Footer */
       footer {
         width: 100%;
-        background-color: #032a54; /* Same color as header */
-        padding: 20px 0; /* Same height as header */
-        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-        margin-top: auto; /* Push footer to the bottom */
+        background-color: #032a54;
+        padding: 15px 0;
+        margin-top: auto;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 480px) {
+        h2 {
+          font-size: 22px;
+        }
+
+        .form-group input {
+          font-size: 14px;
+        }
+
+        button {
+          font-size: 14px;
+          padding: 10px;
+        }
       }
     </style>
   </head>
   <body>
     <!-- Header -->
     <header>
-      <h1>Connect Salone Website</h1>
+      <h1>salone-connect.com</h1>
     </header>
 
     <!-- Registration Container -->
     <div class="container">
-      <h2>Register</h2>
+      <h2>Register Here</h2>
 
       <!-- Display Form Errors -->
       {% if form.errors %}
@@ -204,25 +207,31 @@
         </div>
         <div class="form-group">
           <label for="id_password1">Password</label>
-          {{ form.password1 }}
-          <button
-            type="button"
-            class="toggle-password"
-            data-target="id_password1"
-          >
-            Show
-          </button>
+          <div style="position: relative">
+            {{ form.password1 }}
+            <button
+              type="button"
+              class="toggle-password"
+              data-target="id_password1"
+              aria-label="Toggle password visibility"
+            >
+              Show
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label for="id_password2">Confirm Password</label>
-          {{ form.password2 }}
-          <button
-            type="button"
-            class="toggle-password"
-            data-target="id_password2"
-          >
-            Show
-          </button>
+          <div style="position: relative">
+            {{ form.password2 }}
+            <button
+              type="button"
+              class="toggle-password"
+              data-target="id_password2"
+              aria-label="Toggle password visibility"
+            >
+              Show
+            </button>
+          </div>
         </div>
         <button type="submit">Register</button>
       </form>
@@ -240,35 +249,21 @@
         button.addEventListener("click", function () {
           const targetId = this.getAttribute("data-target");
           const passwordInput = document.getElementById(targetId);
-          const type =
-            passwordInput.getAttribute("type") === "password"
-              ? "text"
-              : "password";
-          passwordInput.setAttribute("type", type);
+          const type = passwordInput.type === "password" ? "text" : "password";
+          passwordInput.type = type;
 
           // Toggle button text
           this.textContent = type === "password" ? "Show" : "Hide";
         });
       });
 
-      // Fetch for form submission
-      function getCSRFToken() {
-        return document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("csrftoken="))
-          ?.split("=")[1];
-      }
-
-      fetch("/accountsregister/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRFToken": getCSRFToken(),
-        },
-        body: new URLSearchParams(
-          new FormData(document.getElementById("register-form"))
-        ),
-      });
+      // Form Submission Handling
+      document
+        .getElementById("register-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault(); // Prevent default form submission
+          this.submit(); // Submit the form normally
+        });
     </script>
   </body>
 </html>
