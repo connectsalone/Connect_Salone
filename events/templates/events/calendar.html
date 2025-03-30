@@ -1,5 +1,7 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
+
 <style>
+  /* Root Color Variables */
   :root {
     --primary-color: #003366;
     --secondary-color: #044745;
@@ -8,12 +10,14 @@
     --font-main: var(--nav-font);
   }
 
+  /* Calendar Container */
   .calendar-container {
     margin: 2rem auto;
     max-width: 1200px;
     padding: 0 1rem;
   }
 
+  /* Calendar Header */
   .calendar-header {
     text-align: center;
     margin: 3rem 0;
@@ -23,6 +27,7 @@
     letter-spacing: 2px;
   }
 
+  /* Calendar Styling */
   #calendar {
     background: white;
     border-radius: 8px;
@@ -30,21 +35,38 @@
     overflow: hidden;
   }
 
+  /* Calendar Header Cells */
   .fc-col-header-cell {
     background: var(--primary-color);
     color: var(--text-light);
     padding: 1rem 0;
   }
 
+  /* Event Day Styling */
   .fc-daygrid-day {
     background: #ffffff;
     border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
   }
 
+  /* Non-Event Days Styling */
+  .fc-daygrid-day.no-events {
+    background: #f9f9f9;
+    opacity: 0.5; /* Shrinks appearance */
+    width: 10px;
+  }
+
+  /* Days with Events Styling */
+  .fc-daygrid-day.has-events {
+    background: #ffffff;
+  }
+
+  /* Highlight Today's Date */
   .fc-daygrid-day.fc-day-today {
     background: #e8f4ff !important;
   }
 
+  /* Event Card Styling */
   .event-card {
     background: var(--secondary-color);
     border: none;
@@ -55,7 +77,7 @@
   }
 
   .event-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1.5px);
   }
 
   .event-card__title {
@@ -71,6 +93,7 @@
     margin: 0.3rem 0 0;
   }
 
+  /* Responsive Design */
   @media (max-width: 768px) {
     .calendar-header {
       font-size: 2rem;
@@ -79,6 +102,30 @@
 
     .fc-toolbar-title {
       font-size: 1.3rem !important;
+    }
+
+    /* Adjust event card layout for small screens */
+    .event-card {
+      padding: 1rem; /* Increase padding for better touch experience */
+    }
+
+    .event-card__title {
+      font-size: 1rem; /* Adjust title size for smaller screens */
+    }
+
+    /* Ensure modal is responsive */
+    .modal-dialog {
+      max-width: 80%;
+      margin: 1.75rem auto;
+    }
+
+    .modal-body {
+      padding: 1rem; /* More padding inside modal */
+    }
+
+    /* Shrink the calendar header font on small screens */
+    .fc-toolbar-title {
+      font-size: 1rem;
     }
   }
 </style>
@@ -108,7 +155,9 @@
         ></button>
       </div>
       <div class="modal-body">
-        <div id="eventContent"></div>
+        <div id="eventContent" class="event-details-container">
+          <!-- Content for event details will be dynamically injected here -->
+        </div>
         <a id="buyTicketBtn" href="#" class="btn btn-primary mt-4"
           >Buy Ticket</a
         >
@@ -152,6 +201,21 @@
             </div>
           `,
         };
+      },
+      eventRender: function (info) {
+        const dayCell = info.el.closest(".fc-daygrid-day");
+        dayCell.classList.add("has-events"); // Mark the day as having an event
+      },
+      dayRender: function (date, cell) {
+        const dayCell = cell.closest(".fc-daygrid-day");
+
+        // Check if there are events for the day
+        const hasEvents = cell.querySelector(".fc-daygrid-event");
+        if (!hasEvents) {
+          dayCell.classList.add("no-events"); // Mark days without events
+        } else {
+          dayCell.classList.remove("no-events"); // Ensure event days are not marked as non-event
+        }
       },
       eventClick: function (info) {
         const event = info.event;

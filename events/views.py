@@ -347,7 +347,6 @@ def get_events(request):
             'start': event.event_date.isoformat(),  # Start date and time in ISO format
             'end': event.event_date.isoformat(),  # You can add an actual end date if needed
             'location': event.event_location,  # Event location
-            'description': event.event_description,  # Event description
             'image': event.event_image.url if event.event_image else None,  # Optional image URL
             'event_type': event.event_type,  # Type of event (e.g., concert, party, etc.)
             'status': event.event_status,  # Status of the event (e.g., upcoming, sold out)

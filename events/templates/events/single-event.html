@@ -3,11 +3,15 @@
 <input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}" />
 
 <style>
+  <style>
   /* Main Layout */
   .page-container {
     display: flex;
     gap: 30px;
     margin-top: 30px;
+    justify-content: center; /* Center horizontally */
+    align-items: flex-start; /* Align items to the top for vertical centering */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
   }
 
   /* Main Content Wrapper */
@@ -27,6 +31,43 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
+  /* Style for Event Title */
+.event-title {
+  font-size: 32px; /* Increase font size */
+  font-weight: bold; /* Make it bold */
+  color:  #033136; /* Change text color (Red shade) */
+  text-align: center; /* Center align */
+  margin-bottom: 15px; /* Add some spacing */
+  text-transform: uppercase;
+  margin-button: 10px;
+}
+
+  /* Style for event details list */
+  .event-details-list {
+    font-size: 18px; /* Increase text size */
+    color:  #033136; /* Adjust text color */
+    list-style: none;
+    padding: 0;
+    font-weight: bold;
+    font-size: 25px;
+  }
+  
+  /* Style for icons */
+  .event-details-list i {
+    font-size: 22px; /* Increase icon size */
+    color: #007bff; /* Adjust icon color (blue shade) */
+    margin-right: 8px;
+  }
+  
+  /* Ensure spacing is consistent */
+  .event-details-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Adjust spacing between icon and text */
+    margin-bottom: 10px; /* Space between list items */
+  }
+  
+
   /* Cart Column */
   .cart-column {
     position: sticky;
@@ -35,6 +76,13 @@
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    max-width: 350px; /* Control cart size on large screens */
+    height: auto; /* Allow height to adjust based on content */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically center content in the cart column */
+    align-items: center; /* Horizontally center content */
+    margin-top: 20px; /* Add spacing for visual balance */
   }
 
   /* Description Card */
@@ -45,6 +93,144 @@
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     margin-top: 20px;
+  }
+
+  /* Center the entire ticket-selection container */
+  .ticket-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .ticket-selection h3 {
+    text-align: center;
+    font-weight: bold;
+    color: #033136;
+    text-transform: capitalize;
+  }
+
+
+  .ticket-select,
+  .quantity-controls,
+  .add-to-cart-button {
+    width: 100%;
+    max-width: 400px; /* Restrict width on large screens */
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  .ticket-select {
+    width: auto;
+    font-size: 18px;
+    padding: 5px;
+  }
+
+  .ticket-select option {
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+ 
+  
+  /* Style for the entire select box */
+  .ticket-select, .ticket-name {
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+
+  /* Style for quantity buttons */
+  .quantity-btn {
+    width: 30px;
+    height: 45px;
+    font-size: 25px;
+    margin: 0 10px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  /* Style for the quantity input field */
+  .quantity-input {
+    width: 50px;
+    text-align: center;
+    padding: 5px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  /* Add some space between elements */
+  .ticket-price-display,
+  .alert-info {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* Style for add-to-cart button */
+  .add-to-cart-button {
+    background-color: #033136;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .add-to-cart-button i {
+    margin-right: 8px;
+  }
+
+  /* Alert styling */
+  .alert-info {
+    background-color: #e7f3fe;
+    border: 1px solid #bee3f8;
+    padding: 10px;
+    color: #31708f;
+    border-radius: 5px;
+  }
+
+  .alert-info a {
+    color: #0056b3;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .ticket-selection {
+      padding: 15px;
+    }
+
+    .ticket-select,
+    .quantity-controls,
+    .add-to-cart-button {
+      max-width: 100%;
+    }
+
+    .quantity-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+
+    .quantity-input {
+      width: 60px;
+      font-size: 18px;
+    }
+
+    .cart-column {
+      max-width: 100%;
+      margin-top: 20px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .ticket-selection {
+      padding: 40px;
+    }
   }
 
   /* Sidebar */
@@ -62,15 +248,19 @@
     .page-container {
       flex-direction: column;
     }
+
     .main-content-wrapper {
       grid-template-columns: 1fr;
     }
+
     .advertising-sidebar,
     .cart-column {
       max-width: 100%;
       position: static;
     }
   }
+</style>
+
 </style>
 
 <main class="main">
@@ -88,78 +278,73 @@
         <div class="cart-column">
           <h1 class="event-title">{{ event.event_name }}</h1>
 
+
           <ul class="event-details-list">
             <li>
-              <i class="bi bi-calendar-event"></i> &nbsp; &nbsp;&nbsp; &nbsp;
-              &nbsp; {{ event.event_date|date:"F j, Y" }}
+              <i class="bi bi-calendar-event"></i> {{ event.event_date|date:"F j, Y" }}
             </li>
             <li>
               <i class="bi bi-clock"></i> {{ event.event_date|time:"g:i A" }}
             </li>
-            <li><i class="bi bi-geo-alt"></i> {{ event.event_location }}</li>
+            <li>
+              <i class="bi bi-geo-alt"></i> {{ event.event_location }}
+            </li>
           </ul>
+          
 
-      
+          <div class="ticket-selection-card">
+            <div class="ticket-selection">
+              <h3>Choose ticket</h3>
+              <select class="ticket-select" id="ticket-type">
+                {% for ticket in ticket_prices %}
+                  <option value="{{ ticket.id }}" data-price="{{ ticket.get_price }}" data-name="{{ ticket.name }}">
+                    <s class="ticket-name">{{ ticket.name }}</s
+                    <span class="ticket-price">Ticket - NLe{{ ticket.get_price }}</span>
+                  </option>
+                {% endfor %}
+              </select>
 
+              <div class="quantity-controls">
+                <h3>Quantity</h3>
+                <button class="quantity-btn" onclick="adjustQuantity(-1)">
+                  -
+                </button>
+                <input
+                  type="number"
+                  id="ticket-quantity"
+                  class="quantity-input"
+                  value="1"
+                  min="1"
+                  max="100"
+                />
+                <button class="quantity-btn" onclick="adjustQuantity(1)">
+                  +
+                </button>
+              </div>
 
-
-          <div class="ticket-selection">
-            <select class="ticket-select" id="ticket-type">
-              {% for ticket in ticket_prices %}
-              <option
-                value="{{ ticket.id }}"
-                data-price="{{ ticket.get_price }}"
-                data-name="{{ ticket.name }}"
+              {% if request.user.is_authenticated %}
+              <button
+                onclick="addToCart({{ event.id }})"
+                class="add-to-cart-button"
               >
-                {{ ticket.name }} Ticket - NLe{{ ticket.get_price }}
-              </option>
-              {% endfor %}
-            </select>
-
-            <div class="quantity-controls">
-              <button class="quantity-btn" onclick="adjustQuantity(-1)">
-                -
+                <i class="bi bi-cart-plus"></i> Add to Cart
               </button>
-              <input
-                type="number"
-                id="ticket-quantity"
-                class="quantity-input"
-                value="1"
-                min="1"
-                max="100"
-              />
-              <button class="quantity-btn" onclick="adjustQuantity(1)">
-                +
-              </button>
+              <p id="cart-message" style="color: green; display: none">
+                Added to cart!
+              </p>
+              {% else %}
+              <div class="alert alert-info">
+                Please
+                <a
+                  href="{% url 'login' %}?next={{ request.path }}"
+                  class="alert-link"
+                  >login</a
+                >
+                to purchase tickets.
+              </div>
+              {% endif %}
             </div>
-
-            {% if request.user.is_authenticated %}
-
-            <button   onclick="addToCart({{ event.id }})"
-                        class="add-to-cart-button">
-              <i class="bi bi-cart-plus"></i> Add to Cart
-            </button>
-            <p id="cart-message" style="color: green; display: none">
-              Added to cart!
-            </p>
-           
-            {% else %}
-            <div class="alert alert-info">
-              Please
-              <a
-                href="{% url 'login' %}?next={{ request.path }}"
-                class="alert-link"
-                >login</a
-              >
-              to purchase tickets.
-            </div>
-            {% endif %}
           </div>
-        </div>
-
-        <div class="description-card">
-          <h2>Event Description</h2>
-          <p>{{ event.event_description }}</p>
         </div>
       </div>
 
@@ -171,103 +356,76 @@
         <div class="ad-item">...</div>
       </div>
     </div>
+
+    <div class="container description">
+      <div class="description-card">
+        <h2>Event Description</h2>
+        <p>{{ event.event_description }}</p>
+      </div>
+    </div>
   </div>
-</script>
 </main>
- 
- 
+
 <script>
-  function getCSRFToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
-  }
   
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
   function adjustQuantity(change) {
-    const input = document.getElementById('ticket-quantity');
+    const input = document.getElementById("ticket-quantity");
     let quantity = parseInt(input.value) || 1;
     quantity = Math.max(1, Math.min(100, quantity + change));
     input.value = quantity;
   }
-  
+
   function addToCart(eventId) {
-    const ticketSelect = document.getElementById('ticket-type');
-    
+    const ticketSelect = document.getElementById("ticket-type");
+
     if (!ticketSelect) {
-      alert('Please select a ticket type');
+      alert("Please select a ticket type");
       return;
     }
-  
+
     const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
     if (!selectedOption) {
-      alert('Invalid ticket selection');
+      alert("Invalid ticket selection");
       return;
     }
-  
+
     const ticketPriceId = selectedOption.value;
-    const ticketPrice = parseInt(selectedOption.getAttribute('data-price'), 10);
-    const quantityInput = document.getElementById('ticket-quantity');
+    const ticketPrice = parseInt(selectedOption.getAttribute("data-price"), 10);
+    const quantityInput = document.getElementById("ticket-quantity");
     const quantity = parseInt(quantityInput.value) || 1;
-  
+
     const addButton = document.querySelector(".add-to-cart-button");
-  
-    console.log('Selected Ticket Price ID:', ticketPriceId);
-    console.log('Quantity:', quantity);
-    console.log('Event ID:', eventId);
-    console.log('Ticket Price:', ticketPrice);
-  
-    if (!ticketPriceId || isNaN(ticketPriceId)) {
-      alert('Please select a valid ticket type');
-      return;
-    }
-  
-    // Add loading state
-    addButton.innerHTML = `<i class="bi bi-arrow-repeat spin"></i> Adding...`;
-    addButton.disabled = true;
-  
-    fetch(`/cart/add/${eventId}/`, {
+
+    console.log("Selected Ticket Price ID:", ticketPriceId);
+    console.log("Selected Ticket Price:", ticketPrice);
+    console.log("Selected Quantity:", quantity);
+
+    fetch(`/add_to_cart/${eventId}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCSRFToken(),
       },
       body: JSON.stringify({
-        quantity: quantity,
-        ticket_price_id: ticketPriceId,  // Fixed JSON syntax
-        ticket_price: ticketPrice       // Fixed JSON syntax
+        ticket_price_id: ticketPriceId,
+        ticket_quantity: quantity,
       }),
     })
-    .then(response => {
-      if (!response.ok) throw new Error('Network error');
-      return response.json();
-    })
-    .then(data => {
-      if (data.success) {
-        document.getElementById("cart-message").style.display = "block";
-        updateCartBadge(data.cart_count);
-      } else {
-        alert(data.error || 'Error adding to cart');
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      alert('An error occurred. Please try again.');
-    })
-    .finally(() => {
-      addButton.innerHTML = `<i class="bi bi-cart-plus"></i> Add to Cart`;
-      addButton.disabled = false;
-      setTimeout(() => {
-        document.getElementById('cart-message').style.display = "none";
-      }, 3000);
-    });
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          addButton.innerHTML = "Added to Cart!";
+          document.getElementById("cart-message").style.display = "block";
+        } else {
+          alert("Error adding to cart");
+        }
+      })
+      .catch((error) => console.error("Error:", error));
   }
-  
-  function updateCartBadge(count) {
-    const cartBadge = document.getElementById("cart-badge");
-    if (cartBadge) {
-      cartBadge.textContent = count > 0 ? count : "";
-      cartBadge.classList.toggle("d-none", count <= 0);
-    }
-  }
-  
 </script>
 
 {% endblock %}
