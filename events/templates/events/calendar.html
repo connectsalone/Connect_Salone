@@ -1,7 +1,5 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
-
 <style>
-  /* Enhanced CSS with CSS Variables and BEM methodology */
   :root {
     --primary-color: #003366;
     --secondary-color: #044745;
@@ -111,6 +109,9 @@
       </div>
       <div class="modal-body">
         <div id="eventContent"></div>
+        <a id="buyTicketBtn" href="#" class="btn btn-primary mt-4"
+          >Buy Ticket</a
+        >
       </div>
     </div>
   </div>
@@ -134,84 +135,78 @@
         right: "dayGridMonth,timeGridWeek,timeGridDay",
       },
       events: {
-        url: '{% url "get_events" %}',
+        url: '{% url "get_events" %}', // Ensure the URL matches the one in your urls.py
         failure: function () {
-          showToast("Error loading events", "danger");
+          alert("Error loading events"); // Show an alert in case of failure
         },
-      },
-      eventDidMount: function (info) {
-        // Add category-based styling
-        const category = info.event.extendedProps.category;
-        if (category) {
-          info.el.classList.add(`event-category-${category}`);
-        }
       },
       eventContent: function (info) {
         return {
           html: `
-          <div class="event-card">
-            <h3 class="event-card__title">${info.event.title}</h3>
-            <p class="event-card__meta">
-              ${info.event.extendedProps.location || ""}<br>
-              ${formatTime(info.event.start)}
-            </p>
-          </div>
-        `,
+            <div class="event-card">
+              <h3 class="event-card__title">${info.event.title}</h3>
+              <p class="event-card__meta">
+                ${info.event.extendedProps.location || ""}<br>
+                ${formatTime(info.event.start)}
+              </p>
+            </div>
+          `,
         };
       },
       eventClick: function (info) {
         const event = info.event;
-        const content = `
-        <div class="row g-4">
-          ${
-            event.extendedProps.image
-              ? `
-            <div class="col-md-6">
-              <img src="${event.extendedProps.image}" 
-                   class="img-fluid rounded" 
-                   alt="${event.title}">
-            </div>`
-              : ""
-          }
-          <div class="${event.extendedProps.image ? "col-md-6" : "col-12"}">
-            <h3 class="mb-3">${event.title}</h3>
-            ${
-              event.extendedProps.description
-                ? `
-              <div class="mb-4">
-                <h4>Description</h4>
-                <p>${event.extendedProps.description}</p>
-              </div>`
-                : ""
-            }
-            <div class="row row-cols-2 g-3">
-              <div class="col">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">When</h5>
-                    <p class="card-text">
-                      ${formatDateTime(event.start)}<br>
-                      ${event.end ? `to ${formatDateTime(event.end)}` : ""}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="col">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">Where</h5>
-                    <p class="card-text">
-                      ${event.extendedProps.location || "TBD"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+        const eventId = event.id;
 
+        // Set the modal content
+        const content = `
+            <div class="row g-4">
+                ${
+                  event.extendedProps.image
+                    ? `<div class="col-md-6"><img src="${event.extendedProps.image}" class="img-fluid rounded" alt="${event.title}"></div>`
+                    : ""
+                }
+                <div class="${
+                  event.extendedProps.image ? "col-md-6" : "col-12"
+                }">
+                    <h3 class="mb-3">${event.title}</h3>
+                    ${
+                      event.extendedProps.description
+                        ? `<div class="mb-4"><h4>Description</h4><p>${event.extendedProps.description}</p></div>`
+                        : ""
+                    }
+                    <div class="row row-cols-2 g-3">
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">When</h5>
+                                    <p class="card-text">${formatDateTime(
+                                      event.start
+                                    )}<br>${
+          event.end ? `to ${formatDateTime(event.end)}` : ""
+        }</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Where</h5>
+                                    <p class="card-text">${
+                                      event.extendedProps.location || "TBD"
+                                    }</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
         document.getElementById("eventContent").innerHTML = content;
+
+        // Update the "Buy Ticket" button URL with the correct path
+        const buyTicketBtn = document.getElementById("buyTicketBtn");
+        buyTicketBtn.href = `/events/single-event/${eventId}/`; // Ensure the URL ends with a slash
+
         new bootstrap.Modal(document.getElementById("eventModal")).show();
       },
     });
@@ -237,19 +232,6 @@
         hour12: true,
       });
     }
-
-    function showToast(message, type = "success") {
-      // Implement toast notification system if needed
-      console.log(`${type.toUpperCase()}: ${message}`);
-    }
-  });
-
-  // Initialize Bootstrap tooltips
-  const tooltipTriggerList = [].slice.call(
-    document.querySelectorAll('[data-bs-toggle="tooltip"]')
-  );
-  tooltipTriggerList.forEach((tooltipTriggerEl) => {
-    new bootstrap.Tooltip(tooltipTriggerEl);
   });
 </script>
 

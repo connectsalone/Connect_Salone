@@ -14,7 +14,7 @@ urlpatterns = [
     path('about/', about, name='about'),
     path('event-list/', event_list, name='event-list'),
     path('contact/', contact, name='contact'),
-    path('single-event/<event_id>', single_event, name='single-event'),
+    path('single-event/<event_id>/', single_event, name='single-event'),
     path('starter-page/', starter_page, name='starter-page'),
     path('scan_ticket/<str:signed_token>/', scan_ticket, name='scan_ticket'),
 

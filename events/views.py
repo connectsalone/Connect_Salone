@@ -335,19 +335,24 @@ from django.http import JsonResponse
 from .models import Event
 
 def get_events(request):
+    # Fetch all events
     events = Event.objects.all()
+
+    # Prepare event data in a format suitable for FullCalendar
     event_data = []
-    
     for event in events:
         event_data.append({
-            'title': event.event_name,
-            'start': event.event_date.isoformat(),
-            'end': event.event_date.isoformat(),  # Adjust if you have an end date
-            'location': event.event_location,
-            'description': event.event_description,
-            'image': event.event_image.url if event.event_image else None,
+            'id': event.id,  # Unique ID for each event
+            'title': event.event_name,  # Event title
+            'start': event.event_date.isoformat(),  # Start date and time in ISO format
+            'end': event.event_date.isoformat(),  # You can add an actual end date if needed
+            'location': event.event_location,  # Event location
+            'description': event.event_description,  # Event description
+            'image': event.event_image.url if event.event_image else None,  # Optional image URL
+            'event_type': event.event_type,  # Type of event (e.g., concert, party, etc.)
+            'status': event.event_status,  # Status of the event (e.g., upcoming, sold out)
         })
-    
+
     return JsonResponse(event_data, safe=False)
 
 # ------------------- Other Pages -------------------
