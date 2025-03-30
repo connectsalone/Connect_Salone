@@ -64,7 +64,7 @@
   position: relative;
   flex: 1 1 50%; /* Each event item now takes up 50% of the row's width */
   min-width: 350px; /* Increased minimum width */
-  max-width: 600px; /* Increased max width */
+  max-width: 700px; /* Increased max width */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -162,60 +162,126 @@
   margin-top: 15px;
 }
 
-/* ========== Responsive Styles ========== */
-@media (max-width: 1024px) {
-  .post-entry {
-    flex: 1 1 45%; /* Each event item takes up 45% of the row's width for medium screens */
+/* ========== Other Events Styles ========== */
+.section {
+  padding: 50px 0;
+}
+
+.section-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title-container h2 {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.section-title-container p a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.section-title-container p a:hover {
+  text-decoration: underline;
+}
+
+.normal-events .event-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.normal-events .event-item {
+  width: calc(16.66% - 20px); /* Adjusting width to account for the gap */
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border-radius: 10px;
+  height: auto; /* Ensure height adjusts based on content */
+}
+
+/* Make the first and last events the tallest */
+.normal-events .event-item:nth-child(1),
+.normal-events .event-item:nth-child(6) {
+  height: 580px; /* Tallest for the first and last items */
+}
+
+/* Progressively shorter events in the middle */
+.normal-events .event-item:nth-child(2),
+.normal-events .event-item:nth-child(5) {
+  height: 400px;
+}
+
+.normal-events .event-item:nth-child(3),
+.normal-events .event-item:nth-child(4) {
+  height: 350px; /* Shortest events */
+}
+
+/* Styling the event image */
+.normal-events .event-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Styling for the event text */
+.event-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 15px;
+  border-radius: 0 0 10px 10px;
+  text-align: left;
+}
+
+.event-text .post-meta {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.event-text .post-meta .title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.event-text .buy-ticket-btn {
+  background-color: #FF6347;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.event-text .buy-ticket-btn:hover {
+  background-color: #FF4500;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .normal-events .event-item {
+    width: calc(33.33% - 20px); /* 3 items per row on medium screens */
   }
 }
 
 @media (max-width: 768px) {
-  .post-entry {
-    flex: 1 1 100%; /* Event items take full width on mobile */
-  }
-
-  .section-title h1 {
-    font-size: 28px; /* Adjusted font size for smaller screens */
-    margin-bottom: 5px; /* Ensure there's less space below the title */
-  }
-
-  .ticket-prices {
-    font-size: 14px;
-  }
-
-  .author .btn {
-    font-size: 16px;
-    padding: 10px 20px;
-  }
-
-  .post-entry img {
-    border-radius: 10px; /* Adding rounded corners for mobile */
+  .normal-events .event-item {
+    width: calc(48% - 20px); /* 2 items per row on smaller screens */
   }
 }
 
-@media (max-width: 480px) {
-  /* Adjust for the smallest mobile screens */
-  .post-entry {
-    flex: 1 1 100%; /* Event items take full width */
-    padding: 10px; /* Adds padding for better spacing */
-    min-width: 100%; /* Ensures no overflow */
-  }
-
-  .post-entry h2 {
-    font-size: 24px; /* Decrease font size for smaller screens */
-  }
-
-  .ticket-prices {
-    font-size: 12px; /* Decrease font size for mobile */
-  }
-
-  .author .btn {
-    font-size: 14px; /* Decrease button font size */
-    padding: 8px 16px; /* Adjust button padding */
-  }
-
-  .post-entry img {
-    border-radius: 8px; /* Rounded corners for mobile */
+@media (max-width: 576px) {
+  .normal-events .event-item {
+    width: 100%; /* 1 item per row on mobile screens */
   }
 }
 
@@ -268,7 +334,7 @@
                   {% if tickets %}
                     {% for ticket in tickets %}
                       <p class="ticket-type">
-                        {{ ticket.ticket_type }}: <strong>{{ ticket.price }}</strong>
+                        {{ ticket.ticket_type }}: <strong>Le{{ ticket.price }}</strong>
                       </p>
                     {% endfor %}
                   {% else %}
@@ -428,25 +494,25 @@
   <!-- /Trending Category Section -->
 
   <!-- Culture Category Section -->
-<section id="culture-category" class="culture-category section">
-  <!-- Section Title -->
-  <div class="container section-title" data-aos="fade-up">
-    <div class="section-title-container d-flex align-items-center justify-content-between">
-      <h2>Other Events</h2>
-      <p><a href="{% url 'event-list' %}">See All Events</a></p>
+  <section id="culture-category" class="culture-category section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+      <div class="section-title-container d-flex align-items-center justify-content-between">
+        <h2>Other Events</h2>
+        <p><a href="{% url 'event-list' %}">See All Events</a></p>
+      </div>
     </div>
-  </div>
-  <!-- End Section Title -->
-
-  <div class="container" data-aos="fade-up" data-aos-delay="100">
-    <div class="row">
-      <!-- Main Content Section -->
-      <div class="col-md-8">
-        <!-- Normal Events Slider -->
-        <div class="normal-events">
-          <div class="event-slider-container">
-            <div class="event-slider">
-              {% for event in normal_events %}
+    <!-- End Section Title -->
+  
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <div class="row">
+        <!-- Main Content Section -->
+        <div class="col-md-12">
+          <!-- Events Container -->
+          <div class="normal-events">
+            <div class="event-container">
+              {% for event in normal_events|slice:":6" %}
+             
               <div class="event-item">
                 <div class="event-image">
                   <img src="{{ event.event_image.url }}" alt="{{ event.event_name }}" class="event-img" />
@@ -467,10 +533,9 @@
                       <p class="early-bird">
                         Early Bird Price: SLe{{ event.early_bird_price }} &nbsp; &nbsp;
                         Normal Price: SLe{{ event.normal_price }}
-                      </class=>
-                      
+                      </p>
                       {% else %}
-                      <p class="normal-price">Ticket Price: {{ event.normal_price }}</p>
+                      <p class="normal-price">Ticket Price: SLe{{ event.normal_price }}</p>
                       {% endif %}
                     </p>
                     <a href="{% url 'single-event' event.id %}">
@@ -483,55 +548,12 @@
               {% endfor %}
             </div>
           </div>
-          
-          <!-- Navigation Buttons -->
-          <button class="slider-btn prev-btn">‹</button>
-          <button class="slider-btn next-btn">›</button>
-        </div>
-        <!-- End Normal Events Slider -->
-      </div>
-
-      <!-- Sidebar Section -->
-      <div class="col-md-4">
-        <div class="sidebar">
-          <!-- Sidebar Content Here -->
-          <div class="post-list border-bottom">
-            <div class="post-meta">
-              <span class="date">Culture</span> <span class="mx-1">•</span> <span>Jul 5th '22</span>
-            </div>
-            <h2 class="mb-2">
-              <a href="blog-details.html">How to Avoid Distraction and Stay Focused During Video Calls?</a>
-            </h2>
-            <span class="author mb-3 d-block">Jenny Wilson</span>
-          </div>
-          <!-- More posts... -->
-             <!-- Sidebar Content Here -->
-          <div class="post-list border-bottom">
-            <div class="post-meta">
-              <span class="date">Culture</span> <span class="mx-1"></span> <span>Jul 5th '22</span>
-            </div>
-            <h2 class="mb-2">
-              <a href="blog-details.html">How to Avoid Distraction and Stay Focused During Video Calls?</a>
-            </h2>
-            <span class="author mb-3 d-block">Jenny Wilson</span>
-          </div>
-          <!-- More posts... -->
-             <!-- Sidebar Content Here -->
-          <div class="post-list border-bottom">
-            <div class="post-meta">
-              <span class="date">Culture</span> <span class="mx-1">•</span> <span>Jul 5th '22</span>
-            </div>
-            <h2 class="mb-2">
-              <a href="blog-details.html">How to Avoid Distraction and Stay Focused During Video Calls?</a>
-            </h2>
-            <span class="author mb-3 d-block">Jenny Wilson</span>
-          </div>
-          <!-- More posts... -->
+          <!-- End Events Container -->
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+  
 <!-- /Culture Category Section -->
 
 
@@ -744,40 +766,5 @@
   </section>
 </main>
 
-<script>
-  let currentIndex = 0; // Keep track of the current event
 
-const events = document.querySelectorAll('.event-item'); // Get all event items
-const totalEvents = events.length;
-
-const prevButton = document.querySelector('.prev-btn');
-const nextButton = document.querySelector('.next-btn');
-
-function showEvent(index) {
-  const offset = -index * 100; // Each event takes 100% of the width
-  document.querySelector('.event-slider').style.transform = `translateX(${offset}%)`;
-  currentIndex = index;
-}
-
-// Auto slide every 10 seconds
-setInterval(() => {
-  currentIndex = (currentIndex + 1) % totalEvents; // Go to the next event
-  showEvent(currentIndex);
-}, 10000); // 10 seconds
-
-// Previous and next buttons
-prevButton.addEventListener('click', () => {
-  currentIndex = (currentIndex - 1 + totalEvents) % totalEvents;
-  showEvent(currentIndex);
-});
-
-nextButton.addEventListener('click', () => {
-  currentIndex = (currentIndex + 1) % totalEvents;
-  showEvent(currentIndex);
-});
-
-// Initial display
-showEvent(currentIndex);
-
-</script>
 {% endblock %}

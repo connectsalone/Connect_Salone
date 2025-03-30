@@ -42,6 +42,7 @@ class Event(models.Model):
         max_length=100,
         choices=[
             ('concert', 'Concert'),
+            ('party', 'Party'),
             ('conference', 'Conference'),
             ('sports', 'Sports'),
             ('theatre', 'Theatre')

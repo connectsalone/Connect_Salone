@@ -321,69 +321,34 @@ def event_detail(request, event_id):
 
 
 # ------------------- Calendar Page -------------------
-from django.db.models import OuterRef, Subquery
-from django.utils import timezone
-from django.http import JsonResponse
-from events.models import Event, TicketPrice
+
+from django.shortcuts import render
+from .models import Event
 
 def calendar_view(request):
-    # Subquery to fetch the first available normal price for each event
-    normal_price_subquery = TicketPrice.objects.filter(
-        event=OuterRef("id")
-    ).order_by("normal_price").values("normal_price")[:1]  # Get the first normal price available
-
-    # Fetch events with the normal price attached
-    events = Event.objects.annotate(
-        normal_price=Subquery(normal_price_subquery)
-    ).values("id", "event_date", "event_location", "event_name", "normal_price", "event_description")
-
-    # Format events for the calendar
-    event_list = [
-        {
-            "id": event["id"],
-            "title": event["event_name"],
-            "location": event["event_location"],
-            "price": event["normal_price"] if event["normal_price"] is not None else "N/A",
-            "description": event["event_description"] if event["event_description"] else "No description available",
-            "start": event["event_date"].isoformat(),
-            "end": (event["event_date"] + timezone.timedelta(hours=2)).isoformat(),  # Assuming 2-hour events
-        }
-        for event in events
-    ]
-
-    return JsonResponse(event_list, safe=False)
-
+    # You can add filtering based on event status or other criteria if needed
+    events = Event.objects.all()  # Fetch all events, you can filter by status if needed
+    return render(request, 'events/calendar.html', {'events': events})
 
 
 from django.http import JsonResponse
-from django.utils import timezone
-from events.models import Event
+from .models import Event
 
 def get_events(request):
-    """Fetches and returns events in JSON format for FullCalendar."""
+    events = Event.objects.all()
+    event_data = []
     
-    # Fetch upcoming events only
-    events = Event.objects.filter(event_date__gte=timezone.now()).values(
-        "id", "event_name", "event_date", "event_location", "event_description", "event_image"
-    )
-
-    # Format data for FullCalendar
-    event_list = [
-        {
-            "id": event["id"],
-            "title": event["event_name"],
-            "start": event["event_date"].isoformat(),
-            "end": (event["event_date"] + timezone.timedelta(hours=2)).isoformat(),  # Assuming events last 2 hours
-            "location": event["event_location"] or "TBD",
-            "description": event["event_description"] or "No description available",
-            "image": event["event_image"] if event["event_image"] else None,  # Include image if available
-        }
-        for event in events
-    ]
-
-    return JsonResponse(event_list, safe=False)
-
-
+    for event in events:
+        event_data.append({
+            'title': event.event_name,
+            'start': event.event_date.isoformat(),
+            'end': event.event_date.isoformat(),  # Adjust if you have an end date
+            'location': event.event_location,
+            'description': event.event_description,
+            'image': event.event_image.url if event.event_image else None,
+        })
+    
+    return JsonResponse(event_data, safe=False)
 
 # ------------------- Other Pages -------------------
 
