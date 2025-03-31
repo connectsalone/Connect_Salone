@@ -417,6 +417,8 @@
         // Handle response from server
         if (data.success) {
           console.log("Success:", data);
+          console.log("Cart Updated! New Count:", data.cart_count);
+          updateCartBadge(data.cart_count);
           addButton.innerHTML = "Added to Cart!";
           document.getElementById("cart-message").style.display = "block";
         } else {
@@ -427,6 +429,15 @@
         console.error("Error:", error);
         alert("An error occurred while adding the ticket to the cart.");
       });
+
+    // Function to update the cart badge dynamically
+    function updateCartBadge(count) {
+      const cartBadge = document.getElementById("cart-badge");
+      if (cartBadge) {
+        cartBadge.textContent = count;
+        cartBadge.style.display = count > 0 ? "inline-block" : "none";
+      }
+    }
   }
 </script>
 

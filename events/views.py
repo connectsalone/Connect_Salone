@@ -82,6 +82,7 @@ def add_to_cart(request, event_id):
             total_quantity=Sum('quantity')
         )['total_quantity'] or 0
 
+        
         return JsonResponse({
             'success': True,
             'cart_count': total_cart_quantity,
