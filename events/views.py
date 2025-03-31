@@ -40,32 +40,23 @@ def update_cart_count_on_login(sender, request, user, **kwargs):
 # ------------------- Cart Views -------------------
 
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Event, TicketPrice, Cart, CartItem
-import json
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-
-
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum
 import json
 
-
 @require_POST
 @login_required
 def add_to_cart(request, event_id):
     try:
         print("\n=== RAW REQUEST DATA ===")
-        print("Request body:", request.body.decode('utf-8'))  # Decode for clarity
+        print("Request body:", request.body.decode('utf-8'))  # Debugging
 
         data = json.loads(request.body)
 
         ticket_price_id = data.get('ticket_price_id')
-        quantity = int(data.get('quantity', 1))
+        quantity = int(data.get('ticket_quantity', 1))  # Ensure correct key
 
         print(f"\n=== PARSED DATA ===")
         print(f"Ticket Price ID: {ticket_price_id}, Type: {type(ticket_price_id)}")
@@ -75,28 +66,26 @@ def add_to_cart(request, event_id):
             return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
         event = get_object_or_404(Event, pk=event_id)
-        ticket_type = get_object_or_404(TicketPrice, pk=int(ticket_price_id), event=event)  # ✅ Get TicketPrice instance
+        ticket_type = get_object_or_404(TicketPrice, pk=int(ticket_price_id), event=event)
 
         cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
 
-        # Check if CartItem with the same cart and ticket_price already exists
-        cart_item = CartItem.objects.filter(cart=cart, ticket_price=ticket_type).first()
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart, ticket_price=ticket_type, defaults={'event': event, 'quantity': quantity}
+        )
 
-        if cart_item:
-            # If CartItem already exists, update the quantity
+        if not created:
             cart_item.quantity += quantity
             cart_item.save()
-        else:
-            # If CartItem doesn't exist, create a new one
-            CartItem.objects.create(cart=cart, event=event, ticket_price=ticket_type, quantity=quantity)
 
-        # ✅ Calculate total cart quantity correctly
-        total_cart_quantity = CartItem.objects.filter(cart=cart).aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
+        total_cart_quantity = CartItem.objects.filter(cart=cart).aggregate(
+            total_quantity=Sum('quantity')
+        )['total_quantity'] or 0
 
         return JsonResponse({
             'success': True,
             'cart_count': total_cart_quantity,
-            'item_price': ticket_type.ticket_price,  # Use the price from TicketPrice instance
+            'item_price': ticket_type.get_price(),  # ✅ Correctly fetching price
             'item_name': ticket_type.get_name_display()
         })
 
@@ -107,6 +96,8 @@ def add_to_cart(request, event_id):
     except Exception as e:
         print(f"Unexpected Error: {e}")
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
 
 def cart_page(request):
     """Render the user's cart."""

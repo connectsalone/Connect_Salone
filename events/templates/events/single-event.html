@@ -1,9 +1,6 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 
-<input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}" />
-
 <style>
-  <style>
   /* Main Layout */
   .page-container {
     display: flex;
@@ -32,33 +29,32 @@
   }
 
   /* Style for Event Title */
-.event-title {
-  font-size: 30px; /* Increase font size */
-  font-weight: bold; /* Make it bold */
-  color:  #033136; /* Change text color (Red shade) */
-  text-align: center; /* Center align */
-  margin-bottom: 15px; /* Add some spacing */
-  text-transform: uppercase;
-  margin-button: 10px;
-}
+  .event-title {
+    font-size: 30px; /* Increase font size */
+    font-weight: bold; /* Make it bold */
+    color: #033136; /* Change text color (Red shade) */
+    text-align: center; /* Center align */
+    margin-bottom: 15px; /* Add some spacing */
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
 
   /* Style for event details list */
   .event-details-list {
     font-size: 20px; /* Increase text size */
-    color:  #033136; /* Adjust text color */
+    color: #033136; /* Adjust text color */
     list-style: none;
     padding: 0;
     font-weight: bold;
-    
   }
-  
+
   /* Style for icons */
   .event-details-list i {
     font-size: 20px; /* Increase icon size */
     color: #007bff; /* Adjust icon color (blue shade) */
     margin-right: 8px;
   }
-  
+
   /* Ensure spacing is consistent */
   .event-details-list li {
     display: flex;
@@ -66,7 +62,6 @@
     gap: 8px; /* Adjust spacing between icon and text */
     margin-bottom: 10px; /* Space between list items */
   }
-  
 
   /* Cart Column */
   .cart-column {
@@ -113,7 +108,6 @@
     text-transform: capitalize;
   }
 
-
   .ticket-select,
   .quantity-controls,
   .add-to-cart-button {
@@ -133,15 +127,13 @@
     font-weight: bold;
     text-transform: uppercase;
   }
-  
- 
-  
+
   /* Style for the entire select box */
-  .ticket-select, .ticket-name {
+  .ticket-select,
+  .ticket-name {
     font-weight: bold;
     text-transform: uppercase;
   }
-  
 
   /* Style for quantity buttons */
   .quantity-btn {
@@ -276,29 +268,32 @@
         <div class="cart-column">
           <h1 class="event-title">{{ event.event_name }}</h1>
 
-
           <ul class="event-details-list">
             <li>
-              <i class="bi bi-calendar-event"></i> {{ event.event_date|date:"F j, Y" }}
+              <i class="bi bi-calendar-event"></i> {{ event.event_date|date:"F
+              j, Y" }}
             </li>
             <li>
               <i class="bi bi-clock"></i> {{ event.event_date|time:"g:i A" }}
             </li>
-            <li>
-              <i class="bi bi-geo-alt"></i> {{ event.event_location }}
-            </li>
+            <li><i class="bi bi-geo-alt"></i> {{ event.event_location }}</li>
           </ul>
-          
 
           <div class="ticket-selection-card">
             <div class="ticket-selection">
               <h3>Choose ticket</h3>
               <select class="ticket-select" id="ticket-type">
                 {% for ticket in ticket_prices %}
-                  <option value="{{ ticket.id }}" data-price="{{ ticket.get_price }}" data-name="{{ ticket.name }}">
-                    <s class="ticket-name">{{ ticket.name }}</s
-                    <span class="ticket-price">Ticket - NLe{{ ticket.get_price }}</span>
-                  </option>
+                <option
+                  value="{{ ticket.id }}"
+                  data-price="{{ ticket.get_price }}"
+                  data-name="{{ ticket.name }}"
+                >
+                  <span <class="ticket-name">{{ ticket.name }}</span>
+                  <span class="ticket-price"
+                    >Ticket - NLe{{ ticket.get_price }}</span
+                  >
+                </option>
                 {% endfor %}
               </select>
 
@@ -365,11 +360,12 @@
 </main>
 
 <script>
-  
+  // Utility function to fetch CSRF token
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
 
+  // Adjust ticket quantity (for - and + buttons)
   function adjustQuantity(change) {
     const input = document.getElementById("ticket-quantity");
     let quantity = parseInt(input.value) || 1;
@@ -377,20 +373,17 @@
     input.value = quantity;
   }
 
+  // Add to cart function with enhanced logging and error handling
   function addToCart(eventId) {
     const ticketSelect = document.getElementById("ticket-type");
 
-    if (!ticketSelect) {
+    // Validate ticket selection
+    if (!ticketSelect || ticketSelect.selectedIndex === -1) {
       alert("Please select a ticket type");
       return;
     }
 
     const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
-    if (!selectedOption) {
-      alert("Invalid ticket selection");
-      return;
-    }
-
     const ticketPriceId = selectedOption.value;
     const ticketPrice = parseInt(selectedOption.getAttribute("data-price"), 10);
     const quantityInput = document.getElementById("ticket-quantity");
@@ -398,31 +391,42 @@
 
     const addButton = document.querySelector(".add-to-cart-button");
 
-    console.log("Selected Ticket Price ID:", ticketPriceId);
-    console.log("Selected Ticket Price:", ticketPrice);
-    console.log("Selected Quantity:", quantity);
+    // Debugging logs to track values
+    console.log("Ticket ID:", ticketPriceId);
+    console.log("Ticket Price:", ticketPrice);
+    console.log("Quantity:", quantity);
 
-    fetch(`/add_to_cart/${eventId}/`, {
+    // Preparing data for AJAX
+    const data = {
+      ticket_price_id: ticketPriceId,
+      ticket_quantity: quantity, // ✅ Match the backend key
+    };
+
+    // Make the AJAX request to add to cart
+    fetch(`/events/cart/add/${eventId}/`, {
+      // ✅ Prefix with `/events/`
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCSRFToken(),
       },
-      body: JSON.stringify({
-        ticket_price_id: ticketPriceId,
-        ticket_quantity: quantity,
-      }),
+      body: JSON.stringify(data),
     })
       .then((response) => response.json())
       .then((data) => {
+        // Handle response from server
         if (data.success) {
+          console.log("Success:", data);
           addButton.innerHTML = "Added to Cart!";
           document.getElementById("cart-message").style.display = "block";
         } else {
-          alert("Error adding to cart");
+          alert("Error adding to cart: " + data.error || "Unknown error");
         }
       })
-      .catch((error) => console.error("Error:", error));
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("An error occurred while adding the ticket to the cart.");
+      });
   }
 </script>
 
