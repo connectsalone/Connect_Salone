@@ -7,21 +7,81 @@
     flex-direction: column;
     border: 5px solid #ddd;
     border-radius: 8px;
-    padding: 10px;
-    background-color: #f9f9f9;
+    padding: 5px;
+    background-color: #fafcfb;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease-in-out;
-    margin-bottom: 20px; /* Added gap between cards */
+    margin-bottom: 5px; /* Space between cards */
   }
 
   /* Styling for each section (event details, ticket list, and price) */
-  .event-details,
-  .ticket-section,
-  .price-section {
+  .event-details {
     display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    width: 100%;
+    flex-direction: row; /* Changed to row to align details in one line */
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+  }
+
+  /* Event Name */
+  .event-name {
+    font-size: 25px;
+    font-weight: bold;
+  }
+
+  /* Event Info: Remove gaps */
+  .event-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap; /* Prevent wrapping */
+    gap: 0px; /* Force remove any gap */
+  }
+
+  /* Remove extra spacing inside <p> */
+  .event-info p {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 15px !important; /* Override any default margins */
+    padding: 0 !important; /* Override any padding */
+    line-height: 3; /* Reduce default line spacing */
+    white-space: nowrap; /* Prevent wrapping */
+  }
+
+  /* Ensure icons don't add extra spacing */
+  .event-info i {
+    color: #033833;
+    font-size: 20px;
+    margin-right: 5px; /* Adjusted for readability */
+  }
+
+  /* 📱 Responsive Styles for Small Screens */
+  @media (max-width: 768px) {
+    .event-details {
+      flex-direction: column; /* Stack on smaller screens */
+      align-items: flex-start;
+    }
+
+    .event-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0px; /* Force no spacing */
+    }
+
+    .event-info p {
+      font-size: 16px;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 2; /* Reduce default line spacing */
+    }
+    .event-info i {
+      color: #ff5733;
+      font-size: 15px;
+      margin-right: 5px; /* Adjusted for readability */
+    }
   }
 
   /* Styling for the ticket section */
@@ -56,7 +116,7 @@
     display: block;
     width: 100%;
     margin-left: 25px;
-    font-size: 18px;
+    font-size: 25px;
     font-weight: bold;
   }
 
@@ -113,20 +173,31 @@
     {% csrf_token %} {% if event_groups %}
     <div class="event-list">
       {% for event_group in event_groups.values %}
+
       <div class="event-card" id="event-{{ event_group.event.id }}">
         <!-- Event Details in First Row -->
-        <div class="event-details">
-          <p class="event-name">{{ event_group.event.event_name }}</p>
-          <p class="event-location">{{ event_group.event.event_location }}</p>
-          <p class="event-date">
-            {{ event_group.event.event_date|date:"F j, Y" }}
-          </p>
-          <p class="event-time">
-            {{ event_group.event.event_date|date:"h:i A" }}
-          </p>
+        <div class="event-card">
+          <div class="event-icon">
+            <i class="fas fa-calendar-check"></i>
+            <span class="event-name">{{ event_group.event.event_name }}</span>
+          </div>
+          <div class="event-details">
+            <div class="event-info">
+              <p class="event-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ event_group.event.event_location }}</span>
+              </p>
+              <p class="event-date">
+                <i class="fas fa-calendar"></i>
+                <span>{{ event_group.event.event_date|date:"F j, Y" }}</span>
+              </p>
+              <p class="event-time">
+                <i class="fas fa-clock"></i>
+                <span>{{ event_group.event.event_date|time:"h:i A" }}</span>
+              </p>
+            </div>
+          </div>
         </div>
-
-        <hr />
 
         <!-- Tickets in Second Row -->
         <div class="ticket-section">
