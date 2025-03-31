@@ -414,17 +414,24 @@
     })
       .then((response) => response.json())
       .then((data) => {
-        // Handle response from server
         if (data.success) {
-          console.log("Success:", data);
           console.log("Cart Updated! New Count:", data.cart_count);
           updateCartBadge(data.cart_count);
+
+          // ✅ Update button text
           addButton.innerHTML = "Added to Cart!";
           document.getElementById("cart-message").style.display = "block";
+
+          // 🔄 Reset button and message after 3 seconds
+          setTimeout(() => {
+            addButton.innerHTML = "Add to Cart"; // Reset button text
+            document.getElementById("cart-message").style.display = "none"; // Hide message
+          }, 3000); // Adjust delay time as needed
         } else {
-          alert("Error adding to cart: " + data.error || "Unknown error");
+          alert("Error adding to cart: " + (data.error || "Unknown error"));
         }
       })
+
       .catch((error) => {
         console.error("Error:", error);
         alert("An error occurred while adding the ticket to the cart.");
