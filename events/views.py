@@ -152,6 +152,7 @@ def cart_page(request):
 
 def update_cart(request, event_id):
     if request.method != "POST":
+        print("🔵 Received AJAX request:", json.dumps(request.POST.dict(), indent=2))
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
 
     user = request.user

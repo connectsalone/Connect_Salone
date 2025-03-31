@@ -1,164 +1,108 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
+
 <style>
-  /* Maintain your existing styles but add these additions */
-  .empty-cart-message {
-    text-align: center;
-    padding: 50px;
-    font-size: 1.5rem;
-    color: #666;
-  }
-
-  .ticket-type {
-    margin: 10px 0;
-    padding: 8px;
-    background: #fff;
-    border-radius: 4px;
-  }
-
-  .quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 15px;
-  }
-
-  .ajax-loading {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.8);
-    z-index: 9999;
-  }
-
-  /* Your existing styles remain the same */
+  /* General styling for the event card */
   .event-card {
     display: flex;
-    justify-content: space-between;
-    border: 1px solid #ddd;
+    flex-direction: column;
+    border: 5px solid #ddd;
     border-radius: 8px;
-    margin-bottom: 20px;
     padding: 10px;
-    position: relative;
     background-color: #f9f9f9;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease-in-out;
+    margin-bottom: 20px; /* Added gap between cards */
   }
 
-  .main {
-    margin-top: 50px;
-    margin-bottom: 20px;
-  }
-
-  .main h1 {
-    font-size: 70px;
-    font-weight: 900;
-  }
-
-  .main h4 {
-    font-size: 30px;
-    font-weight: 600;
-  }
-
-  .event-details {
+  /* Styling for each section (event details, ticket list, and price) */
+  .event-details,
+  .ticket-section,
+  .price-section {
     display: flex;
+    justify-content: space-between;
+    padding: 10px;
     width: 100%;
   }
 
-  .event-column,
-  .ticket-column,
-  .price-column {
-    flex: 1;
-    padding: 10px;
-    text-align: center;
-  }
-
-  .event-name {
-    font-size: 30px;
-    font-weight: 600;
-    color: #ab2d03;
-  }
-
-  .event-date,
-  .event-time,
-  .event-location {
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #01024a;
-    font-weight: 600;
-  }
-
-  .ticket-price {
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #032a54;
-    font-weight: 800;
-  }
-
-  .ticket-quantity {
+  /* Styling for the ticket section */
+  .ticket-section {
     display: flex;
+    flex-direction: column; /* Ensure elements inside this container stack vertically */
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  /* Update the ticket row to ensure spacing between each ticket */
+  .ticket-row {
+    display: flex;
+    justify-content: flex-start; /* Align to the left */
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 20px;
-    color: #032a54;
-    font-weight: 800;
+    padding: 5px 0;
+    width: 100%;
+    margin-bottom: 10px; /* Add bottom margin to create space below each ticket */
   }
 
-  .remove-event {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    cursor: pointer;
-    background: black;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 50%;
-  }
-
-  .decrease-quantity,
-  .increase-quantity {
+  /* Styling for the ticket header */
+  .ticket-header {
     font-size: 25px;
-    color: white;
-    background-color: black;
-    font-weight: 600;
+    font-weight: bold;
+    margin-bottom: 15px; /* Adds space below the heading */
   }
 
-  .remove-event:hover {
-    background: darkred;
+  /* Styling for the ticket list */
+  .ticket-list {
+    display: block;
+    width: 100%;
+    margin-left: 25px;
+    font-size: 18px;
+    font-weight: bold;
   }
 
-  .event-subtotal {
-    position: absolute;
-    bottom: 10px;
-    right: 20px;
-    font-size: 25px;
-    color: green;
-    font-weight: 700;
+  /* Adjust ticket row styling */
+  .ticket-price {
+    font-size: 16px;
+    margin-right: 10px;
+  }
+
+  .btn {
+    margin-left: 5px;
+  }
+
+  /* Styling for the price section */
+  .price-section {
+    text-align: right;
+    font-size: 18px;
   }
 
   .total-price-container {
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
     margin-top: 20px;
-    font-size: 30px;
-    font-weight: 800;
-    color: #032a54;
   }
 
   .cart-buttons {
-    margin-top: 20px;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
   }
 
-  .cart-buttons a {
-    margin: 5px;
-    font-size: 25px;
-    font-weight: 600;
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .ticket-section,
+    .price-section {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .cart-buttons {
+      flex-direction: column;
+    }
+
+    .total-price-container {
+      justify-content: flex-start;
+    }
   }
 </style>
 
@@ -166,78 +110,77 @@
   <div class="container">
     <h1>Your Cart</h1>
     <h4>Please review your cart below</h4>
-
     {% csrf_token %} {% if event_groups %}
     <div class="event-list">
       {% for event_group in event_groups.values %}
       <div class="event-card" id="event-{{ event_group.event.id }}">
+        <!-- Event Details in First Row -->
         <div class="event-details">
-          <div class="event-column">
-            <p class="event-name">{{ event_group.event.event_name }}</p>
-            <p class="event-location">{{ event_group.event.event_location }}</p>
-            <p class="event-date">
-              {{ event_group.event.event_date|date:"F j, Y" }}
-            </p>
-            <p class="event-time">
-              {{ event_group.event.event_date|date:"h:i A" }}
-            </p>
+          <p class="event-name">{{ event_group.event.event_name }}</p>
+          <p class="event-location">{{ event_group.event.event_location }}</p>
+          <p class="event-date">
+            {{ event_group.event.event_date|date:"F j, Y" }}
+          </p>
+          <p class="event-time">
+            {{ event_group.event.event_date|date:"h:i A" }}
+          </p>
+        </div>
+
+        <hr />
+
+        <!-- Tickets in Second Row -->
+        <div class="ticket-section">
+          <div class="ticket-header">
+            <span>Tickets</span>
+            <!-- You can style this header as needed -->
           </div>
 
-          <div class="ticket-column">
-            <p class="ticket-price"></p>
-            <h3>Tickets</h3>
-
-            <div class="ticket-list">
-              {% for ticket in event_group.tickets %}
-              <div id="ticket-{{ ticket.id }}" class="ticket-row">
-                <p class="ticket-price">
-                  <!-- Ticket quantity updated dynamically -->
-                  <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}"
-                    >{{ ticket.quantity }}</span
-                  >
-                  × {{ ticket.ticket_price.name }} @ NLe<span
-                    id="price-{{ event_group.event.id }}-{{ ticket.id }}"
-                  >
-                    {{ ticket.ticket_price.get_price }}
-                  </span>
-
-                  <!-- Buttons to increase/decrease the quantity -->
-                  <button
-                    class="btn btn-sm btn-outline-secondary decrease-quantity"
-                    data-event-id="{{ event_group.event.id }}"
-                    data-ticket-id="{{ ticket.id }}"
-                    data-url="{% url 'update_cart' event_group.event.id %}"
-                  >
-                    -
-                  </button>
-
-                  <button
-                    class="btn btn-sm btn-outline-secondary increase-quantity"
-                    data-event-id="{{ event_group.event.id }}"
-                    data-ticket-id="{{ ticket.id }}"
-                    data-url="{% url 'update_cart' event_group.event.id %}"
-                  >
-                    +
-                  </button>
-                </p>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <div class="price-column">
-            <div class="ticket-quantity">
-              <span
-                id="quantity-{{ event_group.event.id }}"
-                class="quantity-display"
+          <!-- Ticket List Below the Ticket Heading -->
+          <div class="ticket-list">
+            {% for ticket in event_group.tickets %}
+            <div id="ticket-{{ ticket.id }}" class="ticket-row">
+              <p class="ticket-price">
+                <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}">
+                  {{ ticket.quantity }}
+                </span>
+                × {{ ticket.ticket_price.name }} @ NLe
+                <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
+                  {{ ticket.ticket_price.get_price }}
+                </span>
+              </p>
+              <button
+                class="btn btn-sm btn-outline-secondary decrease-quantity"
+                data-event-id="{{ event_group.event.id }}"
+                data-ticket-id="{{ ticket.id }}"
+                data-url="{% url 'update_cart' event_group.event.id %}"
               >
-                {{ event_group.total_quantity }} Tickets
+                -
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary increase-quantity"
+                data-event-id="{{ event_group.event.id }}"
+                data-ticket-id="{{ ticket.id }}"
+                data-url="{% url 'update_cart' event_group.event.id %}"
+              >
+                +
+              </button>
+
+              <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
+                {{ new_event_subtotal }}
+                <!-- Render the subtotal here -->
               </span>
             </div>
-            <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
-              NLe<span> {{ event_group.total_price|floatformat:2 }} </span>
-            </p>
+            {% endfor %}
           </div>
+        </div>
+
+        <hr />
+
+        <!-- Price in Third Row -->
+        <div class="price-section">
+          <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
+            NLe<span> {{ event_group.total_price|floatformat:2 }} </span>
+          </p>
         </div>
       </div>
       {% endfor %}
@@ -257,9 +200,8 @@
         >
       </div>
     </div>
-
     {% else %}
-    <p>Your cart is empty.</p>
+    <p class="empty-cart-message">Your cart is empty.</p>
     {% endif %}
   </div>
 </main>
@@ -292,50 +234,58 @@
         },
         success: function (response) {
           if (response.success) {
-            let newSubtotal = parseFloat(response.new_subtotal);
-            let newTotalPrice = parseFloat(response.new_total_price);
-            let newEventSubtotal = parseFloat(response.new_event_subtotal);
-            let newEventQuantity = response.new_event_quantity;
-
-            // ✅ Update the ticket quantity dynamically
-            $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
-
-            // ✅ Update subtotal for this ticket
-            $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
-
-            // ✅ Update total event subtotal
-            $(`#subtotal-${eventId} span`).text(newEventSubtotal.toFixed(2));
-
-            // ✅ Update total event quantity
-            $(`#quantity-${eventId}`).text(`${newEventQuantity} Tickets`);
-
-            // ✅ Update the total price across all tickets
-            //  $("#total-price span").text(newTotalPrice.toFixed(2));
-
-            // ✅ Remove only the specific ticket row when quantity is 0
-            if (response.remove_ticket) {
-              let ticketRow = $(`#ticket-${ticketId}`);
-              ticketRow.fadeOut(300, function () {
-                $(this).remove();
-
-                // Check if any tickets remain in this event group
-                if ($(`#event-${eventId} .ticket-row`).length === 0) {
-                  $(`#event-${eventId}`).fadeOut(300, function () {
-                    $(this).remove();
-                  });
-                }
-
-                // Check if the cart is empty
-                if ($(".ticket-list .ticket-row").length === 0) {
-                  $(".ticket-list").html("<p>Your cart is empty.</p>");
-                }
-              });
-            }
+            updateCartDetails(response, eventId, ticketId);
           }
         },
       });
     }
   );
+
+  function updateCartDetails(response, eventId, ticketId) {
+    let newSubtotal = parseFloat(response.new_subtotal);
+    let newTotalPrice = parseFloat(response.new_total_price);
+    let newEventSubtotal = parseFloat(response.new_event_subtotal);
+    let newEventQuantity = response.new_event_quantity;
+
+    // Update the ticket quantity dynamically
+    $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
+
+    // Update subtotal for this ticket
+    $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
+
+    // Update total event subtotal
+    $(`#subtotal-${eventId} span`).text(newEventSubtotal.toFixed(2));
+
+    // Update total event quantity
+    $(`#quantity-${eventId}`).text(`${newEventQuantity} Tickets`);
+
+    // Update the total price across all tickets
+    $("#total-price span").text(newTotalPrice.toFixed(2));
+
+    // Remove only the specific ticket row when quantity is 0
+    if (response.remove_ticket) {
+      removeTicketRow(ticketId, eventId);
+    }
+  }
+
+  function removeTicketRow(ticketId, eventId) {
+    let ticketRow = $(`#ticket-${ticketId}`);
+    ticketRow.fadeOut(300, function () {
+      $(this).remove();
+
+      // Check if any tickets remain in this event group
+      if ($(`#event-${eventId} .ticket-row`).length === 0) {
+        $(`#event-${eventId}`).fadeOut(300, function () {
+          $(this).remove();
+        });
+      }
+
+      // Check if the cart is empty
+      if ($(".ticket-list .ticket-row").length === 0) {
+        $(".ticket-list").html("<p>Your cart is empty.</p>");
+      }
+    });
+  }
 </script>
 
 {% endblock %}

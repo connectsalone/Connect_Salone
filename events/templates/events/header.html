@@ -1,5 +1,5 @@
 <script>
-    /* General Styling */
+  /* General Styling */
   .header {
     background-color: #fff;
     padding: 10px 20px;
@@ -98,7 +98,8 @@
     right: -5px;
   }
 
-  .logout, .signup {
+  .logout,
+  .signup {
     font-size: 16px;
     color: #007bff;
     text-decoration: none;
@@ -106,11 +107,13 @@
     align-items: center;
   }
 
-  .logout i, .signup i {
+  .logout i,
+  .signup i {
     margin-right: 5px;
   }
 
-  .logout:hover, .signup:hover {
+  .logout:hover,
+  .signup:hover {
     color: #0056b3;
   }
 
@@ -159,7 +162,8 @@
       margin-right: 10px;
     }
 
-    .logout, .signup {
+    .logout,
+    .signup {
       font-size: 14px;
     }
   }
@@ -231,8 +235,9 @@
         <span
           id="cart-badge"
           class="badge position-absolute {% if cart_count|default:0 == 0 %}d-none{% endif %}"
-          >{{ cart_count }}</span
         >
+          {{ cart_count }}
+        </span>
       </a>
 
       <!-- Authentication Links -->

@@ -108,35 +108,100 @@
 </div>
 
 <script>
-  function getCSRFToken() {
-    return document.querySelector("[name=csrfmiddlewaretoken]").value;
-  }
+  $(document).on(
+    "click",
+    ".increase-quantity, .decrease-quantity",
+    function (e) {
+      e.preventDefault();
 
-  function addToCart(eventId) {
-    let quantity = document.getElementById("ticket-quantity").value;
+      const button = $(this);
+      const eventId = button.data("event-id");
+      const ticketId = button.data("ticket-id");
+      const url = button.data("url");
+      const action = button.hasClass("increase-quantity")
+        ? "increase"
+        : "decrease";
+      const csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
 
-    fetch(`/cart/add/${eventId}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({quantity: quantity}),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          document.getElementById("cart-message").style.display = "block";
-          updateCartBadge(data.cart_count);
-        } else {
-          alert("Error adding to cart.");
-        }
-      })
-      .catch((error) => console.error("Error:", error));
-  }
+      console.log("Sending AJAX Request..."); // 🔍 Debugging
+      console.log(
+        "Event ID:",
+        eventId,
+        "Ticket ID:",
+        ticketId,
+        "Action:",
+        action
+      );
 
+      $.ajax({
+        url: url,
+        method: "POST",
+        data: {
+          action: action,
+          ticket_id: ticketId,
+          event_id: eventId,
+          csrfmiddlewaretoken: csrfToken,
+        },
+        success: function (response) {
+          console.log("AJAX Success:", response); // 🔍 Debugging
+
+          if (response.success) {
+            let newCartCount = response.new_cart_count || 0;
+            let newSubtotal = parseFloat(response.new_subtotal);
+            let newTotalPrice = parseFloat(response.new_total_price);
+            let newEventSubtotal = parseFloat(response.new_event_subtotal);
+            let newEventQuantity = response.new_event_quantity;
+
+            // ✅ Update ticket quantity
+            $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
+
+            // ✅ Update ticket subtotal
+            $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
+
+            // ✅ Update event subtotal
+            $(`#subtotal-${eventId} span`).text(newEventSubtotal.toFixed(2));
+
+            // ✅ Update event quantity
+            $(`#quantity-${eventId}`).text(`${newEventQuantity} Tickets`);
+
+            // ✅ **Force Update the Cart Badge**
+            updateCartBadge(newCartCount);
+
+            // ✅ Remove ticket row if quantity is 0
+            if (response.remove_ticket) {
+              let ticketRow = $(`#ticket-${ticketId}`);
+              ticketRow.fadeOut(300, function () {
+                $(this).remove();
+
+                // If no tickets remain, remove the event section
+                if ($(`#event-${eventId} .ticket-row`).length === 0) {
+                  $(`#event-${eventId}`).fadeOut(300, function () {
+                    $(this).remove();
+                  });
+                }
+
+                // If cart is empty, show a message
+                if ($(".ticket-list .ticket-row").length === 0) {
+                  $(".ticket-list").html("<p>Your cart is empty.</p>");
+                }
+              });
+            }
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error("AJAX Error:", error);
+        },
+      });
+    }
+  );
+
+  /**
+   * Function to update the cart badge dynamically
+   */
   function updateCartBadge(count) {
     const cartBadge = document.getElementById("cart-badge");
+    console.log("Updating Cart Badge:", count); // 🔍 Debugging Log
+
     if (cartBadge) {
       cartBadge.textContent = count > 0 ? count : "";
       cartBadge.classList.toggle("d-none", count === 0);
