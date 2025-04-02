@@ -150,9 +150,12 @@ def cart_page(request):
     })
 
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import Event, Cart, CartItem
+
 def update_cart(request, event_id):
     if request.method != "POST":
-        print("🔵 Received AJAX request:", json.dumps(request.POST.dict(), indent=2))
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=400)
 
     user = request.user
@@ -188,14 +191,17 @@ def update_cart(request, event_id):
     # Get the updated list of cart items for this event
     event_cart_items = CartItem.objects.filter(cart=cart, event=event)
 
+    # Calculate new subtotal for the ticket
+    new_ticket_subtotal = cart_item.quantity * ticket_price if not was_deleted else 0
+
     # Calculate new subtotal for the entire event
     new_event_subtotal = sum(item.quantity * item.ticket_price.get_price() for item in event_cart_items)
 
     # Calculate the new total price for the entire cart
-    new_total_price = calculate_cart_total(cart)
+    new_total_price = sum(item.quantity * item.ticket_price.get_price() for item in CartItem.objects.filter(cart=cart))
 
     # Get the updated cart count
-    new_cart_count = get_cart_count(cart)
+    new_cart_count = sum(item.quantity for item in CartItem.objects.filter(cart=cart))
 
     # If the item was deleted, return quantity = 0 and instantly remove the row
     if was_deleted:
@@ -207,6 +213,7 @@ def update_cart(request, event_id):
             "new_event_subtotal": new_event_subtotal,  # Event subtotal
             "new_total_price": new_total_price,
             "new_cart_count": new_cart_count,
+            "ticket_price": ticket_price,  # Ensure frontend gets the price
             "remove_ticket": True  # Flag to remove the ticket row
         })
 
@@ -214,14 +221,14 @@ def update_cart(request, event_id):
     return JsonResponse({
         "success": True,
         "new_quantity": cart_item.quantity,
-        "new_subtotal": cart_item.quantity * ticket_price,  # Corrected subtotal calculation
+        "new_subtotal": new_ticket_subtotal,  # ✅ Corrected subtotal calculation
         "new_event_quantity": sum(item.quantity for item in event_cart_items),  # Update event quantity
         "new_event_subtotal": new_event_subtotal,  # Updated event subtotal
         "new_total_price": new_total_price,
         "new_cart_count": new_cart_count,
+        "ticket_price": ticket_price,  # ✅ Send correct ticket price
         "remove_ticket": False  # No need to remove ticket row
     })
-
 
 
 def update_cart_count_in_session(request, user):

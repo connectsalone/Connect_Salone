@@ -270,13 +270,16 @@
 
           <ul class="event-details-list">
             <li>
-              <i class="bi bi-calendar-event"></i> {{ event.event_date|date:"F
-              j, Y" }}
+              <i class="bi bi-calendar-event"></i>
+              <span>{{ event.event_date|date:"F j, Y" }}</span>
             </li>
             <li>
-              <i class="bi bi-clock"></i> {{ event.event_date|time:"g:i A" }}
+              <i class="bi bi-clock"></i> 
+              <span>{{ event.event_date|time:"g:i A" }}</span> 
             </li>
-            <li><i class="bi bi-geo-alt"></i> {{ event.event_location }}</li>
+            <li><i class="bi bi-geo-alt"></i> 
+              <span>{{ event.event_location }}</li></span>
+              
           </ul>
 
           <div class="ticket-selection-card">

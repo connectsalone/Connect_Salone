@@ -1,6 +1,17 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 
 <style>
+  .container h1 {
+    margin-top: 20px;
+    font-weight: bolder;
+    font-size: 50px;
+  }
+
+  .container h4 {
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+
   /* General styling for the event card */
   .event-card {
     display: flex;
@@ -11,7 +22,7 @@
     background-color: #fafcfb;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease-in-out;
-    margin-bottom: 5px; /* Space between cards */
+    margin-bottom: 10px; /* Space between cards */
   }
 
   /* Styling for each section (event details, ticket list, and price) */
@@ -28,6 +39,7 @@
   .event-name {
     font-size: 25px;
     font-weight: bold;
+    color: #023022;
   }
 
   /* Event Info: Remove gaps */
@@ -49,11 +61,12 @@
     padding: 0 !important; /* Override any padding */
     line-height: 3; /* Reduce default line spacing */
     white-space: nowrap; /* Prevent wrapping */
+    color: #023022;
   }
 
   /* Ensure icons don't add extra spacing */
   .event-info i {
-    color: #033833;
+    color: #ff5733;
     font-size: 20px;
     margin-right: 5px; /* Adjusted for readability */
   }
@@ -104,6 +117,13 @@
     margin-bottom: 10px; /* Add bottom margin to create space below each ticket */
   }
 
+  .ticket-subtotal {
+    font-size: 18px;
+    font-weight: bold;
+    color: #450209;
+    margin-left: 100px; /* Pushes subtotal to the right */
+  }
+
   /* Styling for the ticket header */
   .ticket-header {
     font-size: 25px;
@@ -116,8 +136,6 @@
     display: block;
     width: 100%;
     margin-left: 25px;
-    font-size: 25px;
-    font-weight: bold;
   }
 
   /* Adjust ticket row styling */
@@ -128,24 +146,6 @@
 
   .btn {
     margin-left: 5px;
-  }
-
-  /* Styling for the price section */
-  .price-section {
-    text-align: right;
-    font-size: 18px;
-  }
-
-  .total-price-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 20px;
-  }
-
-  .cart-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
   }
 
   /* Responsive adjustments */
@@ -162,6 +162,53 @@
 
     .total-price-container {
       justify-content: flex-start;
+    }
+  }
+
+  /* Styling for the price section */
+  .price-section {
+    text-align: right;
+    font-size: 25px;
+    font-weight: bold;
+    color: #023022;
+  }
+
+  .total-price-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .total-price-container .total {
+    font-size: 30px;
+    font-weight: bold;
+    color: #023022;
+  }
+
+  .total-price-container .total-price {
+    font-size: 40px;
+    font-weight: bolder;
+    color: #450209;
+  }
+
+  .cart-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .total-price-container .total {
+      font-size: 20px;
+      font-weight: bold;
+      color: #023022;
+    }
+
+    .total-price-container .total-price {
+      font-size: 30px;
+      font-weight: bolder;
+      color: #450209;
     }
   }
 </style>
@@ -215,6 +262,7 @@
                   {{ ticket.quantity }}
                 </span>
                 × {{ ticket.ticket_price.name }} @ NLe
+
                 <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
                   {{ ticket.ticket_price.get_price }}
                 </span>
@@ -236,9 +284,12 @@
                 +
               </button>
 
-              <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
-                {{ new_event_subtotal }}
-                <!-- Render the subtotal here -->
+              <!-- Add Ticket Subtotal here -->
+              <span
+                id="subtotal-ticket-{{ event_group.event.id }}-{{ ticket.id }}"
+                class="ticket-subtotal"
+              >
+                NLe {{ ticket.quantity|floatformat:2 }}
               </span>
             </div>
             {% endfor %}
@@ -258,7 +309,8 @@
 
       <div class="total-price-container">
         <p id="total-price">
-          Total: NLe<span>{{ total_price|floatformat:2 }}</span>
+          <span class="total">Grand Total:</span>
+          <span class="total-price">NLe {{ total_price|floatformat:2 }}</span>
         </p>
       </div>
 
@@ -280,6 +332,11 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+  $(document).ready(function () {
+    // Initialize correct subtotals on page load
+    updateAllSubtotals();
+  });
+
   $(document).on(
     "click",
     ".increase-quantity, .decrease-quantity",
@@ -313,27 +370,31 @@
   );
 
   function updateCartDetails(response, eventId, ticketId) {
-    let newSubtotal = parseFloat(response.new_subtotal);
+    let quantity = parseInt(response.new_quantity);
+    let ticketPrice = parseFloat(response.ticket_price);
+    let newSubtotal = quantity * ticketPrice;
     let newTotalPrice = parseFloat(response.new_total_price);
     let newEventSubtotal = parseFloat(response.new_event_subtotal);
     let newEventQuantity = response.new_event_quantity;
 
     // Update the ticket quantity dynamically
-    $(`#quantity-${eventId}-${ticketId}`).text(response.new_quantity);
+    $(`#quantity-${eventId}-${ticketId}`).text(quantity);
 
-    // Update subtotal for this ticket
-    $(`#price-${eventId}-${ticketId}`).text(newSubtotal.toFixed(2));
+    // Update the ticket subtotal
+    $(`#subtotal-ticket-${eventId}-${ticketId}`).text(
+      `NLe ${newSubtotal.toFixed(2)}`
+    );
 
-    // Update total event subtotal
+    // Update event subtotal
     $(`#subtotal-${eventId} span`).text(newEventSubtotal.toFixed(2));
 
-    // Update total event quantity
+    // Update event ticket quantity
     $(`#quantity-${eventId}`).text(`${newEventQuantity} Tickets`);
 
-    // Update the total price across all tickets
-    $("#total-price span").text(newTotalPrice.toFixed(2));
+    // Update total price
+    $("#total-price .total-price").text(`NLe ${newTotalPrice.toFixed(2)}`);
 
-    // Remove only the specific ticket row when quantity is 0
+    // Remove ticket row if quantity is 0
     if (response.remove_ticket) {
       removeTicketRow(ticketId, eventId);
     }
@@ -344,17 +405,31 @@
     ticketRow.fadeOut(300, function () {
       $(this).remove();
 
-      // Check if any tickets remain in this event group
+      // Remove event card if no tickets remain
       if ($(`#event-${eventId} .ticket-row`).length === 0) {
         $(`#event-${eventId}`).fadeOut(300, function () {
           $(this).remove();
         });
       }
 
-      // Check if the cart is empty
+      // Check if cart is empty
       if ($(".ticket-list .ticket-row").length === 0) {
         $(".ticket-list").html("<p>Your cart is empty.</p>");
       }
+    });
+  }
+
+  function updateAllSubtotals() {
+    $(".ticket-row").each(function () {
+      let ticketRow = $(this);
+      let eventId = ticketRow.find("button").data("event-id");
+      let ticketId = ticketRow.find("button").data("ticket-id");
+      let quantity = parseInt($(`#quantity-${eventId}-${ticketId}`).text());
+      let ticketPrice = parseFloat($(`#price-${eventId}-${ticketId}`).text());
+      let newSubtotal = quantity * ticketPrice;
+      $(`#subtotal-ticket-${eventId}-${ticketId}`).text(
+        `NLe ${newSubtotal.toFixed(2)}`
+      );
     });
   }
 </script>

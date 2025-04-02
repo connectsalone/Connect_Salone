@@ -141,6 +141,7 @@ class TicketPrice(models.Model):
         verbose_name = 'Ticket Type'
         verbose_name_plural = 'Ticket Types'
 
+
 from django.db import models
 from django.core.files.base import ContentFile
 from django.core.signing import TimestampSigner
