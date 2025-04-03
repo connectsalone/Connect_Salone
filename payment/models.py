@@ -1,23 +1,33 @@
 from django.db import models, transaction, IntegrityError
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.conf import settings
 from django.core.validators import RegexValidator
 from events.models import Cart, Ticket, Event, TicketPrice
 import logging
-import uuid  # ✅ For unique transaction IDs
+import uuid
+from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
-
 
 class ServiceFee(models.Model):
     """Model to store service fee for each event ticket."""
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="service_fees")
     ticket_price = models.ForeignKey(TicketPrice, on_delete=models.CASCADE)
     fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
-    
+
     def __str__(self):
         return f"Service Fee for {self.event.event_name} - {self.ticket_price.name}: {self.fee_amount}"
+
+import uuid
+from decimal import Decimal
+from django.db import models, transaction, IntegrityError
+from django.utils import timezone
+from django.core.validators import RegexValidator
+from django.contrib.auth import get_user_model
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Payment(models.Model):
     STATUS_CHOICES = [
@@ -25,65 +35,114 @@ class Payment(models.Model):
         ('completed', 'Completed'),
         ('failed', 'Failed'),
     ]
-    
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="payments", null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_payments")
+
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="user_payments"
+    )
     phone_number = models.CharField(
         max_length=9,
         validators=[RegexValidator(regex=r'^\d{9}$', message="Enter a valid 9-digit phone number.")]
-    )  # Strictly 9 digits
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Kept as a field
-    transaction_id = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    transaction_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    cart = models.OneToOneField(Cart, on_delete=models.CASCADE)
     payment_reference = models.CharField(max_length=128, unique=True)
     payment_date = models.DateTimeField(null=True, blank=True)
+    cart = models.ForeignKey('events.Cart', on_delete=models.SET_NULL, null=True, blank=True)  # Updated reference to Cart
+
+    ticket_total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    service_fee_total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     @property
     def calculated_amount(self):
-        """Calculate the total payment amount based on cart items and add service fee from ServiceFee model."""
-        # Sum of ticket prices
-        ticket_prices = Ticket.objects.filter(cart=self.cart).values_list('price', flat=True)
-        total_ticket_price = sum(ticket_prices)
+        """Calculate total payment amount based on cart items, including service fees."""
+        if not self.cart:
+            return Decimal('0.00')  # If no cart, return 0
 
-        # Fetch service fee for the event
-        service_fee = self.event.service_fee.fee_amount if self.event and self.event.service_fee else 0.00
+        ticket_total = Decimal('0.00')
+        service_fee_total = Decimal('0.00')
 
-        # Service fee for each ticket (multiply by the number of tickets)
-        total_service_fee = service_fee * len(ticket_prices)
+        for item in self.cart.items.all():
+            ticket_price = item.ticket_price.get_price() if item.ticket_price else Decimal('0.00')
+            ticket_total += ticket_price * item.quantity
 
-        # Total amount
-        total_amount = total_ticket_price + total_service_fee
-        return total_amount
+            try:
+                service_fee = ServiceFee.objects.get(event=item.event, ticket_price=item.ticket_price)
+                service_fee_total += service_fee.fee_amount * item.quantity
+            except ServiceFee.DoesNotExist:
+                logger.warning(f"Service fee not found for event {item.event.id} and ticket {item.ticket_price}")
+
+        return ticket_total + service_fee_total
 
     def save(self, *args, **kwargs):
-        """Handle transaction and set payment date."""
-        try:
+        """Ensure atomic save and update the payment date when completed."""
+        if not self.transaction_id:
             self.transaction_id = str(uuid.uuid4())  # Ensures uniqueness
-            if self.status == "completed" and not self.payment_date:
-                self.payment_date = timezone.now()
+        
+        # Calculate ticket total and service fee total
+        if self.cart:
+            ticket_total = Decimal('0.00')
+            service_fee_total = Decimal('0.00')
 
-            super().save(*args, **kwargs)
-            logger.info(f"Payment {self.transaction_id} saved for {self.user.username}.")
+            for item in self.cart.items.all():
+                ticket_price = item.ticket_price.get_price() if item.ticket_price else Decimal('0.00')
+                ticket_total += ticket_price * item.quantity
+
+                try:
+                    service_fee = ServiceFee.objects.get(event=item.event, ticket_price=item.ticket_price)
+                    service_fee_total += service_fee.fee_amount * item.quantity
+                except ServiceFee.DoesNotExist:
+                    logger.warning(f"Service fee not found for event {item.event.id} and ticket {item.ticket_price}")
+
+            # Store values separately
+            self.ticket_total = ticket_total
+            self.service_fee_total = service_fee_total
+            self.amount = ticket_total + service_fee_total  # Total payment
+
+        # Update payment date when status is completed
+        if self.status == 'completed' and not self.payment_date:
+            self.payment_date = timezone.now()
+
+        # Using atomic transaction to ensure consistency
+        try:
+            with transaction.atomic():
+                super().save(*args, **kwargs)  # Save the payment first
+                # Save individual ticket payments after saving the main payment object
+                self.save_payment_tickets()
+
         except IntegrityError as e:
-            logger.error(f"Error saving payment {self.transaction_id}: {e}")
-            raise ValidationError("Payment could not be processed due to a database error.")
+            logger.error(f"Payment save failed: {e}")
+            raise ValueError("An error occurred while processing the payment. Please try again.")
 
+    def save_payment_tickets(self):
+        """Save the associated tickets for the payment."""
+        for item in self.cart.items.all():
+            try:
+                ticket_price = item.ticket_price.get_price() if item.ticket_price else Decimal('0.00')
+                PaymentTicket.objects.create(
+                    payment=self,
+                    ticket=item.ticket_price,
+                    event=item.event,
+                    quantity=item.quantity,
+                    price=ticket_price,
+                    amount=ticket_price * item.quantity
+                )
+            except Exception as e:
+                logger.error(f"Error saving ticket for payment {self.transaction_id}: {e}")
 
     def __str__(self):
-        event_name = self.event.event_name if self.event else "No Event"
-        return f"Payment of {self.amount} by {self.user.username} for {event_name}"
+        return f"Payment of {self.amount} by {self.user.username}"
+
+from events.models import Event, TicketPrice  # Import Event model from events app
 
 
-    def clean(self):
-        if not self.transaction_id:
-            raise ValidationError("Transaction ID must be provided.")
-        
-        if self.status == 'completed' and not self.payment_date:
-            self.payment_date = timezone.now()  # Auto-set if missing
+class PaymentTicket(models.Model):
+    payment = models.ForeignKey(Payment, related_name="payment_tickets", on_delete=models.CASCADE)
+    ticket = models.ForeignKey(TicketPrice, on_delete=models.CASCADE)  # Correct reference to TicketPrice model
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)  # Correct reference to Event model
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
 
-        # Only enforce event requirement if it’s necessary
-        if not self.event and not self.cart:
-            raise ValidationError("Either an event or a cart must be specified for the payment.")
-
-
+    def __str__(self):
+        return f"Payment for {self.quantity} tickets of {self.event.name} by {self.payment.user.username}"

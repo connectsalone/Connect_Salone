@@ -22,7 +22,7 @@
     background-color: #fafcfb;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease-in-out;
-    margin-bottom: 10px; /* Space between cards */
+    margin-bottom: 20px; /* Space between cards */
   }
 
   /* Styling for each section (event details, ticket list, and price) */
@@ -195,6 +195,8 @@
     display: flex;
     justify-content: space-between;
     margin-top: 15px;
+    padding: 10px;
+    font-size: 25px;
   }
 
   /* Responsive adjustments */
@@ -209,6 +211,13 @@
       font-size: 30px;
       font-weight: bolder;
       color: #450209;
+    }
+
+    .ticket-subtotal {
+      font-size: 15px;
+      font-weight: bold;
+      color: #450209;
+      margin-left: 60px; /* Pushes subtotal to the right */
     }
   }
 </style>
@@ -343,6 +352,8 @@
     function (e) {
       e.preventDefault();
 
+      console.log("Button clicked!"); // ✅ Should appear in console
+
       const button = $(this);
       const eventId = button.data("event-id");
       const ticketId = button.data("ticket-id");
@@ -361,8 +372,11 @@
           csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
         },
         success: function (response) {
+          console.log("AJAX Response:", response); // ✅ Check if response is received
+
           if (response.success) {
             updateCartDetails(response, eventId, ticketId);
+            updateCartBadge(response.cart_count); // ✅ Ensure this function is being called
           }
         },
       });
@@ -431,6 +445,16 @@
         `NLe ${newSubtotal.toFixed(2)}`
       );
     });
+  }
+
+  function updateCartBadge(count) {
+    console.log("Updated Cart Count:", count); // Debugging log
+
+    const cartBadge = document.getElementById("cart-badge");
+    if (cartBadge) {
+      cartBadge.textContent = count;
+      cartBadge.style.display = count > 0 ? "inline-block" : "none";
+    }
   }
 </script>
 

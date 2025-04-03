@@ -19,33 +19,38 @@ class ServiceFeeAdmin(admin.ModelAdmin):
 admin.site.register(ServiceFee, ServiceFeeAdmin)
 
 
+from django.contrib import admin
+from .models import Payment, Ticket
+from django.utils.translation import gettext_lazy as _
+
+class EventFilter(admin.SimpleListFilter):
+    title = _('Event')  # The label for the filter
+    parameter_name = 'event'
+
+    def lookups(self, request, model_admin):
+        # Get a list of unique event names from the tickets related to payments
+        events = Ticket.objects.values_list('event__event_name', flat=True).distinct()
+        return [(event, event) for event in events]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            # Filter payments by event name through related tickets
+            return queryset.filter(tickets__event__event_name=self.value())
+        return queryset
+
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('transaction_id', 'user', 'event', 'amount', 'status', 'payment_date', 'payment_reference')
-    list_filter = ('status', 'event', 'payment_date')
-    search_fields = ('transaction_id', 'user__username', 'payment_reference')
+    list_display = ('user', 'phone_number', 'amount', 'status', 'transaction_id', 'get_event')
+    list_filter = ('status', EventFilter)  # Using the custom EventFilter for filtering by event
 
-    def calculated_amount(self, obj):
-        return obj.calculated_amount
-    calculated_amount.short_description = _('Calculated Amount')
-    calculated_amount.admin_order_field = 'amount'
+    def get_event(self, obj):
+        """Returns the event name from the first ticket."""
+        first_ticket = Ticket.objects.filter(payment=obj).first()
+        if first_ticket:
+            return first_ticket.event.event_name
+        return "No Event"
 
-    actions = ['mark_as_completed', 'mark_as_failed']
-
-    def mark_as_completed(self, request, queryset):
-        """Mark selected payments as completed."""
-        rows_updated = queryset.update(status='completed')
-        self.message_user(request, f"{rows_updated} payment(s) marked as completed.")
-    mark_as_completed.short_description = _('Mark selected payments as completed')
-
-    def mark_as_failed(self, request, queryset):
-        """Mark selected payments as failed."""
-        rows_updated = queryset.update(status='failed')
-        self.message_user(request, f"{rows_updated} payment(s) marked as failed.")
-    mark_as_failed.short_description = _('Mark selected payments as failed')
-
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        # Annotate the total amount for each payment (including service fee)
-        return queryset.annotate(total_amount=Sum('amount'))
+    get_event.short_description = _('Event')
 
 admin.site.register(Payment, PaymentAdmin)
+
+

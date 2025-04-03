@@ -30,8 +30,9 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from events.models import Cart, Ticket, Event
-from payment.models import Payment
+from payment.models import Payment, ServiceFee
 from datetime import datetime
+from decimal import Decimal
 
 SECRET_KEY = settings.PAYMENT_SECRET_KEY
 WEBSITE_URL = settings.WEBSITE_URL  # Replace with your actual secret key
@@ -75,23 +76,31 @@ def process_orange_money_payment(phone_number, amount):
     else:
         return False, None
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+from django.utils.crypto import get_random_string
+from .models import Payment, PaymentTicket
+from events.models import Cart, TicketPrice
+from payment.models import ServiceFee
+from django.contrib.auth.decorators import login_required
+import logging
 
-
-from payment.models import ServiceFee  # Import the ServiceFee model
-from decimal import Decimal  # ✅ Add this
+logger = logging.getLogger(__name__)
 
 @login_required
 def orange_payment(request):
     """Handles Orange Money payment processing and creates tickets upon success."""
+    # Fetch the cart for the logged-in user that is not yet paid
     cart = Cart.objects.prefetch_related('items__event').filter(user=request.user, is_paid=False).first()
 
+    # Check if the cart exists and contains items
     if not cart or cart.items.count() == 0:
         messages.error(request, "No active cart found.")
         return redirect('cart_view')  # Redirect to cart page if no active cart
 
-    # ✅ Using the same event grouping logic as cart_page
+    # Group tickets by event
     event_groups = {}
-
     for ticket in cart.items.all():
         event = ticket.event
         event_id = event.id
@@ -104,77 +113,90 @@ def orange_payment(request):
                 'total_quantity': 0
             }
 
-        ticket_price = ticket.ticket_price.get_price()  # ✅ Ensuring we get correct price
+        ticket_price = ticket.ticket_price.get_price()
         subtotal = ticket_price * ticket.quantity
 
         event_groups[event_id]['tickets'].append(ticket)
         event_groups[event_id]['total_price'] += subtotal
         event_groups[event_id]['total_quantity'] += ticket.quantity
 
-    # ✅ Total ticket price
+    # Calculate total price
     total_ticket_price = sum(group['total_price'] for group in event_groups.values())
 
-    # ✅ Total service fee
+    # Calculate total service fee
     total_service_fee = sum(
         (service_fee.fee_amount * item.quantity)
         for item in cart.items.all()
         if (service_fee := ServiceFee.objects.filter(event=item.event).first())
     )
 
-    # ✅ Final total = ticket price + service fee
     total_price = total_ticket_price + total_service_fee
-
-    print(f"Total Ticket Price: {total_ticket_price}, Total Service Fee: {total_service_fee}, Final Total: {total_price}")
 
     if request.method == 'POST':
         phone_number = request.POST.get('phone_number', '').strip()
 
-        # Validate phone number format
+        # Validate phone number
         if not phone_number.isdigit() or not phone_number.startswith('07') or len(phone_number) != 9:
             messages.error(request, "Invalid phone number format.")
             return redirect('orange_payment')
 
-        # Generate the payment reference
+        # Generate payment reference
         unique_code = get_random_string(16)
         payment_reference = generate_payment_reference(request.user, '', unique_code)
 
-        # Create payment record
+        # Ensure cart reference is valid before creating payment
+        if cart is None or cart.id == 0:
+            messages.error(request, "Invalid cart reference.")
+            return redirect('cart_view')  # Redirect to cart page if the cart is invalid
+
+        # Create payment record and associate the cart correctly
         payment = Payment.objects.create(
             user=request.user,
             amount=total_price,
             phone_number=phone_number,
             status='pending',
-            cart=cart,
             payment_reference=payment_reference,
+            cart=cart  # Ensure cart is associated correctly
         )
 
-        # Simulate payment success with a unique transaction ID
+        # Simulate payment processing
         success, transaction_id = process_orange_money_payment(phone_number, total_price)
 
         if success:
             try:
                 with transaction.atomic():
+                    # Mark payment as completed
                     payment.status = 'completed'
                     payment.transaction_id = transaction_id
+                    payment.payment_date = timezone.now()  # Ensure payment date is set
                     payment.save()
 
-                    # Call the function to create tickets (pass the existing payment)
-                    payment, tickets = create_payment_and_tickets(request.user, cart, phone_number, total_price, transaction_id, payment)
+                    # Create tickets for payment
+                    for ticket in cart.items.all():
+                        ticket_price = ticket.ticket_price.get_price() if ticket.ticket_price else Decimal('0.00')
+                        # Create a payment ticket record for each ticket in the cart
+                        PaymentTicket.objects.create(
+                            payment=payment,
+                            ticket=ticket.ticket_price,
+                            event=ticket.event,
+                            quantity=ticket.quantity,
+                            price=ticket_price,
+                            amount=ticket_price * ticket.quantity
+                        )
 
-                    if payment and tickets:
-                        cart.is_paid = True
-                        cart.save()
-                        cart.items.all().delete()  # ✅ Clear cart items after payment
+                    # Mark cart as paid and clear items
+                    cart.is_paid = True
+                    cart.save()
+                    cart.items.all().delete()  # Clear cart items after payment
 
-                        messages.success(request, "Payment successful and tickets have been created!")
-                        return redirect('tickets')
-                    else:
-                        raise Exception("Error occurred while creating tickets")
+                    messages.success(request, "Payment successful and tickets have been created!")
+                    return redirect('tickets')  # Redirect to tickets page
 
             except Exception as e:
                 logger.error(f"Payment processing error: {e}")
                 messages.error(request, "Payment was successful, but an error occurred while creating tickets.")
         else:
+            # Payment failed
             payment.status = 'failed'
             payment.save()
             messages.error(request, "Payment failed. Please try again.")
@@ -184,34 +206,27 @@ def orange_payment(request):
     })
 
 
-@transaction.atomic()
-def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id, existing_payment):
-    try:
-        payment = existing_payment  # Use the existing payment object
 
+from django.db import transaction
+import qrcode
+from io import BytesIO
+from django.core.files.base import ContentFile
+
+@transaction.atomic
+def create_payment_and_tickets(user, cart, phone_number, total_price, transaction_id, existing_payment):
+    try:
+        # Use existing payment if available
+        payment = existing_payment
         # Generate unique payment reference
         payment_reference = generate_payment_reference(user, transaction_id, get_random_string(16))
-
-        # Log the payment reference
-        logger.info(f"Generated payment reference: {payment_reference}")
-
-        # Ensure the reference does not already exist
-        if Payment.objects.filter(payment_reference=payment_reference).exists():
-            logger.error(f"Duplicate payment reference: {payment_reference}")
-            return None, "Duplicate payment reference"
-
-        # Debug Payment fields before saving
-        logger.info(f"Payment data before save: {payment.__dict__}")
-
         payment.payment_reference = payment_reference
         payment.save()  # Save the updated payment reference
 
-        # Process tickets
+        # Create tickets for all items in the cart
         tickets = []
-        for item in cart.items.all():  # ✅ Use `items` instead of `cart_items`
+        for item in cart.items.all():
             event = item.event
             ticket_count = item.quantity
-
             for _ in range(ticket_count):
                 unique_code = get_random_string(16)
                 qr = qrcode.make(unique_code)
@@ -224,7 +239,7 @@ def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id,
                     user=user,
                     event=event,
                     ticket_name=event.event_name,
-                    ticket_price=ticket.ticket_price.get_price() ,
+                    ticket_price=event.get_ticket_price(),
                     payment_reference=payment_reference,
                     qr_code=qr_image,
                     quantity=1,
@@ -234,9 +249,6 @@ def create_payment_and_tickets(user, cart, phone_number, amount, transaction_id,
 
         return payment, tickets
 
-    except ObjectDoesNotExist:
-        logger.error(f"Cart not found for user: {user.username}")
-        return None, "Cart not found"
     except Exception as e:
         logger.error(f"Error creating payment and tickets: {e}")
         return None, f"An error occurred: {str(e)}"

@@ -103,6 +103,7 @@ WSGI_APPLICATION = 'connect_salone.wsgi.application'
 
 
 DATABASES = {
+    
     'default': {
         'ENGINE': 'django.db.backends.postgresql',  # Change this based on your database type
         'NAME': config('DATABASE_NAME'),

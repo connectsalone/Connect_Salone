@@ -105,6 +105,7 @@
     text-decoration: none;
     display: flex;
     align-items: center;
+
   }
 
   .logout i,
@@ -119,6 +120,12 @@
 
   /* Mobile Responsiveness */
   @media (max-width: 767px) {
+    .header {
+
+      padding: 10px 20px;
+
+    }
+
     .navmenu {
       display: none;
       flex-direction: column;
@@ -172,12 +179,20 @@
   @media (min-width: 768px) {
     .navmenu {
       display: flex;
-      margin-left: auto;
+      margin-left: 20px;
     }
 
     .mobile-nav-toggle {
       display: none;
     }
+
+    .logout,
+  .signup {
+    font-size: 5px;
+    margin-right: 10px;
+
+
+  }
   }
 </script>
 

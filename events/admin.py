@@ -24,11 +24,51 @@ class EventAdmin(admin.ModelAdmin):
     readonly_fields = ('event_created_at', 'event_updated_at', 'view_count')
 
 
+from django.contrib import admin
+from django import forms
+from .models import TicketPrice, Event
+
+# Admin form to display the ticket price
+class TicketPriceAdminForm(forms.ModelForm):
+    class Meta:
+        model = TicketPrice
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.event:
+            # Set the ticket price on form initialization
+            self.fields['ticket_price_display'] = forms.CharField(
+                initial=str(self.instance.get_price()), disabled=True, required=False
+            )
+
+    def clean_event(self):
+        event = self.cleaned_data.get('event')
+        if event:
+            # Update ticket price display when the event is changed
+            self.fields['ticket_price_display'].initial = str(event.ticket_types.first().get_price() if event.ticket_types.exists() else "No ticket price available")
+        return event
+
+
 @admin.register(TicketPrice)
 class TicketPriceAdmin(admin.ModelAdmin):
-    list_display = ('event', 'name', 'early_bird_price', 'normal_price', 'early_bird_start', 'early_bird_end')
+    form = TicketPriceAdminForm
+    list_display = ('event', 'name', 'early_bird_price', 'normal_price', 'early_bird_start', 'early_bird_end', 'get_ticket_price_display')
     list_filter = ('name', 'early_bird_start', 'early_bird_end')
     search_fields = ('event__event_name',)
+
+    readonly_fields = ('get_ticket_price_display',)
+
+    def get_ticket_price_display(self, obj):
+        """ Custom method to return the ticket price for display in the list. """
+        return obj.get_price() if obj else "No price available"
+    get_ticket_price_display.short_description = 'Ticket Price'
+
+    def save_model(self, request, obj, form, change):
+        # Ensure ticket price is correctly saved based on event
+        obj.save()  # Save the model to update the ticket price
+        super().save_model(request, obj, form, change)
+
 
 
 @admin.register(Sponsorer)

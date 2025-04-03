@@ -54,19 +54,24 @@
     color: #8f1204;
   }
 
-  .event-subtotal,
-  .event-service-fee {
+  .event-subtotal {
     font-weight: bold;
     font-size: 18px;
     text-align: right;
-  }
-
-  .event-subtotal {
     color: green;
   }
 
   .event-service-fee {
-    color: #8f1204;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: right;
+    color: #8f1204; /* Service Fee in red */
+  }
+
+  /* Center payment option text */
+  .payment-option {
+    text-align: center;
+    margin-top: 20px;
   }
 
   /* Total amounts - Service Fee and Grand Total */
@@ -104,8 +109,31 @@
       width: 90%;
     }
 
+    /* Center payment option text */
+    .payment-option {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* Adjust payment logos container */
     .payment-logo {
+      display: flex;
+      justify-content: center;
       gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      align-items: center; /* Center logos vertically */
+      justify-content: center; /* Center logos horizontally */
+    }
+
+    .payment-logo a {
+      display: inline-block; /* Ensure each logo is inline-block */
+      margin: 10px;
+    }
+
+    .payment-img {
+      max-width: 120px; /* Adjust the logo size as needed */
+      height: auto;
     }
 
     .service-fee-total,
@@ -145,15 +173,13 @@
             <ul>
               <li class="event-name">{{ event_data.event.event_name }}</li>
               <li>
-                <span class="event-ticket-number">Tickets :</span>
+                <span class="event-ticket-number">Tickets:</span>
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
               <li class="event-subtotal">NLe {{ event_data.subtotal }}</li>
-              <li>
-                <span class="event-service-fee">Service Fee:</span>
-                <span class="event-service-fee"
-                  >NLe {{ event_data.service_fee }}</span
-                >
+              <!-- Service Fee moved below Subtotal -->
+              <li class="event-service-fee">
+                Service Fee: NLe {{ event_data.service_fee }}
               </li>
             </ul>
           </div>
@@ -177,24 +203,27 @@
       <div class="payment-option">
         <h2>Choose Payment Option</h2>
         <div class="payment-logo">
-          <a href="3"
-            ><img
+          <a href="3">
+            <img
               src="{% static 'assets/img/visa-logo.png' %}"
               alt="Visa Logo"
               class="payment-img"
-          /></a>
-          <a href="{% url 'orange_payment' %}"
-            ><img
+            />
+          </a>
+          <a href="{% url 'orange_payment' %}">
+            <img
               src="{% static 'assets/img/orange-money.png' %}"
               alt="Orange Money Logo"
               class="payment-img"
-          /></a>
-          <a href="{% url 'orange_payment' %}"
-            ><img
+            />
+          </a>
+          <a href="{% url 'orange_payment' %}">
+            <img
               src="{% static 'assets/img/afrimoney1.png' %}"
               alt="AfriMoney Logo"
               class="payment-img"
-          /></a>
+            />
+          </a>
         </div>
       </div>
     </div>
