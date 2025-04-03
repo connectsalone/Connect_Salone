@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from events.models import Cart, Ticket, Event, EventView, CartItem
-from payment.models import Payment
+#from payment.models import Payment
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
