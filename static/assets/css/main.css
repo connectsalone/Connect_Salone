@@ -357,7 +357,6 @@ h6 {
   }
 }
 
-/* Navmenu - Mobile */
 @media (max-width: 1199px) {
   .mobile-nav-toggle {
     color: var(--nav-color);
@@ -378,10 +377,10 @@ h6 {
     list-style: none;
     position: absolute;
     inset: 60px 20px 20px 20px;
-    padding: 10px 0;
+    padding: 20px 0;
     margin: 0;
     border-radius: 6px;
-    background-color: var(--nav-mobile-background-color);
+    background-color: white; /* ✅ White background */
     overflow-y: auto;
     transition: 0.3s;
     z-index: 9998;
@@ -390,30 +389,29 @@ h6 {
 
   .navmenu a,
   .navmenu a:focus {
-    color: var(--nav-dropdown-color);
-    padding: 10px 20px;
+    color: black; /* ✅ Contrast with white bg */
+    padding: 14px 24px; /* ✅ More padding for mobile */
     font-family: var(--nav-font);
     font-size: 17px;
-    font-weight: 500;
+    font-weight: 700; /* ✅ Bold text */
     display: flex;
     align-items: center;
     justify-content: space-between;
     white-space: nowrap;
     transition: 0.3s;
+    text-decoration: none;
   }
 
   .navmenu a i,
   .navmenu a:focus i {
-    font-size: 12px;
-    line-height: 0;
-    margin-left: 5px;
-    width: 30px;
-    height: 30px;
+    font-size: 14px;
+    margin-left: 10px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: 0.3s;
     background-color: color-mix(in srgb, var(--accent-color), transparent 90%);
   }
 
@@ -442,14 +440,14 @@ h6 {
     z-index: 99;
     padding: 10px 0;
     margin: 10px 20px;
-    background-color: var(--nav-dropdown-background-color);
+    background-color: #f9f9f9;
     border: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
     box-shadow: none;
     transition: all 0.5s ease-in-out;
   }
 
   .navmenu .dropdown ul ul {
-    background-color: rgba(33, 37, 41, 0.1);
+    background-color: rgba(33, 37, 41, 0.05);
   }
 
   .navmenu .dropdown > .dropdown-active {
@@ -464,7 +462,7 @@ h6 {
   .mobile-nav-active .mobile-nav-toggle {
     color: #fff;
     position: absolute;
-    font-size: 32px;
+    font-size: 35px;
     top: 15px;
     right: 15px;
     margin-right: 0;
@@ -475,12 +473,19 @@ h6 {
     position: fixed;
     overflow: hidden;
     inset: 0;
-    background: rgba(33, 37, 41, 0.8);
+    background: rgba(249, 15, 15, 0.5);
     transition: 0.3s;
   }
 
   .mobile-nav-active .navmenu > ul {
     display: block;
+  }
+
+  /* ✅ Additional spacing before logout */
+  .navmenu li.logout {
+    margin-top: 24px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
   }
 }
 

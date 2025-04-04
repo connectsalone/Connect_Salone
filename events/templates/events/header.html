@@ -1,201 +1,37 @@
-<script>
-  /* General Styling */
-  .header {
-    background-color: #fff;
-    padding: 10px 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+<style>
+  /* Increase padding for mobile view */
+  @media (max-width: 768px) {
+    .header .container {
+      padding-left: 20px; /* Add space on left */
+      padding-right: 20px; /* Add space on right */
+    }
+
+    /* Increase padding for menu items in the header */
+    .navmenu ul li a {
+      padding: 15px 17px; /* Increase padding for mobile menu items */
+    }
   }
 
-  .sitename {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
+  /* Change mobile menu toggle icon to white and add space */
+  .mobile-nav-toggle {
+    color: white; /* Change icon color to white */
+    font-size: 2rem; /* Adjust icon size */
+    margin-top: 15px; /* Add some space from the top */
+    margin-bottom: 15px;
+    margin-right: 5px; /* Add some space from the right */
+    margin-left: 20px;
   }
 
-  /* Logo Styling */
   .logo {
-    display: flex;
-    align-items: center;
+    padding-right: 15px; /* Add some space to the right of the logo */
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
-  .logo h1 {
-    margin: 0;
-  }
-
-  /* Navigation Menu */
   .navmenu {
-    display: flex;
-    align-items: center;
-    margin: 0;
+    margin-left: 15px; /* Add a little margin on the left side */
   }
-
-  .navmenu ul {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .navmenu li {
-    margin-right: 20px;
-    position: relative;
-  }
-
-  .navmenu a {
-    text-decoration: none;
-    font-size: 16px;
-    color: #333;
-    padding: 10px;
-    display: block;
-  }
-
-  .navmenu .active {
-    color: #007bff;
-  }
-
-  .navmenu .dropdown:hover > ul {
-    display: block;
-  }
-
-  .navmenu .dropdown ul {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #fff;
-    padding: 10px;
-    list-style: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  .navmenu .toggle-dropdown {
-    margin-left: 5px;
-  }
-
-  /* Cart and User Authentication Links */
-  .header-social-links {
-    display: flex;
-    align-items: center;
-  }
-
-  .cart {
-    position: relative;
-    margin-right: 20px;
-  }
-
-  .cart i {
-    font-size: 24px;
-    color: #333;
-  }
-
-  .cart .badge {
-    background-color: #ff0000;
-    color: white;
-    font-size: 12px;
-    padding: 5px;
-    border-radius: 50%;
-    top: -5px;
-    right: -5px;
-  }
-
-  .logout,
-  .signup {
-    font-size: 16px;
-    color: #007bff;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-
-  }
-
-  .logout i,
-  .signup i {
-    margin-right: 5px;
-  }
-
-  .logout:hover,
-  .signup:hover {
-    color: #0056b3;
-  }
-
-  /* Mobile Responsiveness */
-  @media (max-width: 767px) {
-    .header {
-
-      padding: 10px 20px;
-
-    }
-
-    .navmenu {
-      display: none;
-      flex-direction: column;
-      width: 100%;
-      background-color: #fff;
-      position: absolute;
-      top: 70px;
-      left: 0;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .navmenu.active {
-      display: flex;
-    }
-
-    .navmenu li {
-      margin-right: 0;
-      text-align: center;
-      padding: 10px;
-      width: 100%;
-    }
-
-    .mobile-nav-toggle {
-      display: block;
-      font-size: 30px;
-      cursor: pointer;
-      color: white; /* Make mobile menu button white */
-    }
-
-    /* Adding space between logout and mobile menu button */
-    .header-social-links {
-      margin-right: 20px; /* Add space between logout and menu button */
-    }
-
-    /* Spacing between logout link and the menu button */
-    .logout {
-      margin-right: 20px; /* Space after logout on mobile */
-    }
-
-    .cart {
-      margin-right: 10px;
-    }
-
-    .logout,
-    .signup {
-      font-size: 14px;
-    }
-  }
-
-  /* Large Screen Adjustment */
-  @media (min-width: 768px) {
-    .navmenu {
-      display: flex;
-      margin-left: 20px;
-    }
-
-    .mobile-nav-toggle {
-      display: none;
-    }
-
-    .logout,
-  .signup {
-    font-size: 5px;
-    margin-right: 10px;
-
-
-  }
-  }
-</script>
-
+</style>
 <header id="header" class="header d-flex align-items-center sticky-top">
   <div
     class="container position-relative d-flex align-items-center justify-content-between"
@@ -214,7 +50,6 @@
         <li><a href="{% url 'home' %}" class="active">Home</a></li>
         <li><a href="{% url 'event-list' %}">EVENTS & TICKETS</a></li>
         <li><a href="{% url 'calendar_view' %}" class="active">CALENDAR</a></li>
-
         <li class="dropdown">
           <a href="#">
             <span>Categories</span>
@@ -231,13 +66,13 @@
                 <li><a href="#">Deep Dropdown 2</a></li>
               </ul>
             </li>
-            <li><a href="">Scan Ticket</a></li>
+            <li><a href="#">Scan Ticket</a></li>
             <li><a href="{% url 'calendar_view' %}">Calendar</a></li>
             <li><a href="{% url 'get_events' %}">Get Events</a></li>
-            <li><a href="">Tickets</a></li>
+            <li><a href="#">Tickets</a></li>
           </ul>
         </li>
-        <li><a href="" class="active">TICKETS</a></li>
+        <li><a href="#" class="active">TICKETS</a></li>
         <li><a href="{% url 'contact' %}">Contact US</a></li>
       </ul>
     </nav>
