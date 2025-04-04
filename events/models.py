@@ -105,10 +105,10 @@ class TicketPrice(models.Model):
     name = models.CharField(
         max_length=50,
         choices=[
-            ('rdinary', 'Ordinary'),
-            ('near_stage', 'Near Stage'),
-            ('vip', 'VIP'),
-            ('vvip', 'VVIP'),
+            ('Ordinary', 'Ordinary'),
+            ('Near_Stage', 'Near Stage'),
+            ('VIP', 'VIP'),
+            ('VVIP', 'VVIP'),
         ]
     )
     early_bird_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

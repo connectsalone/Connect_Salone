@@ -4,171 +4,135 @@
   .container h1 {
     margin-top: 20px;
     font-weight: bolder;
-    font-size: 50px;
+    font-size: 3rem;
   }
 
   .container h4 {
     margin-bottom: 20px;
     font-weight: bold;
+    font-size: 1.5rem;
   }
 
-  /* General styling for the event card */
+  /* Responsive Event Card */
   .event-card {
     display: flex;
     flex-direction: column;
-    border: 5px solid #ddd;
-    border-radius: 8px;
-    padding: 5px;
+    border: 3px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
     background-color: #fafcfb;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.3s ease-in-out;
-    margin-bottom: 20px; /* Space between cards */
-  }
-
-  /* Styling for each section (event details, ticket list, and price) */
-  .event-details {
-    display: flex;
-    flex-direction: row; /* Changed to row to align details in one line */
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0; /* Remove padding */
-    margin: 0; /* Remove margin */
+    margin-bottom: 25px;
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Event Name */
   .event-name {
-    font-size: 25px;
+    font-size: 1.6rem;
     font-weight: bold;
     color: #023022;
   }
 
-  /* Event Info: Remove gaps */
+  /* Info Row */
   .event-info {
     display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
     align-items: center;
-    justify-content: flex-start;
-    flex-wrap: nowrap; /* Prevent wrapping */
-    gap: 0px; /* Force remove any gap */
+    font-size: 1.1rem;
   }
 
-  /* Remove extra spacing inside <p> */
   .event-info p {
+    margin: 0;
+    padding: 0;
     display: flex;
     align-items: center;
-    font-size: 20px;
     font-weight: bold;
-    margin: 0 15px !important; /* Override any default margins */
-    padding: 0 !important; /* Override any padding */
-    line-height: 3; /* Reduce default line spacing */
-    white-space: nowrap; /* Prevent wrapping */
     color: #023022;
   }
 
-  /* Ensure icons don't add extra spacing */
   .event-info i {
     color: #ff5733;
-    font-size: 20px;
-    margin-right: 5px; /* Adjusted for readability */
+    margin-right: 6px;
+    font-size: 1rem;
   }
 
-  /* 📱 Responsive Styles for Small Screens */
-  @media (max-width: 768px) {
-    .event-details {
-      flex-direction: column; /* Stack on smaller screens */
-      align-items: flex-start;
-    }
-
-    .event-info {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0px; /* Force no spacing */
-    }
-
-    .event-info p {
-      font-size: 16px;
-      margin: 0 !important;
-      padding: 0 !important;
-      line-height: 2; /* Reduce default line spacing */
-    }
-    .event-info i {
-      color: #ff5733;
-      font-size: 15px;
-      margin-right: 5px; /* Adjusted for readability */
-    }
-  }
-
-  /* Styling for the ticket section */
+  /* Tickets Section */
   .ticket-section {
-    display: flex;
-    flex-direction: column; /* Ensure elements inside this container stack vertically */
-    padding: 10px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    width: 100%;
+    margin-top: 15px;
   }
 
-  /* Update the ticket row to ensure spacing between each ticket */
+  .ticket-header {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
   .ticket-row {
     display: flex;
-    justify-content: flex-start; /* Align to the left */
+    flex-wrap: wrap;
     align-items: center;
-    padding: 5px 0;
-    width: 100%;
-    margin-bottom: 10px; /* Add bottom margin to create space below each ticket */
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .ticket-price {
+    font-size: 1.2rem;
+    margin-right: 15px;
+    font-weight: bold;
   }
 
   .ticket-subtotal {
-    font-size: 18px;
+    font-size: 1rem;
     font-weight: bold;
     color: #450209;
-    margin-left: 100px; /* Pushes subtotal to the right */
+    margin-left: auto;
   }
 
-  /* Styling for the ticket header */
-  .ticket-header {
-    font-size: 25px;
-    font-weight: bold;
-    margin-bottom: 15px; /* Adds space below the heading */
-  }
-
-  /* Styling for the ticket list */
-  .ticket-list {
-    display: block;
-    width: 100%;
-    margin-left: 25px;
-  }
-
-  /* Adjust ticket row styling */
-  .ticket-price {
-    font-size: 16px;
-    margin-right: 10px;
-  }
-
+  /* Buttons */
   .btn {
-    margin-left: 5px;
+    margin-top: -15px;
+    font-weight: bold;
+    font-size: 20px;
+    height: 25px;
+    width: 25px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .ticket-section,
-    .price-section {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .cart-buttons {
-      flex-direction: column;
-    }
-
-    .total-price-container {
-      justify-content: flex-start;
-    }
+  .increase-quantity {
+    background-color: #2ecc71;
+    color: white;
   }
 
-  /* Styling for the price section */
+  .decrease-quantity {
+    background-color: #e74c3c;
+    color: white;
+  }
+
+  .btn:hover {
+    transform: scale(1.08);
+  }
+
+  .btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Pricing Summary */
   .price-section {
     text-align: right;
-    font-size: 25px;
+    font-size: 1.3rem;
     font-weight: bold;
     color: #023022;
   }
@@ -177,52 +141,130 @@
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
+    padding-right: 200px;
   }
 
   .total-price-container .total {
-    font-size: 30px;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #023022;
   }
 
   .total-price-container .total-price {
-    font-size: 40px;
+    font-size: 1.5rem;
     font-weight: bolder;
     color: #450209;
+    margin-left: 5px;
   }
 
+  /* Cart Buttons */
   .cart-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
-    padding: 10px;
-    font-size: 25px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 1rem;
+    padding: 10px 0;
   }
 
-  /* Responsive adjustments */
+  /* 📱 Mobile Adjustments */
   @media (max-width: 768px) {
-    .total-price-container .total {
-      font-size: 20px;
-      font-weight: bold;
-      color: #023022;
+    .container h1 {
+      font-size: 2rem;
     }
 
-    .total-price-container .total-price {
-      font-size: 30px;
-      font-weight: bolder;
-      color: #450209;
+    .container h4 {
+      font-size: 1.1rem;
+    }
+
+    .event-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ticket-row {
+      flex-direction: column;
+      align-items: flex-start;
     }
 
     .ticket-subtotal {
-      font-size: 15px;
-      font-weight: bold;
-      color: #450209;
-      margin-left: 60px; /* Pushes subtotal to the right */
+      margin-left: 0;
+      font-size: 0.95rem;
+    }
+
+    .total-price-container {
+      justify-content: flex-start;
+    }
+
+    .total-price-container .total,
+    .total-price-container .total-price {
+      font-size: 1.2rem;
+    }
+
+    .price-section {
+      text-align: left;
+    }
+  }
+
+  /* 📱 Mobile Adjustments */
+  @media (max-width: 768px) {
+    .container h1 {
+      font-size: 2rem;
+    }
+
+    .container h4 {
+      font-size: 1.1rem;
+    }
+
+    .event-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ticket-row {
+      display: flex; /* Change to flex layout */
+      flex-direction: row; /* Align everything in a single row */
+      align-items: center; /* Center the items vertically */
+      width: 100%; /* Ensure it takes up the full width */
+      gap: 25px; /* Add space between items */
+      margin-bottom: 10px; /* Add space between ticket rows */
+    }
+
+    .ticket-subtotal {
+      margin-left: 10px;
+      font-size: 0.95rem;
+      margin-right: 0px; /* Space from other elements */
+    }
+
+    .total-price-container {
+      justify-content: flex-start;
+    }
+
+    .total-price-container .total,
+    .total-price-container .total-price {
+      font-size: 1.2rem;
+    }
+
+    .price-section {
+      text-align: left;
     }
   }
 </style>
-
 <main class="main">
+  <!-- Page Title -->
+  <div class="page-title">
+    <div class="container d-lg-flex justify-content-between align-items-center">
+      <h4 class="mb-2 mb-lg-0">Cart Page</h4>
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="{% url 'home' %}">Home</a></li>
+          <li class="current"><strong>Cart Page</strong></li>
+          <li><a href="{% url 'home' %}">Go Back</a></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
   <div class="container">
     <h1>Your Cart</h1>
     <h4>Please review your cart below</h4>
@@ -230,88 +272,94 @@
     <div class="event-list">
       {% for event_group in event_groups.values %}
 
-      <div class="event-card" id="event-{{ event_group.event.id }}">
-        <!-- Event Details in First Row -->
-        <div class="event-card">
-          <div class="event-icon">
-            <i class="fas fa-calendar-check"></i>
-            <span class="event-name">{{ event_group.event.event_name }}</span>
-          </div>
-          <div class="event-details">
-            <div class="event-info">
-              <p class="event-location">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>{{ event_group.event.event_location }}</span>
-              </p>
-              <p class="event-date">
-                <i class="fas fa-calendar"></i>
-                <span>{{ event_group.event.event_date|date:"F j, Y" }}</span>
-              </p>
-              <p class="event-time">
-                <i class="fas fa-clock"></i>
-                <span>{{ event_group.event.event_date|time:"h:i A" }}</span>
-              </p>
+      <div class="container px-3 px-md-5">
+        <div class="event-card" id="event-{{ event_group.event.id }}">
+          <!-- Event Details in First Row -->
+          <div class="event-card">
+            <div class="event-icon">
+              <i class="fas fa-calendar-check"></i>
+              <span class="event-name">{{ event_group.event.event_name }}</span>
+            </div>
+            <div class="event-details">
+              <div class="event-info">
+                <p class="event-location">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>{{ event_group.event.event_location }}</span>
+                </p>
+                <p class="event-date">
+                  <i class="fas fa-calendar"></i>
+                  <span>{{ event_group.event.event_date|date:"F j, Y" }}</span>
+                </p>
+                <p class="event-time">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ event_group.event.event_date|time:"h:i A" }}</span>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Tickets in Second Row -->
-        <div class="ticket-section">
-          <div class="ticket-header">
-            <span>Tickets</span>
-            <!-- You can style this header as needed -->
+          <!-- Tickets in Second Row -->
+          <div class="ticket-section">
+            <div class="ticket-header">
+              <span>Tickets</span>
+              <!-- You can style this header as needed -->
+            </div>
+
+            <!-- Ticket List Below the Ticket Heading -->
+            <div class="ticket-list">
+              {% for ticket in event_group.tickets %}
+              <div id="ticket-{{ ticket.id }}" class="ticket-row">
+                <p class="ticket-price">
+                  <span
+                    id="quantity-{{ event_group.event.id }}-{{ ticket.id }}"
+                  >
+                    {{ ticket.quantity }}
+                  </span>
+                  {{ ticket.ticket_price.name }} Ticket @ NLe
+
+                  <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
+                    {{ ticket.ticket_price.get_price }}
+                  </span>
+                </p>
+                <button
+                  class="btn btn-sm btn-outline-secondary decrease-quantity"
+                  data-event-id="{{ event_group.event.id }}"
+                  data-ticket-id="{{ ticket.id }}"
+                  data-url="{% url 'update_cart' event_group.event.id %}"
+                >
+                  -
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-secondary increase-quantity"
+                  data-event-id="{{ event_group.event.id }}"
+                  data-ticket-id="{{ ticket.id }}"
+                  data-url="{% url 'update_cart' event_group.event.id %}"
+                >
+                  +
+                </button>
+
+                <!-- Add Ticket Subtotal here -->
+                <span
+                  id="subtotal-ticket-{{ event_group.event.id }}-{{ ticket.id }}"
+                  class="ticket-subtotal"
+                >
+                  NLe {{ ticket.quantity|floatformat:2 }}
+                </span>
+              </div>
+              {% endfor %}
+            </div>
           </div>
 
-          <!-- Ticket List Below the Ticket Heading -->
-          <div class="ticket-list">
-            {% for ticket in event_group.tickets %}
-            <div id="ticket-{{ ticket.id }}" class="ticket-row">
-              <p class="ticket-price">
-                <span id="quantity-{{ event_group.event.id }}-{{ ticket.id }}">
-                  {{ ticket.quantity }}
-                </span>
-                × {{ ticket.ticket_price.name }} @ NLe
+          <hr />
 
-                <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
-                  {{ ticket.ticket_price.get_price }}
-                </span>
-              </p>
-              <button
-                class="btn btn-sm btn-outline-secondary decrease-quantity"
-                data-event-id="{{ event_group.event.id }}"
-                data-ticket-id="{{ ticket.id }}"
-                data-url="{% url 'update_cart' event_group.event.id %}"
-              >
-                -
-              </button>
-              <button
-                class="btn btn-sm btn-outline-secondary increase-quantity"
-                data-event-id="{{ event_group.event.id }}"
-                data-ticket-id="{{ ticket.id }}"
-                data-url="{% url 'update_cart' event_group.event.id %}"
-              >
-                +
-              </button>
-
-              <!-- Add Ticket Subtotal here -->
-              <span
-                id="subtotal-ticket-{{ event_group.event.id }}-{{ ticket.id }}"
-                class="ticket-subtotal"
-              >
-                NLe {{ ticket.quantity|floatformat:2 }}
+          <!-- Price in Third Row -->
+          <div class="price-section">
+            <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
+              Total: NLe<span>
+                {{ event_group.total_price|floatformat:2 }}
               </span>
-            </div>
-            {% endfor %}
+            </p>
           </div>
-        </div>
-
-        <hr />
-
-        <!-- Price in Third Row -->
-        <div class="price-section">
-          <p id="subtotal-{{ event_group.event.id }}" class="event-subtotal">
-            NLe<span> {{ event_group.total_price|floatformat:2 }} </span>
-          </p>
         </div>
       </div>
       {% endfor %}

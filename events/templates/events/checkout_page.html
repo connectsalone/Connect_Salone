@@ -1,7 +1,6 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
 
 <style>
-  /* General card styling */
   .card {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -12,7 +11,7 @@
   }
 
   .card-header {
-    background-color: #0471b5;
+    background-color: #043a40;
     padding: 10px;
     text-align: center;
   }
@@ -30,7 +29,6 @@
     margin-bottom: 10px;
   }
 
-  /* Styling for each event card */
   .event-card {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -42,39 +40,50 @@
   .event-name {
     font-weight: bold;
     font-size: 20px;
-    color: #354667;
+    color: #043a40;
+  }
+
+  .payment-detail {
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
   }
 
   .event-ticket-number {
     font-weight: bold;
-    color: #354667;
+    color: #043a40;
+    font-size: 20px;
   }
 
   .event-tickets {
-    color: #8f1204;
+    color: #ba6707;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .event-subtotal,
+  .event-service-fee,
+  .event-subtotal-fee {
+    font-weight: bold;
+    font-size: 18px;
+    text-align: right;
   }
 
   .event-subtotal {
-    font-weight: bold;
-    font-size: 18px;
-    text-align: right;
     color: green;
   }
-
   .event-service-fee {
-    font-weight: bold;
-    font-size: 18px;
-    text-align: right;
-    color: #8f1204; /* Service Fee in red */
+    color: #8f1204;
+  }
+  .event-subtotal-fee {
+    color: #033331;
   }
 
-  /* Center payment option text */
   .payment-option {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 15px;
   }
 
-  /* Total amounts - Service Fee and Grand Total */
   .total-amounts {
     margin-top: 20px;
     display: flex;
@@ -88,57 +97,57 @@
     margin: 5px 0;
   }
 
-  .service-fee-total,
-  .grand-total {
-    color: green;
+  .ticket-price-total {
     font-size: 24px;
-    font-weight: bold;
+    color: #033331;
   }
 
   .service-fee-total {
-    color: #8f1204; /* Service Fee in red */
+    color: #8f1204;
+    font-size: 24px;
   }
-
   .grand-total {
-    color: green; /* Grand Total in green */
+    color: green;
+    font-size: 24px;
   }
 
-  /* Mobile responsive adjustments */
+  .choose-payment {
+    font-size: 30px;
+    color: #043a40;
+    font-weight: bold;
+    margin-bottom: 25px;
+  }
+
   @media (max-width: 768px) {
     .card {
       width: 90%;
     }
 
-    /* Center payment option text */
-    .payment-option {
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    /* Adjust payment logos container */
     .payment-logo {
       display: flex;
       justify-content: center;
-      gap: 20px;
       flex-wrap: wrap;
+      gap: 20px;
       margin-top: 20px;
-      align-items: center; /* Center logos vertically */
-      justify-content: center; /* Center logos horizontally */
     }
 
     .payment-logo a {
-      display: inline-block; /* Ensure each logo is inline-block */
       margin: 10px;
     }
 
     .payment-img {
-      max-width: 120px; /* Adjust the logo size as needed */
+      max-width: 120px;
       height: auto;
     }
 
     .service-fee-total,
-    .grand-total {
-      font-size: 20px; /* Adjust font size on smaller screens */
+    .grand-total,
+    .ticket-price-total {
+      font-size: 20px;
+    }
+
+    .choose-payment {
+      font-size: 20px;
     }
   }
 </style>
@@ -150,8 +159,9 @@
       <h1 class="mb-2 mb-lg-0">Checkout</h1>
       <nav class="breadcrumbs">
         <ol>
-          <li><a href="index.html">Home</a></li>
+          <li><a href="{% url 'home' %}">Home</a></li>
           <li class="current">Checkout</li>
+          <li><a href="{% url 'cart_page' %}">Go Back</a></li>
         </ol>
       </nav>
     </div>
@@ -160,15 +170,13 @@
   <!-- Checkout Section -->
   <section id="about" class="checkout section">
     <div class="container">
-      <!-- Main Card for Payment Details -->
+      <!-- Payment Details Card -->
       <div class="card mb-5">
         <div class="card-header">
-          <h4 class="payment-deatil">PAYMENT DETAILS</h4>
+          <span class="payment-detail">PAYMENT DETAILS</span>
         </div>
         <div class="card-body">
           {% for event_data in events_in_cart %}
-
-          <!-- Small Card for Each Event -->
           <div class="event-card">
             <ul>
               <li class="event-name">{{ event_data.event.event_name }}</li>
@@ -176,17 +184,28 @@
                 <span class="event-ticket-number">Tickets:</span>
                 <span class="event-tickets">{{ event_data.quantity }}</span>
               </li>
-              <li class="event-subtotal">NLe {{ event_data.subtotal }}</li>
-              <!-- Service Fee moved below Subtotal -->
+              <li class="event-subtotal">
+                Subtotal: NLe {{ event_data.subtotal }}
+              </li>
               <li class="event-service-fee">
                 Service Fee: NLe {{ event_data.service_fee }}
+              </li>
+              <li class="event-subtotal-fee">
+                Total for Event: NLe {{ event_data.total }}
               </li>
             </ul>
           </div>
           {% endfor %}
 
-          <!-- Service Fee Total and Grand Total -->
+          <!-- Totals -->
+
           <div class="total-amounts">
+            <div>
+              <strong>Total Ticket Price:</strong>
+              <span class="ticket-price-total"
+                >NLe {{ total_ticket_price }}</span
+              >
+            </div>
             <div>
               <strong>Total Service Fee:</strong>
               <span class="service-fee-total">NLe {{ service_fee_total }}</span>
@@ -201,26 +220,29 @@
 
       <!-- Payment Options -->
       <div class="payment-option">
-        <h2>Choose Payment Option</h2>
+        <span class="choose-payment">Choose Payment Option</span>
         <div class="payment-logo">
-          <a href="3">
+          <a href="#" aria-label="Pay with Visa">
             <img
               src="{% static 'assets/img/visa-logo.png' %}"
-              alt="Visa Logo"
+              alt="Visa"
               class="payment-img"
             />
           </a>
-          <a href="{% url 'orange_payment' %}">
+          <a
+            href="{% url 'orange_payment' %}"
+            aria-label="Pay with Orange Money"
+          >
             <img
               src="{% static 'assets/img/orange-money.png' %}"
-              alt="Orange Money Logo"
+              alt="Orange Money"
               class="payment-img"
             />
           </a>
-          <a href="{% url 'orange_payment' %}">
+          <a href="#" aria-label="Pay with AfriMoney">
             <img
               src="{% static 'assets/img/afrimoney1.png' %}"
-              alt="AfriMoney Logo"
+              alt="AfriMoney"
               class="payment-img"
             />
           </a>

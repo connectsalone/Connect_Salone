@@ -535,49 +535,64 @@ from .models import Cart, CartItem
 from payment.models import ServiceFee
 
 def checkout_page(request):
-    events_in_cart = defaultdict(lambda: {"quantity": 0, "subtotal": Decimal(0), "service_fee": Decimal(0)})
+    events_summary = defaultdict(lambda: {
+        "quantity": 0,
+        "subtotal": Decimal(0),
+        "service_fee": Decimal(0),
+        "total": Decimal(0),  # Add total field here
+    })
+
     total_price = Decimal(0)
+    total_service_fee = Decimal(0)
     cart_count = 0
-    service_fee_total = Decimal(0)  # Initialize the service fee total
 
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
 
         if cart:
-            cart_count = cart.items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
+            cart_count = cart.items.aggregate(
+                total_quantity=Sum('quantity')
+            )['total_quantity'] or 0
+
             cart_items = CartItem.objects.filter(cart=cart)
 
             for item in cart_items:
                 event = item.event
                 quantity = item.quantity
-                ticket_price = item.ticket_price.get_price()
-                subtotal = ticket_price * quantity
+                price_per_ticket = item.ticket_price.get_price()
+                subtotal = price_per_ticket * quantity
 
-                # ✅ Safe way to get service fee (avoiding RelatedObjectDoesNotExist)
-                service_fee = ServiceFee.objects.filter(event=event, ticket_price=item.ticket_price).first()
-                service_fee_amount = service_fee.fee_amount if service_fee else Decimal(0.00)
+                # Get service fee
+                fee_obj = ServiceFee.objects.filter(
+                    event=event, ticket_price=item.ticket_price
+                ).first()
+                fee_amount = fee_obj.fee_amount if fee_obj else Decimal(0)
+                service_fee_total = fee_amount * quantity
+                total = subtotal + service_fee_total
 
-                # ✅ Aggregate by event
-                events_in_cart[event]["event"] = event
-                events_in_cart[event]["quantity"] += quantity
-                events_in_cart[event]["subtotal"] += subtotal
-                events_in_cart[event]["service_fee"] += service_fee_amount * quantity
+                # Aggregate by event
+                events_summary[event]["event"] = event
+                events_summary[event]["quantity"] += quantity
+                events_summary[event]["subtotal"] += subtotal
+                events_summary[event]["service_fee"] += service_fee_total
+                events_summary[event]["total"] += total
 
-                # ✅ Update total price
-                total_price += subtotal + (service_fee_amount * quantity)
+                # Update grand totals
+                total_price += total
+                total_service_fee += service_fee_total
 
-                # Add service fee to total service fee
-                service_fee_total += service_fee_amount * quantity
+                # Add just before return statement
+                total_ticket_price = total_price - total_service_fee
 
     context = {
         'cart_count': cart_count,
-        'events_in_cart': events_in_cart.values(),
+        'events_in_cart': events_summary.values(),
         'total_price': total_price,
-        'service_fee_total': service_fee_total,  # Add the service fee total to context
+        'service_fee_total': total_service_fee,
+        'total_ticket_price': total_ticket_price,  # ✅ Add this
     }
 
     return render(request, 'events/checkout_page.html', context)
-
 
 
 
