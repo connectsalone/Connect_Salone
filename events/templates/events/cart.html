@@ -13,7 +13,7 @@
     font-size: 1.5rem;
   }
 
-  /* Responsive Event Card */
+  /* Event Card */
   .event-card {
     display: flex;
     flex-direction: column;
@@ -37,13 +37,14 @@
     color: #023022;
   }
 
-  /* Info Row */
+  /* Event Info */
   .event-info {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 25px;
     align-items: center;
     font-size: 1.1rem;
+    margin-top: 5px;
   }
 
   .event-info p {
@@ -88,10 +89,11 @@
   }
 
   .ticket-subtotal {
-    font-size: 1rem;
+    font-size: 1.2em;
     font-weight: bold;
     color: #450209;
     margin-left: auto;
+    margin-top: -10px;
   }
 
   /* Buttons */
@@ -129,7 +131,7 @@
     transform: scale(0.95);
   }
 
-  /* Pricing Summary */
+  /* Price Summary */
   .price-section {
     text-align: right;
     font-size: 1.3rem;
@@ -157,18 +159,34 @@
     margin-left: 5px;
   }
 
-  /* Cart Buttons */
+  /* Default Layout for Large Screens */
   .cart-buttons {
     display: flex;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
-    font-size: 1rem;
-    padding: 10px 0;
+    gap: 15px;
+    margin-top: 25px;
   }
 
-  /* 📱 Mobile Adjustments */
+  .cart-buttons .btn {
+    flex: 1;
+    padding: 20px 30px;
+    font-size: 1.5rem;
+    border-radius: 0;
+    text-align: center;
+  }
+
+  .cart-buttons .btn-outline-primary {
+    border: 2px solid #007bff;
+    color: #043a40;
+    background-color: transparent;
+  }
+
+  .cart-buttons .btn-primary {
+    background-color: #043a40;
+    color: white;
+  }
+
+  /* Mobile Adjustments */
   @media (max-width: 768px) {
     .container h1 {
       font-size: 2rem;
@@ -181,11 +199,17 @@
     .event-info {
       flex-direction: column;
       align-items: flex-start;
+      gap: 10px;
     }
 
     .ticket-row {
-      flex-direction: column;
-      align-items: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .ticket-price {
+      font-size: 1rem;
     }
 
     .ticket-subtotal {
@@ -194,63 +218,98 @@
     }
 
     .total-price-container {
-      justify-content: flex-start;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+      text-align: right;
+      width: 100%;
     }
 
     .total-price-container .total,
     .total-price-container .total-price {
       font-size: 1.2rem;
+      text-align: right;
+      width: 100%;
     }
 
     .price-section {
-      text-align: left;
-    }
-  }
-
-  /* 📱 Mobile Adjustments */
-  @media (max-width: 768px) {
-    .container h1 {
-      font-size: 2rem;
+      display: flex;
+      justify-content: flex-end; /* Move the event total and total to the right */
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #023022;
+      text-align: right;
     }
 
-    .container h4 {
-      font-size: 1.1rem;
-    }
-
-    .event-info {
+    /* Refine Cart Button Layout for Mobile */
+    .cart-buttons {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
+      gap: 15px;
+      margin-top: 35px;
     }
 
-    .ticket-row {
-      display: flex; /* Change to flex layout */
-      flex-direction: row; /* Align everything in a single row */
-      align-items: center; /* Center the items vertically */
-      width: 100%; /* Ensure it takes up the full width */
-      gap: 25px; /* Add space between items */
-      margin-bottom: 10px; /* Add space between ticket rows */
+    .cart-buttons .btn {
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 12px 0;
     }
 
-    .ticket-subtotal {
-      margin-left: 10px;
-      font-size: 0.95rem;
-      margin-right: 0px; /* Space from other elements */
+    .cart-buttons .btn-outline-primary {
+      border: 2px solid #007bff;
+      color: #007bff;
     }
 
-    .total-price-container {
-      justify-content: flex-start;
+    .cart-buttons .btn-primary {
+      background-color: #007bff;
+      color: white;
     }
 
-    .total-price-container .total,
-    .total-price-container .total-price {
+    /* Event Card Adjustments for Small Screens */
+    .event-card {
+      padding: 15px;
+    }
+
+    .ticket-header {
       font-size: 1.2rem;
     }
 
-    .price-section {
-      text-align: left;
+    .ticket-price {
+      font-size: 1rem;
+    }
+
+    /* Keep the + and - buttons on the same row as the ticket list */
+    .ticket-row {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .ticket-price,
+    .ticket-subtotal {
+      flex: 1;
+    }
+
+    .increase-quantity,
+    .decrease-quantity {
+      margin-top: -20px;
+      padding: 10px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .ticket-row .ticket-price {
+      margin-right: 10px;
+    }
+
+    .ticket-row .ticket-subtotal {
+      margin-left: 10px;
+      text-align: right;
+      font-size: 1.2rem;
     }
   }
 </style>
+
 <main class="main">
   <!-- Page Title -->
   <div class="page-title">
@@ -315,7 +374,7 @@
                   >
                     {{ ticket.quantity }}
                   </span>
-                  {{ ticket.ticket_price.name }} Ticket @ NLe
+                  x {{ ticket.ticket_price.name }} Ticket @ NLe
 
                   <span id="price-{{ event_group.event.id }}-{{ ticket.id }}">
                     {{ ticket.ticket_price.get_price }}
