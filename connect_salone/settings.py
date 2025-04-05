@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #DEBUG = env.bool('DEBUG', default=True)
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-
+FERNET_KEY = config('FERNET_KEY')
 
 SITE_ID = config("SITE_ID", default=1, cast=int) # or the ID of the site you want to be the default
 
@@ -213,44 +213,31 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'accounts.User'  # Custom user model
 
-# Logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': 'DEBUG',  # Make sure this is DEBUG or INFO
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-    'django': {
-        'handlers': ['console'],
-        'level': 'INFO',  # Change to DEBUG for development
-        'propagate': True,
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # Set this to DEBUG or INFO
+        },
+        '__main__': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
     },
 }
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # PayPal Configuration
-
-
-
-PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
-PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
-PAYPAL_MODE = config("PAYPAL_MODE", "sandbox")  # Use 'live' for production
-
-#CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="https://connect-salone.com").split(",")
-
-
-# settings.py
-PAYMENT_SECRET_KEY = config("PAYMENT_SECRET_KEY")  # Replace with your actual secret key
-WEBSITE_URL = "https://www.yourwebsite.com"
-
-
 
 
 ORANGE_MONEY_API_KEY = config("ORANGE_MONEY_API_KEY")
