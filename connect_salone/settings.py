@@ -220,6 +220,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
+WEBSITE_URL = config("WEBSITE_URL", default="https://salone-connect.com")
+
 #import os, psutil
 #process = psutil.Process(os.getpid())
 #print(f"Memory usage at startup: {process.memory_info().rss / 1024 ** 2:.2f} MB")

@@ -33,6 +33,10 @@ from events.models import Cart, Ticket, Event
 from payment.models import Payment, ServiceFee
 from datetime import datetime
 from decimal import Decimal
+from django.conf import settings
+
+WEBSITE_URL = settings.WEBSITE_URL  # or hardcode for now: 'https://salone-connect.com'
+
 
 
 
