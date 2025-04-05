@@ -1,8 +1,9 @@
 from pathlib import Path
 import os
 from datetime import timedelta
-import dj_database_url
 from decouple import config
+from cryptography.fernet import Fernet
+import base64
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -14,6 +15,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #SECRET_KEY = env('SECRET_KEY')  # Move to .env
 #DEBUG = env.bool('DEBUG', default=True)
 #ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+
+
+# 32-byte base64 key (store this securely, e.g., in environment variable)
+
+fernet_key = config("FERNET_SECRET_KEY")
+cipher_suite = Fernet(fernet_key)
+
 
 FERNET_KEY = config('FERNET_KEY')
 
@@ -225,3 +233,23 @@ WEBSITE_URL = config("WEBSITE_URL", default="https://salone-connect.com")
 #import os, psutil
 #process = psutil.Process(os.getpid())
 #print(f"Memory usage at startup: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'django': {
+        'handlers': ['console'],
+        'level': 'INFO',  # Change to DEBUG for development
+        'propagate': True,
+    },
+}

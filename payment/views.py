@@ -271,9 +271,9 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
 
         # Step 3: Create tickets
         for item in cart.items.all():
-            for item in cart.items.all():
-                print(f"Cart item: {item.event.event_name}, quantity: {item.quantity}")
-                logger.info(f"Creating tickets for event: {item.event.event_name}, quantity: {item.quantity}")
+
+            print(f"Cart item: {item.event.event_name}, quantity: {item.quantity}")
+            logger.info(f"Creating tickets for event: {item.event.event_name}, quantity: {item.quantity}")
 
             event = item.event
             ticket_price = item.ticket_price  # ✅ This is a ForeignKey object
@@ -320,10 +320,9 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
         return None, f"An error occurred: {str(e)}"
 
        
-
 import hashlib
 import uuid
-from datetime import datetime
+from django.utils import timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -333,33 +332,41 @@ def generate_qr_code(self):
     Generate a secure, unique reference for the QR code.
     """
     try:
-        # Create a unique string by combining ticket ID, event ID, and a timestamp
-        unique_string = f"{self.id}_{self.event.id}_{datetime.now().isoformat()}_{uuid.uuid4()}"
-        
-        # Optionally hash this unique string for added security
+        if not self.id or not self.event.id:
+            raise ValueError("Ticket and Event must be saved before generating QR code.")
+
+        unique_string = f"{self.id}_{self.event.id}_{timezone.now().isoformat()}_{uuid.uuid4()}"
         secure_reference = hashlib.sha256(unique_string.encode()).hexdigest()
-        
+
         return secure_reference
 
     except Exception as e:
         logger.error(f"QR Code Generation Failed: {e}")
         raise
 
+
 import json
 import qrcode
 import logging
 from cryptography.fernet import Fernet
+from PIL import Image
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
-# Make sure `cipher_suite` is defined elsewhere in your code
-# Example: cipher_suite = Fernet(your_secret_key)
+# Ensure you have this globally or passed in securely
+# Example: cipher_suite = Fernet(your_32_byte_secret_key)
 
-def generate_secure_ticket_qr(ticket):
+def generate_secure_ticket_qr(ticket, cipher_suite, size=300):
     """
-    Generate a secure QR code with encrypted ticket data and website URL.
+    Generate a secure QR code with encrypted ticket data and embedded verification URL.
+    Returns a PIL image (RGB).
     """
     try:
+        if not cipher_suite:
+            raise ValueError("Cipher suite not initialized for encryption.")
+
+        # Prepare ticket payload
         ticket_data = {
             "payment_reference": ticket.payment_reference,
             "ticket_id": ticket.id,
@@ -369,15 +376,29 @@ def generate_secure_ticket_qr(ticket):
             "website_url": "https://salone-connect.com/verify"
         }
 
+        # Encrypt payload
         ticket_json = json.dumps(ticket_data)
         encrypted_data = cipher_suite.encrypt(ticket_json.encode())
-        qr = qrcode.make(encrypted_data).resize((300, 300))
 
-        return qr
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(encrypted_data.decode())  # decode bytes to string
+        qr.make(fit=True)
+
+        qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+        qr_img = qr_img.resize((size, size))
+
+        return qr_img
 
     except Exception as e:
-        logger.error(f"Failed to generate secure QR code for ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
+        logger.error(f"❌ Failed to generate secure QR code for ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
         raise
+
 
 
 
