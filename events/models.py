@@ -222,6 +222,7 @@ class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     cart_count = models.IntegerField(default=0)
     total_price = models.FloatField(default=0.0)
+    is_paid = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Cart for {self.user.username}"
@@ -267,6 +268,8 @@ class CartItem(models.Model):
     ticket_price = models.ForeignKey(TicketPrice, on_delete=models.CASCADE, default=1)
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(default=timezone.now)  # Ensure a default value
+    is_paid = models.BooleanField(default=False)
+    
 
 
     class Meta:

@@ -1,0 +1,24 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+<h2>Your Tickets</h2>
+
+{% if tickets %}
+<ul>
+  {% for ticket in tickets %}
+  <li>
+    <div>
+      <strong>{{ ticket.event.event_name }}</strong><br />
+      <small
+        >{{ ticket.event.event_date }} at {{ ticket.event.event_location
+        }}</small
+      ><br />
+      <a href="{% url 'payment:ticket_view' ticket.id %}">View Ticket</a> |
+      <a href="{% url 'payment:download_ticket' ticket.id %}"
+        >Download Ticket</a
+      >
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>You have no tickets yet. Please purchase tickets to see them here.</p>
+{% endif %} {% endblock %}

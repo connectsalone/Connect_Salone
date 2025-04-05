@@ -19,8 +19,12 @@ class ServiceFee(models.Model):
     ticket_price = models.ForeignKey(TicketPrice, on_delete=models.CASCADE)
     fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
 
+    class Meta:
+        unique_together = ('event', 'ticket_price')  # Ensure uniqueness for event and ticket_price
+
     def __str__(self):
         return f"Service Fee for {self.event.event_name} - {self.ticket_price.name}: {self.fee_amount}"
+
 
 import uuid
 from decimal import Decimal
@@ -148,4 +152,6 @@ class PaymentTicket(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"Payment for {self.quantity} tickets of {self.event.name} by {self.payment.user.username}"
+        return f"Payment for {self.quantity} tickets of {self.event.event_name} by {self.payment.user.username}"
+
+

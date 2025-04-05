@@ -1,0 +1,23 @@
+{% extends "events/base.html" %} {% load static %} {% block content %}
+<h2>{{ ticket.event.event_name }} - Ticket</h2>
+
+<div>
+  <h3>Ticket Details</h3>
+  <p><strong>Event:</strong> {{ ticket.event.event_name }}</p>
+  <p><strong>Date:</strong> {{ ticket.event.event_date }}</p>
+  <p><strong>Location:</strong> {{ ticket.event.event_location }}</p>
+
+  <h4>QR Code</h4>
+  <img
+    src="data:image/png;base64,{{ ticket.qr_code|base64 }}"
+    alt="Ticket QR Code"
+  />
+
+  <p>
+    <a href="{% url 'payment:download_ticket' ticket.id %}"
+      >Download Ticket Image</a
+    >
+  </p>
+</div>
+
+{% endblock %}

@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 import uuid  # ✅ For unique transaction IDs
 import qrcode
 import json
@@ -123,15 +120,16 @@ def orange_payment(request):
         event_groups[event_id]['total_price'] += subtotal
         event_groups[event_id]['total_quantity'] += ticket.quantity
 
-    # Calculate total price
+    # Calculate total ticket price
     total_ticket_price = sum(group['total_price'] for group in event_groups.values())
 
-    # Calculate total service fee
-    total_service_fee = sum(
-        (service_fee.fee_amount * item.quantity)
-        for item in cart.items.all()
-        if (service_fee := ServiceFee.objects.filter(event=item.event).first())
-    )
+    # Calculate total service fee only for paid tickets
+    total_service_fee = Decimal(0)
+    for item in cart.items.all():
+        # Fetch the service fee only for the ticket_price of the paid ticket
+        service_fee = ServiceFee.objects.filter(event=item.event, ticket_price=item.ticket_price).first()
+        if service_fee:
+            total_service_fee += service_fee.fee_amount * item.quantity
 
     total_price = total_ticket_price + total_service_fee
 
@@ -176,21 +174,25 @@ def orange_payment(request):
 
                     # Create tickets for payment
                     for ticket in cart.items.all():
-                        ticket_price = ticket.ticket_price.get_price() if ticket.ticket_price else Decimal('0.00')
-                        # Create a payment ticket record for each ticket in the cart
-                        PaymentTicket.objects.create(
-                            payment=payment,
-                            ticket=ticket.ticket_price,
-                            event=ticket.event,
-                            quantity=ticket.quantity,
-                            price=ticket_price,
-                            amount=ticket_price * ticket.quantity
-                        )
+                        if ticket.ticket_price:
+                            ticket_price = ticket.ticket_price.get_price() if ticket.ticket_price else Decimal('0.00')
+                            # Create a payment ticket record for each ticket in the cart
+                            PaymentTicket.objects.create(
+                                payment=payment,
+                                ticket=ticket.ticket_price,
+                                event=ticket.event,
+                                quantity=ticket.quantity,
+                                price=ticket_price,
+                                amount=ticket_price * ticket.quantity
+                            )
+                        else:
+                            logger.error(f"Invalid ticket price for ticket {ticket.id}. Ticket price is None.")
 
                     # Mark cart as paid and clear items
                     cart.is_paid = True
                     cart.save()
-                    cart.items.all().delete()  # Clear cart items after payment
+                    cart.items.all().update(is_paid=True)  # Update the items as paid instead of deleting
+                    # Alternatively, you can mark the items as "paid" (e.g., `cart.items.update(status='paid')`)
 
                     messages.success(request, "Payment successful and tickets have been created!")
                     return redirect('tickets')  # Redirect to tickets page
