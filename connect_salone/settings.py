@@ -213,32 +213,11 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'accounts.User'  # Custom user model
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',  # Make sure this is DEBUG or INFO
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'DEBUG',  # Set this to DEBUG or INFO
-        },
-        '__main__': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-    },
-}
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-ORANGE_MONEY_API_KEY = config("ORANGE_MONEY_API_KEY")
 
 
 #import os, psutil

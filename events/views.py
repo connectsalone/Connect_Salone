@@ -14,9 +14,6 @@ from .models import Cart, CartItem, Event
 
 from decouple import config
 
-PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
-PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
-
 
 
 # ------------------- Cart Utility Functions -------------------

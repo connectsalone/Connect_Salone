@@ -34,10 +34,6 @@ from payment.models import Payment, ServiceFee
 from datetime import datetime
 from decimal import Decimal
 
-SECRET_KEY = settings.PAYMENT_SECRET_KEY
-WEBSITE_URL = settings.WEBSITE_URL  # Replace with your actual secret key
-cipher_suite = Fernet(SECRET_KEY)
-
 
 
 logger = logging.getLogger(__name__)
