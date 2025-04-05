@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
   
 
-    'paypal.standard.ipn',
+   
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -237,7 +237,10 @@ LOGGING = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# PayPal Configuration
-
 
 ORANGE_MONEY_API_KEY = config("ORANGE_MONEY_API_KEY")
+
+
+#import os, psutil
+#process = psutil.Process(os.getpid())
+#print(f"Memory usage at startup: {process.memory_info().rss / 1024 ** 2:.2f} MB")
