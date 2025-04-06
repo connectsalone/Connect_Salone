@@ -453,7 +453,6 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
         return None, f"An error occurred: {str(e)}"
 
 
-
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from io import BytesIO
 from cryptography.fernet import Fernet
@@ -464,19 +463,19 @@ import math
 logger = logging.getLogger(__name__)
 
 def generate_ticket_image(ticket, cipher_suite):
+    # Load fonts with reduced sizes for event name and ticket number
+    try:
+        title_font = ImageFont.truetype("arialbd.ttf", 30)  # Use Arial Bold for the event name
+        text_font = ImageFont.truetype("arial.ttf", 30)
+        watermark_font = ImageFont.truetype("arial.ttf", 45)
+        ticket_num_font = ImageFont.truetype("arial.ttf", 15)  # Reduced font size for ticket number
+    except IOError:
+        title_font = text_font = watermark_font = ticket_num_font = ImageFont.load_default()
+
     try:
         width, height = 1000, 400
         img = Image.new("RGB", (width, height), "white")
         draw = ImageDraw.Draw(img)
-
-        # Load fonts
-        try:
-            title_font = ImageFont.truetype("arial.ttf", 50)
-            text_font = ImageFont.truetype("arial.ttf", 30)
-            watermark_font = ImageFont.truetype("arial.ttf", 35)
-            ticket_num_font = ImageFont.truetype("arial.ttf", 25)
-        except IOError:
-            title_font = text_font = watermark_font = ticket_num_font = ImageFont.load_default()
 
         # Layout sections
         left, middle, right = (0, 0, width//3), (width//3, 0, 2*width//3), (2*width//3, 0, width)
@@ -492,14 +491,14 @@ def generate_ticket_image(ticket, cipher_suite):
                 logger.error(f"[Image Fail] Ticket {ticket.id}: {e}")
 
         # Middle: Event Details Centered
-        def center_text(text, y, font):
+        def center_text(text, y, font, color="black"):
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             x = middle[0] + ((middle[2] - middle[0]) - text_width) // 2
-            draw.text((x, y), text, font=font, fill="black")
+            draw.text((x, y), text, font=font, fill=color)
 
         y = 50
-        center_text(ticket.event.event_name.upper(), y, title_font)
+        center_text(ticket.event.event_name.upper(), y, title_font, color="#0a3338")  # Set color to #0a3338 with bold font
         center_text(ticket.event.event_date.strftime('%B %d, %Y'), y + 70, text_font)
         center_text(ticket.event.event_date.strftime('%I:%M %p'), y + 120, text_font)
         center_text(ticket.event.event_location, y + 170, text_font)
@@ -512,9 +511,19 @@ def generate_ticket_image(ticket, cipher_suite):
             qr_y = (height - qr.height) // 2
 
             # Draw ticket number above QR code
-            tn_text = f"Ticket No: {ticket.ticket_name}"
+            tn_text = f"{ticket.ticket_name}"
+
+            # Calculate the bounding box of the ticket number text
             tn_bbox = draw.textbbox((0, 0), tn_text, font=ticket_num_font)
-            tn_x = right[0] + ((right[2] - right[0]) - (tn_bbox[2] - tn_bbox[0])) // 2
+
+            # Calculate the width of the text and available space in the right section
+            ticket_width = tn_bbox[2] - tn_bbox[0]  # Width of the ticket number text
+            available_width = right[2] - right[0]  # Available width for centering the ticket number
+
+            # Center the text within the right section
+            tn_x = right[0] + (available_width - ticket_width) // 2
+
+            # Draw the ticket number text at the calculated x position and y position above the QR code
             draw.text((tn_x, qr_y - 30), tn_text, font=ticket_num_font, fill="black")
 
             # Paste QR code
@@ -579,11 +588,25 @@ def ticket(request, ticket_id):
     
     return HttpResponse(img_io, content_type="image/png")
 
-@login_required
+
+from collections import defaultdict
+from django.shortcuts import render
+from payment.models import Ticket
+
 def tickets_view(request):
-    """Displays all tickets for the current user."""
-    tickets = Ticket.objects.filter(user=request.user)
-    return render(request, 'payment/ticket_list.html', {'tickets': tickets})
+    tickets = Ticket.objects.all()  # Fetch all tickets
+
+    # Group tickets by event using defaultdict
+    grouped_tickets = defaultdict(list)
+    for ticket in tickets:
+        grouped_tickets[ticket.event].append(ticket)
+
+    # Convert the defaultdict to a regular dictionary (optional)
+    grouped_tickets = dict(grouped_tickets)
+
+    # Pass the grouped tickets to the template
+    return render(request, 'payment/ticket_list.html', {'grouped_tickets': grouped_tickets})
+
 
 
 
