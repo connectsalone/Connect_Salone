@@ -163,6 +163,8 @@ class Ticket(models.Model):
     paid = models.BooleanField(default=False)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Store the ticket price
+    ticket_number = models.CharField(max_length=100, unique=True)
+
 
 
     def save(self, *args, **kwargs):
@@ -203,7 +205,7 @@ class Ticket(models.Model):
         return signer.sign(data)
 
     def __str__(self):
-        return f"Ticket for {self.event.event_name}"  # Use event_name instead of name
+        return f"{self.ticket_number} - {self.user.username}"
 
     class Meta:
         ordering = ['-event__event_date']
