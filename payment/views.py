@@ -94,8 +94,6 @@ def generate_ticket_number():
     return ticket_number
 
 
-
-
 def process_orange_money_payment(phone_number, amount):
     """Simulates Orange Money payment processing for testing purposes."""
     # Simulate a successful payment response
@@ -309,6 +307,8 @@ def generate_secure_ticket_qr(ticket, cipher_suite, size=300):
     except Exception as e:
         logger.error(f"[QR FAIL] Ticket ID {getattr(ticket, 'id', 'unknown')}: {str(e)}")
         raise ValueError(f"Error generating QR code: {e}")
+
+
 
 import hashlib
 import uuid
@@ -608,8 +608,6 @@ def tickets_view(request):
     return render(request, 'payment/ticket_list.html', {'grouped_tickets': grouped_tickets})
 
 
-
-
 @login_required
 def download_ticket(request, ticket_id):
     """Generates and downloads the ticket image."""
@@ -624,22 +622,33 @@ def download_ticket(request, ticket_id):
 
     return response
 
+from cryptography.fernet import Fernet
+import json
+from django.http import JsonResponse
+import logging
+from decouple import config
+from .models import Ticket  # Ensure you import your Ticket model
 
+logger = logging.getLogger(__name__)
 
-@login_required
+# Ensure you load the correct key
+fernet_key = config("FERNET_SECRET_KEY")
+cipher_suite = Fernet(fernet_key)
+
 def scan_ticket(request):
     if request.method == "POST":
-        qr_data = request.POST.get('qr_data')
-        if not qr_data:
+        encrypted_data = request.POST.get('qr_data')
+
+        if not encrypted_data:
             return JsonResponse({"error": "No QR code data provided"}, status=400)
 
         try:
-            decrypted_data = cipher_suite.decrypt(qr_data.encode()).decode()
-            ticket_data = json.loads(decrypted_data)  # Safer alternative to eval
+            decrypted_data = cipher_suite.decrypt(encrypted_data.encode()).decode()
+            ticket_data = json.loads(decrypted_data)  # Safely decode JSON
             ticket_id = ticket_data.get('ticket_id')
             website_url = ticket_data.get('website_url')
-            
-            if website_url != WEBSITE_URL:
+
+            if website_url != 'EXPECTED_WEBSITE_URL':
                 return JsonResponse({"error": "Invalid website URL"}, status=400)
 
             ticket = Ticket.objects.filter(id=ticket_id).first()
@@ -655,7 +664,6 @@ def scan_ticket(request):
     return render(request, 'payment/scan_ticket.html')
 
 
-
 def verify_qr(encrypted_data):
     try:
         decrypted_data = cipher_suite.decrypt(encrypted_data.encode()).decode()
@@ -664,8 +672,3 @@ def verify_qr(encrypted_data):
     except Exception as e:
         logger.error(f"QR verification failed: {e}")
         return None
-
-
-
-
- 
