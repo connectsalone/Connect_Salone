@@ -209,96 +209,97 @@ def orange_payment(request):
     return render(request, 'payment/orange_payment.html', {
         'total_price': total_price
     })
-
-
 from django.db import transaction
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
 from cryptography.fernet import Fernet
-from events.models import Ticket  # Adjust to your actual app
-from django.conf import settings
 from django.core.exceptions import ValidationError
-import logging
+from events.models import Ticket  # Update to your app's structure
+from django.conf import settings
 
-logger = logging.getLogger(__name__)
 cipher_suite = Fernet(settings.FERNET_KEY)
 
 @transaction.atomic
 def create_payment_and_tickets(user, cart, phone_number, total_price, transaction_id, existing_payment):
     try:
-        logger.info("Starting ticket creation process...")
+        print("🚀 Starting ticket creation process...")
 
-        # Debugging: Log cart item count
-        logger.info(f"Cart contains {cart.items.count()} items.")
-
-        # Step 1: Check if phone number is provided
         if not phone_number:
-            logger.error("Phone number is required to process payment and create tickets.")
-            raise ValidationError("Phone number is required to process payment and create tickets.")
+            raise ValidationError("❌ Phone number is required to process payment and create tickets.")
 
-        logger.info(f"Processing payment for user: {user.username} with phone number: {phone_number}")
-
-        # Step 2: Use existing payment if available
-        payment = existing_payment
-        if not payment:
-            logger.error("No existing payment found.")
+        if not existing_payment:
+            print("❌ No existing payment found.")
             return None, "Payment does not exist."
 
-        payment_reference = generate_payment_reference(user, transaction_id, get_random_string(16))
-        payment.payment_reference = payment_reference
-        payment.save()
+        try:
+            payment = existing_payment
+            payment_reference = generate_payment_reference(user, transaction_id, get_random_string(16))
+            payment.payment_reference = payment_reference
+            payment.save()
 
-        logger.info(f"Payment reference generated: {payment_reference}")
+        except Exception as payment_error:
+            print(f"❌ Error setting payment reference or saving payment: {payment_error}")
+            print(f"✅ Payment reference generated: {payment_reference}")
+            raise  # This will cause the transaction to roll back early
+
+            
 
         tickets = []
+        cart_items = cart.items.all()
+        print(f"🛒 Cart has {cart_items.count()} items.")
 
-        # Step 3: Create tickets
-        for item in cart.items.all():
+        for item in cart_items:
             event = item.event
-            ticket_price = item.ticket_price  # This is a ForeignKey object
-            
-            if ticket_price:
-                price = ticket_price.get_price()  # Call the get_price() method to get the correct price
-                logger.info(f"Creating ticket for event: {event.event_name}, price: {price}")
-            else:
-                logger.error(f"TicketPrice object is invalid or missing for event: {event.event_name}")
-                continue  # Skip creating tickets for this event if price is missing
+            ticket_price = item.ticket_price
 
-            # Proceed with ticket creation
-            for i in range(item.quantity):  # Iterate based on the quantity
-                # Create a unique ticket number or identifier to ensure uniqueness
+            if not ticket_price:
+                print(f"⚠️ Skipping event '{event.event_name}' due to missing ticket_price.")
+                continue
+
+            try:
+                price = ticket_price.get_price()
+                print(f"🎫 Creating tickets for event: {event.event_name} | Price: {price} | Quantity: {item.quantity}")
+            except Exception as e:
+                print(f"❌ Error getting price for event {event.event_name}: {e}")
+                continue
+
+            for i in range(item.quantity):
                 ticket_number = f"{event.event_name} - Ticket #{i + 1} - {get_random_string(8)}"
-                
-                # Create ticket with price and other details
-                ticket = Ticket.objects.create(
-                    user=user,
-                    event=event,
-                    ticket_name=ticket_number,  # Using ticket number to make each ticket unique
-                    ticket_price=ticket_price,
-                    price=price,  # Store the price in the Ticket model
-                    payment_reference=payment_reference,
-                    quantity=1,
-                    paid=True
-                )
+                try:
+                    ticket = Ticket.objects.create(
+                        user=user,
+                        event=event,
+                        ticket_name=ticket_number,
+                        ticket_price=ticket_price,
+                        price=price,
+                        quantity=1,  # <-- this line is essential
+                        payment_reference=payment_reference,
+                        paid=True
+                    )
+                    print(f"✅ Ticket created: {ticket.ticket_name} (ID: {ticket.id})")
 
-                # Generate and save QR code for the ticket
-                qr_img = generate_secure_ticket_qr(ticket)
-                qr_io = BytesIO()
-                qr_img.save(qr_io, format='PNG')
-                ticket.qr_code.save(f"qr_{ticket.id}.png", ContentFile(qr_io.getvalue()), save=True)
+                    # Generate and attach QR code
+                    try:
+                        qr_img = generate_secure_ticket_qr(ticket)
+                        qr_io = BytesIO()
+                        qr_img.save(qr_io, format='PNG')
+                        ticket.qr_code.save(f"qr_{ticket.id}.png", ContentFile(qr_io.getvalue()), save=True)
+                        print(f"📷 QR code saved for ticket ID: {ticket.id}")
+                    except Exception as qr_error:
+                        print(f"❌ Failed to generate QR for ticket {ticket.id}: {qr_error}")
 
-                logger.info(f"Created ticket ID: {ticket.id} for event {event.event_name} with ticket number: {ticket_number}")
-                tickets.append(ticket)  # Add each created ticket to the list
+                    tickets.append(ticket)
 
-        # Step 6: Return payment and tickets created
-        logger.info(f"Ticket creation process completed. {len(tickets)} tickets created.")
+                except Exception as create_error:
+                    print(f"❌ Failed to create ticket for event {event.event_name}: {create_error}")
+                    raise  # <--- Force exit so you see the *first real error* that breaks the transaction  
+
+        print(f"✅ Ticket creation complete. Total tickets created: {len(tickets)}")
         return payment, tickets
 
     except Exception as e:
-        logger.error(f"Error during payment and ticket creation: {e}")
-        if 'event' in locals():
-            logger.error(f"Error creating ticket for event: {event.event_name}")
+        print(f"💥 Error during ticket creation: {e}")
         return None, f"An error occurred: {str(e)}"
 
 
