@@ -72,16 +72,21 @@
       async function startCamera() {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: {facingMode: "environment"},
+            video: {
+              facingMode: "environment",
+              width: {ideal: 1280},
+              height: {ideal: 720},
+            },
           });
           videoElement.srcObject = stream;
-          videoElement.setAttribute("playsinline", true);
+          videoElement.setAttribute("playsinline", true); // Ensures it works on iPhones
           videoElement.play();
           statusElement.innerText = "Scanning...";
           requestAnimationFrame(scanQRCode);
         } catch (err) {
           console.error("Error accessing camera:", err);
-          statusElement.innerText = "Unable to access camera.";
+          statusElement.innerText =
+            "Unable to access camera. Please allow camera permissions.";
         }
       }
 
@@ -99,27 +104,24 @@
             canvasElement.height
           );
 
-          // Define the scanning box region
-          const boxWidth = canvasElement.width * 0.7;
-          const boxHeight = canvasElement.height * 0.7;
-          const boxX = (canvasElement.width - boxWidth) / 2;
-          const boxY = (canvasElement.height - boxHeight) / 2;
-
           const imageData = canvasContext.getImageData(
-            boxX,
-            boxY,
-            boxWidth,
-            boxHeight
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height
           );
-          const qrCode = jsQR(imageData.data, boxWidth, boxHeight);
+          const qrCode = jsQR(
+            imageData.data,
+            canvasElement.width,
+            canvasElement.height
+          );
 
           if (qrCode) {
             lastScanTime = Date.now(); // Reset last scan time
             processScannedData(qrCode.data);
           } else {
-            // Check if 5 seconds have passed without detecting a QR code
             if (Date.now() - lastScanTime > 5000) {
-              beepThreeTimes(); // Beep after 5 seconds of no detection
+              beepThreeTimes(); // Beep after 5 seconds of no QR code detection
               lastScanTime = Date.now(); // Reset timer
             }
             requestAnimationFrame(scanQRCode);
