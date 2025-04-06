@@ -212,21 +212,14 @@ def orange_payment(request):
 
 
 from django.db import transaction
-import qrcode
 from io import BytesIO
 from django.core.files.base import ContentFile
-import json
-import uuid
-import logging
-import hashlib
-from datetime import datetime
-from django.db import transaction
 from django.utils.crypto import get_random_string
-from django.core.files.base import ContentFile
 from cryptography.fernet import Fernet
-from events.models import Ticket  # adjust to your actual app
+from events.models import Ticket  # Adjust to your actual app
 from django.conf import settings
 from django.core.exceptions import ValidationError
+import logging
 
 logger = logging.getLogger(__name__)
 cipher_suite = Fernet(settings.FERNET_KEY)
@@ -235,14 +228,13 @@ cipher_suite = Fernet(settings.FERNET_KEY)
 def create_payment_and_tickets(user, cart, phone_number, total_price, transaction_id, existing_payment):
     try:
         logger.info("Starting ticket creation process...")
-        print("✅ Payment saved, now creating tickets...")
-
 
         # Debugging: Log cart item count
         logger.info(f"Cart contains {cart.items.count()} items.")
 
         # Step 1: Check if phone number is provided
         if not phone_number:
+            logger.error("Phone number is required to process payment and create tickets.")
             raise ValidationError("Phone number is required to process payment and create tickets.")
 
         logger.info(f"Processing payment for user: {user.username} with phone number: {phone_number}")
@@ -261,12 +253,11 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
 
         tickets = []
 
-                # Step 3: Create tickets
+        # Step 3: Create tickets
         for item in cart.items.all():
             event = item.event
             ticket_price = item.ticket_price  # This is a ForeignKey object
             
-            # Check if ticket_price is valid and has price
             if ticket_price:
                 price = ticket_price.get_price()  # Call the get_price() method to get the correct price
                 logger.info(f"Creating ticket for event: {event.event_name}, price: {price}")
@@ -275,12 +266,17 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
                 continue  # Skip creating tickets for this event if price is missing
 
             # Proceed with ticket creation
-            for _ in range(item.quantity):
+            for i in range(item.quantity):  # Iterate based on the quantity
+                # Create a unique ticket number or identifier to ensure uniqueness
+                ticket_number = f"{event.event_name} - Ticket #{i + 1} - {get_random_string(8)}"
+                
+                # Create ticket with price and other details
                 ticket = Ticket.objects.create(
                     user=user,
                     event=event,
-                    ticket_name=event.event_name,
+                    ticket_name=ticket_number,  # Using ticket number to make each ticket unique
                     ticket_price=ticket_price,
+                    price=price,  # Store the price in the Ticket model
                     payment_reference=payment_reference,
                     quantity=1,
                     paid=True
@@ -292,22 +288,20 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
                 qr_img.save(qr_io, format='PNG')
                 ticket.qr_code.save(f"qr_{ticket.id}.png", ContentFile(qr_io.getvalue()), save=True)
 
-                logger.info(f"Created ticket ID: {ticket.id} for event {event.event_name}")
-
-
+                logger.info(f"Created ticket ID: {ticket.id} for event {event.event_name} with ticket number: {ticket_number}")
+                tickets.append(ticket)  # Add each created ticket to the list
 
         # Step 6: Return payment and tickets created
         logger.info(f"Ticket creation process completed. {len(tickets)} tickets created.")
         return payment, tickets
 
     except Exception as e:
-        # Step 7: Error handling
         logger.error(f"Error during payment and ticket creation: {e}")
         if 'event' in locals():
             logger.error(f"Error creating ticket for event: {event.event_name}")
         return None, f"An error occurred: {str(e)}"
 
-       
+
 import hashlib
 import uuid
 from django.utils import timezone
@@ -331,7 +325,6 @@ def generate_qr_code(self):
     except Exception as e:
         logger.error(f"QR Code Generation Failed: {e}")
         raise
-
 import json
 import qrcode
 import logging
@@ -346,35 +339,46 @@ def generate_secure_ticket_qr(ticket, cipher_suite, size=300):
     Returns a resized RGB PIL image.
     """
     try:
+        # Ensure the cipher suite is provided
         if not cipher_suite:
             raise ValueError("Cipher suite is required to encrypt QR payload.")
 
+        # Prepare ticket payload
         payload = {
             "payment_reference": ticket.payment_reference,
             "ticket_id": ticket.id,
             "event_name": ticket.event.event_name,
             "event_date": ticket.event.event_date.strftime('%B %d, %Y'),
             "event_location": ticket.event.event_location,
-            "website_url": "https://salone-connect.com/verify"
+            "website_url": "https://salone-connect.com/verify"  # Assuming this is a ticket verification page
         }
 
-        encrypted = cipher_suite.encrypt(json.dumps(payload).encode()).decode()
+        # Encrypt the ticket data
+        encrypted_data = cipher_suite.encrypt(json.dumps(payload).encode()).decode()
 
+        # Create QR code
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=10,
             border=4,
         )
-        qr.add_data(encrypted)
+        qr.add_data(encrypted_data)
         qr.make(fit=True)
 
+        # Generate QR image in RGB mode
         qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-        return qr_img.resize((size, size))
+
+        # Resize image for better display (default size is 300x300)
+        resized_img = qr_img.resize((size, size))
+
+        return resized_img
 
     except Exception as e:
-        logger.error(f"[QR FAIL] Ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
+        # Enhanced error logging with more ticket information if available
+        logger.error(f"[QR FAIL] Ticket ID {getattr(ticket, 'id', 'unknown')}: {str(e)}")
         raise
+
 
 
 import logging

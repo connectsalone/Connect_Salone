@@ -162,6 +162,8 @@ class Ticket(models.Model):
     secret_token = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
     paid = models.BooleanField(default=False)
     quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Store the ticket price
+
 
     def save(self, *args, **kwargs):
         if not self.ticket_price and self.paid:

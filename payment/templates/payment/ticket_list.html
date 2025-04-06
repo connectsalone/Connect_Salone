@@ -1,22 +1,78 @@
 {% extends "events/base.html" %} {% load static %} {% block content %}
-<h2>Your Tickets</h2>
+<style>
+  .ticket-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1rem;
+  }
 
-{% if tickets %}
-<ul>
-  {% for ticket in tickets %}
-  <li>
-    <div>
-      <strong>{{ ticket.event.event_name }}</strong><br />
-      <small
-        >{{ ticket.event.event_date }} at {{ ticket.event.event_location
-        }}</small
-      ><br />
-      <a href="{% url 'ticket_view' ticket.id %}">View Ticket</a> |
+  .ticket-item {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .ticket-item:hover {
+    transform: scale(1.01);
+  }
+
+  .ticket-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .ticket-date-location {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  .ticket-actions {
+    margin-top: 0.75rem;
+  }
+
+  .ticket-actions a {
+    text-decoration: none;
+    color: #2563eb;
+    font-weight: 500;
+    margin-right: 1rem;
+  }
+
+  .ticket-actions a:hover {
+    text-decoration: underline;
+  }
+
+  .no-tickets {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    color: #6b7280;
+  }
+</style>
+
+<div class="ticket-container">
+  <h2>Your Tickets</h2>
+
+  {% if tickets %} {% for ticket in tickets %}
+  <div class="ticket-item">
+    <div class="ticket-title">{{ ticket.event.event_name }}</div>
+    <div class="ticket-date-location">
+      {{ ticket.event.event_date }} at {{ ticket.event.event_location }}
+    </div>
+    <div class="ticket-actions">
+      <a href="{% url 'ticket_view' ticket.id %}">View Ticket</a>
       <a href="{% url 'download_ticket' ticket.id %}">Download Ticket</a>
     </div>
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>You have no tickets yet. Please purchase tickets to see them here.</p>
-{% endif %} {% endblock %}
+  </div>
+  {% endfor %} {% else %}
+  <p class="no-tickets">
+    You have no tickets yet. Please purchase tickets to see them here.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
