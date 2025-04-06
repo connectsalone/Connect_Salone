@@ -68,6 +68,28 @@
       let scanning = true;
       let lastScanTime = Date.now();
       let beepTimeout;
+      let continuousBeepTimeout;
+
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      function startBeeping() {
+        oscillator.start();
+      }
+
+      function stopBeeping() {
+        oscillator.stop();
+        oscillator.start();
+      }
 
       async function startCamera() {
         try {
@@ -83,6 +105,7 @@
           videoElement.play();
           statusElement.innerText = "Scanning...";
           requestAnimationFrame(scanQRCode);
+          startBeeping(); // Start continuous beep when scanning starts
         } catch (err) {
           console.error("Error accessing camera:", err);
           statusElement.innerText =
@@ -117,8 +140,10 @@
           );
 
           if (qrCode) {
+            console.log("QR Code detected:", qrCode.data); // Debugging line to check QR code detection
             lastScanTime = Date.now(); // Reset last scan time
             processScannedData(qrCode.data);
+            stopBeeping(); // Stop beeping after a QR code is detected
           } else {
             if (Date.now() - lastScanTime > 5000) {
               beepThreeTimes(); // Beep after 5 seconds of no QR code detection
@@ -144,7 +169,7 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log("Server response:", data);
+            console.log("Server response:", data); // Debugging line to check server response
             if (data.message) {
               statusElement.innerText = "✅ Ticket is valid.";
             } else {
@@ -154,6 +179,7 @@
             setTimeout(() => {
               statusElement.innerText = "Scanning...";
               scanning = true;
+              startBeeping(); // Start continuous beep when scanning resumes
               requestAnimationFrame(scanQRCode);
             }, 1000);
           })
@@ -164,6 +190,7 @@
             setTimeout(() => {
               statusElement.innerText = "Scanning...";
               scanning = true;
+              startBeeping(); // Start continuous beep when scanning resumes
               requestAnimationFrame(scanQRCode);
             }, 1000);
           });
@@ -172,13 +199,10 @@
       function beepThreeTimes() {
         let count = 0;
         function beep() {
-          const audioContext = new (window.AudioContext ||
-            window.webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-
           oscillator.type = "sine";
           oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          const gainNode = audioContext.createGain();
           gainNode.gain.setValueAtTime(1, audioContext.currentTime);
 
           oscillator.connect(gainNode);
