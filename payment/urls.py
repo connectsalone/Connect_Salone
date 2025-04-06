@@ -1,12 +1,12 @@
 from django.urls import path
-from payment.views import orange_payment, ticket_view, download_ticket, scan_ticket, tickets_view
+from payment.views import orange_payment, ticket, download_ticket, scan_ticket, tickets_view
 
 urlpatterns = [
     # Payment views
     path('payment/orange/', orange_payment, name='orange_payment'),
 
     # Ticket views
-    path('ticket/view/<int:ticket_id>/', ticket_view, name='ticket_view'),
+    path('ticket/view/<int:ticket_id>/', ticket, name='ticket_view'),
     path('ticket/download/<int:ticket_id>/', download_ticket, name='download_ticket'),
 
 

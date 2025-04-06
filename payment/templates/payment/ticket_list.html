@@ -11,10 +11,8 @@
         >{{ ticket.event.event_date }} at {{ ticket.event.event_location
         }}</small
       ><br />
-      <a href="{% url 'payment:ticket_view' ticket.id %}">View Ticket</a> |
-      <a href="{% url 'payment:download_ticket' ticket.id %}"
-        >Download Ticket</a
-      >
+      <a href="{% url 'ticket_view' ticket.id %}">View Ticket</a> |
+      <a href="{% url 'download_ticket' ticket.id %}">Download Ticket</a>
     </div>
   </li>
   {% endfor %}

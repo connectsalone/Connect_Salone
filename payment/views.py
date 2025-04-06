@@ -173,35 +173,28 @@ def orange_payment(request):
                     payment.payment_date = timezone.now()  # Ensure payment date is set
                     payment.save()
 
-                    # Step 7: Create tickets for payment
-                    logger.info("Payment processed successfully, starting ticket creation...")
+                    # Step 7: Call create_payment_and_tickets for ticket creation
+                    logger.info("✅ Payment processed successfully, now calling ticket creation...")
 
-                    for ticket in cart.items.all():
-                        if ticket.ticket_price:
-                            ticket_price = ticket.ticket_price.get_price() if ticket.ticket_price else Decimal('0.00')
-                            try:
-                                # Create a payment ticket record for each ticket in the cart
-                                payment_ticket = PaymentTicket.objects.create(
-                                    payment=payment,
-                                    ticket=ticket.ticket_price,
-                                    event=ticket.event,
-                                    quantity=ticket.quantity,
-                                    price=ticket_price,
-                                    amount=ticket_price * ticket.quantity
-                                )
-                                logger.info(f"Payment ticket created for ticket ID: {ticket.id}.")
+                    payment, tickets = create_payment_and_tickets(
+                        user=request.user,
+                        cart=cart,
+                        phone_number=phone_number,
+                        total_price=total_price,
+                        transaction_id=transaction_id,
+                        existing_payment=payment
+                    )
 
-                            except Exception as e:
-                                logger.error(f"Error creating PaymentTicket for ticket ID {ticket.id}: {e}")
-                        else:
-                            logger.error(f"Invalid ticket price for ticket {ticket.id}. Ticket price is None.")
+                    if not tickets:
+                        messages.error(request, "Tickets were not created. Please contact support.")
+                        return redirect('cart_view')
 
                     # Step 8: Mark cart as paid and clear items
                     cart.is_paid = True
                     cart.save()
                     cart.items.all().update(is_paid=True)  # Update the items as paid instead of deleting
 
-                    messages.success(request, "Enter correct phone number and initiate payment!")
+                    messages.success(request, "Payment successful and tickets created!")
                     return redirect('tickets')  # Redirect to tickets page
 
             except Exception as e:
@@ -216,7 +209,6 @@ def orange_payment(request):
     return render(request, 'payment/orange_payment.html', {
         'total_price': total_price
     })
-
 
 
 from django.db import transaction
@@ -269,22 +261,21 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
 
         tickets = []
 
-        # Step 3: Create tickets
+                # Step 3: Create tickets
         for item in cart.items.all():
-
-            print(f"Cart item: {item.event.event_name}, quantity: {item.quantity}")
-            logger.info(f"Creating tickets for event: {item.event.event_name}, quantity: {item.quantity}")
-
             event = item.event
-            ticket_price = item.ticket_price  # ✅ This is a ForeignKey object
-            print(f"Ticket price object: {item.ticket_price}, price: {item.ticket_price.price}")
+            ticket_price = item.ticket_price  # This is a ForeignKey object
+            
+            # Check if ticket_price is valid and has price
+            if ticket_price:
+                price = ticket_price.get_price()  # Call the get_price() method to get the correct price
+                logger.info(f"Creating ticket for event: {event.event_name}, price: {price}")
+            else:
+                logger.error(f"TicketPrice object is invalid or missing for event: {event.event_name}")
+                continue  # Skip creating tickets for this event if price is missing
 
-
-            # Debugging: Log ticket creation for each item in cart
-            logger.info(f"Creating {item.quantity} tickets for event '{event.event_name}' at price {ticket_price.price}")
-
+            # Proceed with ticket creation
             for _ in range(item.quantity):
-                # Step 4: Create the ticket first (needed to generate secure QR)
                 ticket = Ticket.objects.create(
                     user=user,
                     event=event,
@@ -295,18 +286,15 @@ def create_payment_and_tickets(user, cart, phone_number, total_price, transactio
                     paid=True
                 )
 
-                logger.info(f"Created ticket ID: {ticket.id} for event {event.event_name}")
-
-                # Step 5: Generate secure QR code image
+                # Generate and save QR code for the ticket
                 qr_img = generate_secure_ticket_qr(ticket)
                 qr_io = BytesIO()
                 qr_img.save(qr_io, format='PNG')
-
-                # Save QR code to ticket
                 ticket.qr_code.save(f"qr_{ticket.id}.png", ContentFile(qr_io.getvalue()), save=True)
 
-                logger.info(f"QR code generated and saved for ticket ID: {ticket.id}")
-                tickets.append(ticket)
+                logger.info(f"Created ticket ID: {ticket.id} for event {event.event_name}")
+
+
 
         # Step 6: Return payment and tickets created
         logger.info(f"Ticket creation process completed. {len(tickets)} tickets created.")
@@ -344,30 +332,24 @@ def generate_qr_code(self):
         logger.error(f"QR Code Generation Failed: {e}")
         raise
 
-
 import json
 import qrcode
 import logging
 from cryptography.fernet import Fernet
 from PIL import Image
-from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
-# Ensure you have this globally or passed in securely
-# Example: cipher_suite = Fernet(your_32_byte_secret_key)
-
 def generate_secure_ticket_qr(ticket, cipher_suite, size=300):
     """
-    Generate a secure QR code with encrypted ticket data and embedded verification URL.
-    Returns a PIL image (RGB).
+    Generates a secure QR code with encrypted ticket data.
+    Returns a resized RGB PIL image.
     """
     try:
         if not cipher_suite:
-            raise ValueError("Cipher suite not initialized for encryption.")
+            raise ValueError("Cipher suite is required to encrypt QR payload.")
 
-        # Prepare ticket payload
-        ticket_data = {
+        payload = {
             "payment_reference": ticket.payment_reference,
             "ticket_id": ticket.id,
             "event_name": ticket.event.event_name,
@@ -376,48 +358,44 @@ def generate_secure_ticket_qr(ticket, cipher_suite, size=300):
             "website_url": "https://salone-connect.com/verify"
         }
 
-        # Encrypt payload
-        ticket_json = json.dumps(ticket_data)
-        encrypted_data = cipher_suite.encrypt(ticket_json.encode())
+        encrypted = cipher_suite.encrypt(json.dumps(payload).encode()).decode()
 
-        # Generate QR code
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=10,
             border=4,
         )
-        qr.add_data(encrypted_data.decode())  # decode bytes to string
+        qr.add_data(encrypted)
         qr.make(fit=True)
 
-        qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
-        qr_img = qr_img.resize((size, size))
-
-        return qr_img
+        qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        return qr_img.resize((size, size))
 
     except Exception as e:
-        logger.error(f"❌ Failed to generate secure QR code for ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
+        logger.error(f"[QR FAIL] Ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
         raise
-
-
 
 
 import logging
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+from cryptography.fernet import Fernet
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-def generate_ticket_image(ticket):
+def generate_ticket_image(ticket, cipher_suite):
     """
-    Generate a dynamic ticket image with secure QR code and a centered text watermark.
+    Generates a ticket image with event info, QR code, and watermark.
+    Returns a BytesIO image stream.
     """
     try:
         width, height = 1000, 400
-        ticket_image = Image.new("RGB", (width, height), "white")
-        draw = ImageDraw.Draw(ticket_image)
+        img = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(img)
 
-        # Load fonts with fallback
+        # Load fonts
         try:
             title_font = ImageFont.truetype("arial.ttf", 50)
             text_font = ImageFont.truetype("arial.ttf", 30)
@@ -425,81 +403,92 @@ def generate_ticket_image(ticket):
         except IOError:
             title_font = text_font = watermark_font = ImageFont.load_default()
 
-        # Define sections
-        left_section = (0, 0, width // 3, height)
-        middle_section = (width // 3, 0, 2 * width // 3, height)
-        right_section = (2 * width // 3, 0, width, height)
+        # Layout sections
+        left, middle, right = (0, 0, width//3), (width//3, 0, 2*width//3), (2*width//3, 0, width)
+        padding = 10
 
-        image_padding = 10
-
-        # Load Event Image
+        # Left: Event Image
         if ticket.event.event_image:
             try:
                 event_img = Image.open(ticket.event.event_image.path)
-                event_img = event_img.resize((width // 3 - 2 * image_padding, height - 2 * image_padding))
-                ticket_image.paste(event_img, (image_padding, image_padding))
+                event_img = event_img.resize((width//3 - 2*padding, height - 2*padding))
+                img.paste(event_img, (padding, padding))
             except Exception as e:
-                logger.error(f"Error loading event image for ticket {ticket.id}: {e}")
+                logger.error(f"[Image Fail] Ticket {ticket.id}: {e}")
 
-        # Draw middle section
-        text_y = 50
-
-        def draw_centered_text(text, y_offset, font):
+        # Middle: Event Text
+        def center_text(text, y, font):
             try:
-                text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
-                x_pos = middle_section[0] + (middle_section[2] - middle_section[0] - text_width) // 2
-                draw.text((x_pos, y_offset), text, font=font, fill="black")
+                bbox = draw.textbbox((0, 0), text, font=font)
+                text_width = bbox[2] - bbox[0]
+                x = middle[0] + ((middle[2] - middle[0]) - text_width) // 2
+                draw.text((x, y), text, font=font, fill="black")
             except Exception as e:
-                logger.error(f"Failed to draw text '{text}' for ticket {ticket.id}: {e}")
+                logger.error(f"[Text Fail] {text}: {e}")
 
-        draw_centered_text(ticket.event.event_name.upper(), text_y, title_font)
-        draw_centered_text(ticket.event.event_date.strftime('%B %d, %Y'), text_y + 70, text_font)
-        draw_centered_text(ticket.event.event_date.strftime('%I:%M %p'), text_y + 120, text_font)
-        draw_centered_text(ticket.event.event_location, text_y + 170, text_font)
-        draw_centered_text(f"Price: NLe{ticket.event.get_ticket_price():.2f}", text_y + 220, text_font)
+        y = 50
+        center_text(ticket.event.event_name.upper(), y, title_font)
+        center_text(ticket.event.event_date.strftime('%B %d, %Y'), y + 70, text_font)
+        center_text(ticket.event.event_date.strftime('%I:%M %p'), y + 120, text_font)
+        center_text(ticket.event.event_location, y + 170, text_font)
+        center_text(f"Price: NLe{ticket.ticket_price.get_price():.2f}", y + 220, text_font)
 
-        # Generate QR code
+        # Right: QR Code
         try:
-            qr = generate_secure_ticket_qr(ticket)
-            qr_x = right_section[0] + (right_section[2] - right_section[0] - qr.size[0]) // 2
-            qr_y = (height - qr.size[1]) // 2
-            ticket_image.paste(qr, (qr_x, qr_y))
+        
+            qr = generate_secure_ticket_qr(ticket, cipher_suite)
+            qr_x = right[0] + ((right[2] - right[0]) - qr.width) // 2
+            qr_y = (height - qr.height) // 2
+            img.paste(qr, (qr_x, qr_y))
+
         except Exception as e:
-            logger.error(f"QR code generation failed for ticket {ticket.id}: {e}")
+            logger.error(f"[QR Paste Fail] Ticket {ticket.id}: {e}")
 
-        # Draw border
-        border_width = 5
-        draw.rectangle([(0, 0), (width, height)], outline="green", width=border_width)
-        draw.rectangle([(border_width, border_width), (width - border_width, height - border_width)], outline="white", width=border_width)
-        draw.rectangle([(2 * border_width, 2 * border_width), (width - 2 * border_width, height - 2 * border_width)], outline="blue", width=border_width)
+        # Borders
+        draw.rectangle([(0, 0), (width, height)], outline="green", width=5)
+        draw.rectangle([(5, 5), (width - 5, height - 5)], outline="white", width=5)
+        draw.rectangle([(10, 10), (width - 10, height - 10)], outline="blue", width=5)
 
-        # Add centered text watermark
+        # Watermark
         try:
-            watermark_text = "salone-connect.com"
-            watermark_width, watermark_height = draw.textbbox((0, 0), watermark_text, font=watermark_font)[2:]
-            watermark_x = (width - watermark_width) // 2
-            watermark_y = (height - watermark_height) // 2
-
-            draw.text((watermark_x, watermark_y), watermark_text, font=watermark_font, fill=(180, 180, 180, 128))  # light gray
+            watermark = "salone-connect.com"
+            bbox = draw.textbbox((0, 0), watermark, font=watermark_font)
+            wm_width = bbox[2] - bbox[0]
+            wm_x = (width - wm_width) // 3
+            wm_y = (height - bbox[3]) // 3
+            draw.text((wm_x, wm_y), watermark, font=watermark_font, fill=(180, 180, 180))
         except Exception as e:
-            logger.error(f"Failed to add text watermark: {e}")
+            logger.error(f"[Watermark Fail]: {e}")
 
-        # Save image to BytesIO
-        img_io = BytesIO()
-        ticket_image.save(img_io, format="PNG")
-        img_io.seek(0)
-        return img_io
+        # Save to BytesIO
+        output = BytesIO()
+        img.save(output, format="PNG")
+        output.seek(0)
+
+        # Optional: Save for debugging
+        # img.save(f"debug_ticket_{ticket.id}.png")
+
+        return output
 
     except Exception as e:
-        logger.error(f"Failed to generate ticket image for ticket ID {getattr(ticket, 'id', 'unknown')}: {e}")
+        logger.error(f"[Ticket Gen Fail] ID {getattr(ticket, 'id', 'unknown')}: {e}")
         raise
+
+from cryptography.fernet import Fernet
+from django.conf import settings
 
 
 @login_required
-def ticket_view(request, ticket_id):
+def ticket(request, ticket_id):
+
     """View the ticket image before downloading."""
     ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
-    img_io = generate_ticket_image(ticket)
+
+    # Initialize cipher_suite (use your 32-byte base64 key)
+    cipher_suite = Fernet(settings.FERNET_KEY)
+    
+    # Then call the function with both args
+    img_io = generate_ticket_image(ticket, cipher_suite)
     
     return HttpResponse(img_io, content_type="image/png")
 
