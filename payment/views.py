@@ -661,7 +661,7 @@ def scan_ticket(request):
             logger.error(f"Error scanning ticket: {e}")
             return JsonResponse({"error": "Invalid QR code data"}, status=400)
 
-    return render(request, 'payment/scan_ticket.html')
+    return render(request, 'payment/live_scanner.html')
 
 
 def verify_qr(encrypted_data):
@@ -675,7 +675,7 @@ def verify_qr(encrypted_data):
 
 
 
-from django.shortcuts import render
+#from django.shortcuts import render
 
-def live_qr_scanner(request):
-    return render(request, 'payment/live_scanner.html')
+#def live_qr_scanner(request):
+ #   return render(request, 'payment/live_scanner.html')
