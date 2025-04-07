@@ -42,6 +42,19 @@
         font-size: 18px;
         font-weight: bold;
       }
+      .rescan-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+      .rescan-button:hover {
+        background-color: #45a049;
+      }
     </style>
   </head>
   <body>
@@ -59,17 +72,25 @@
 
     <canvas id="canvas"></canvas>
 
+    <button id="rescanButton" class="rescan-button" style="display: none">
+      Rescan
+    </button>
+
     <script>
       const videoElement = document.getElementById("video");
       const canvasElement = document.getElementById("canvas");
       const statusElement = document.getElementById("status");
+      const rescanButton = document.getElementById("rescanButton");
       const canvasContext = canvasElement.getContext("2d");
 
       let scanning = true;
-      let lastScanTime = Date.now();
       let beepTimeout;
-      let continuousBeepTimeout;
+      let isScanningComplete = false;
+      let lastScanTime = Date.now();
+      let cameraTimeout;
+      let stream;
 
+      // Audio context setup for the beeps
       const audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -83,17 +104,27 @@
       gainNode.connect(audioContext.destination);
 
       function startBeeping() {
-        oscillator.start();
+        if (!continuousBeeping) {
+          continuousBeeping = true;
+          oscillator.start();
+        }
       }
 
       function stopBeeping() {
-        oscillator.stop();
-        oscillator.start();
+        if (continuousBeeping) {
+          oscillator.stop();
+          oscillator.start();
+          continuousBeeping = false;
+        }
       }
 
       async function startCamera() {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
+          // Start beeping immediately when the camera starts
+          startBeeping();
+
+          // Get video stream
+          stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: "environment",
               width: {ideal: 1280},
@@ -105,11 +136,30 @@
           videoElement.play();
           statusElement.innerText = "Scanning...";
           requestAnimationFrame(scanQRCode);
-          startBeeping(); // Start continuous beep when scanning starts
+
+          // Set the timeout to close the camera after 10 seconds of no QR code detected
+          cameraTimeout = setTimeout(() => {
+            if (Date.now() - lastScanTime > 10000) {
+              // 10 second timeout
+              stopBeeping();
+              statusElement.innerText =
+                "❌ Code not detected. Please try again.";
+              stopCamera();
+              rescanButton.style.display = "inline-block";
+            }
+          }, 10000);
         } catch (err) {
           console.error("Error accessing camera:", err);
           statusElement.innerText =
             "Unable to access camera. Please allow camera permissions.";
+        }
+      }
+
+      function stopCamera() {
+        // Stop the camera stream
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          videoElement.srcObject = null;
         }
       }
 
@@ -140,19 +190,21 @@
           );
 
           if (qrCode) {
+            if (!isScanningComplete) {
+              // Stop beeping when QR code is detected
+              stopBeeping();
+              isScanningComplete = true;
+            }
             console.log("QR Code detected:", qrCode.data); // Debugging line to check QR code detection
+            statusElement.innerText = "✅ QR Code Detected!";
             lastScanTime = Date.now(); // Reset last scan time
             processScannedData(qrCode.data);
-            stopBeeping(); // Stop beeping after a QR code is detected
           } else {
-            if (Date.now() - lastScanTime > 5000) {
-              beepThreeTimes(); // Beep after 5 seconds of no QR code detection
-              lastScanTime = Date.now(); // Reset timer
-            }
-            requestAnimationFrame(scanQRCode);
+            console.log("No QR code detected"); // Log to check if the scanning is working
+            requestAnimationFrame(scanQRCode); // Continue scanning if no QR code
           }
         } else {
-          requestAnimationFrame(scanQRCode);
+          requestAnimationFrame(scanQRCode); // Continue scanning if video not ready
         }
       }
 
@@ -179,7 +231,8 @@
             setTimeout(() => {
               statusElement.innerText = "Scanning...";
               scanning = true;
-              startBeeping(); // Start continuous beep when scanning resumes
+              isScanningComplete = false; // Reset scanning status
+              startBeeping(); // Start continuous beep again when scanning resumes
               requestAnimationFrame(scanQRCode);
             }, 1000);
           })
@@ -190,7 +243,8 @@
             setTimeout(() => {
               statusElement.innerText = "Scanning...";
               scanning = true;
-              startBeeping(); // Start continuous beep when scanning resumes
+              isScanningComplete = false; // Reset scanning status
+              startBeeping(); // Start continuous beep again when scanning resumes
               requestAnimationFrame(scanQRCode);
             }, 1000);
           });
@@ -220,6 +274,14 @@
         beep();
       }
 
+      // Rescan button functionality
+      rescanButton.addEventListener("click", () => {
+        statusElement.innerText = "Initializing scanner...";
+        rescanButton.style.display = "none"; // Hide the rescan button
+        startCamera();
+      });
+
+      // Start the camera on page load
       startCamera();
     </script>
   </body>

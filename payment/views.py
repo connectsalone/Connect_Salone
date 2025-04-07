@@ -672,3 +672,10 @@ def verify_qr(encrypted_data):
     except Exception as e:
         logger.error(f"QR verification failed: {e}")
         return None
+
+
+
+from django.shortcuts import render
+
+def live_qr_scanner(request):
+    return render(request, 'payment/live_scanner.html')
