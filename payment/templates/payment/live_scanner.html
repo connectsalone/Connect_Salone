@@ -1,36 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live QR Code Scanner</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+      }
+
       #reader {
         width: 300px;
         margin: auto;
       }
+
       #result {
         margin-top: 20px;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         color: green;
-        text-align: center;
+      }
+
+      .error {
+        color: red;
+      }
+
+      .success {
+        color: green;
       }
     </style>
   </head>
   <body>
-    <h2 style="text-align: center">Live QR Code Scanner</h2>
+    <h2>Live QR Code Scanner</h2>
+
     <div id="reader"></div>
     <div id="result"></div>
 
     <script>
       const resultEl = document.getElementById("result");
 
+      function showMessage(message, isError = false) {
+        resultEl.innerHTML = `<div class="${
+          isError ? "error" : "success"
+        }">${message}</div>`;
+      }
+
+      function playBeep(times = 3, delay = 200) {
+        const context = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        let count = 0;
+
+        function beep() {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(1000, context.currentTime); // frequency in Hz
+          gain.gain.setValueAtTime(0.2, context.currentTime); // volume
+
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+
+          oscillator.start();
+          oscillator.stop(context.currentTime + 0.1); // beep duration
+
+          count++;
+          if (count < times) {
+            setTimeout(beep, delay);
+          }
+        }
+
+        beep();
+      }
+
       function onScanSuccess(decodedText, decodedResult) {
-        resultEl.innerHTML = `<strong>Scanned QR Code:</strong> ${decodedText}`;
+        showMessage(`Scanned: ${decodedText}`);
+
+        // Send scanned data to backend
+        fetch("/scan-ticket/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}", // Injected from Django template
+          },
+          body: `qr_data=${encodeURIComponent(decodedText)}`,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.status === "success") {
+              playBeep(); // 🔊 Play beep on success
+              alert(`✅ Ticket Verified for event: ${data.data.event_name}`);
+              showMessage(
+                `Ticket ID: ${data.data.ticket_id}<br>Event: ${data.data.event_name}<br>Scanned at: ${data.data.used_at}`
+              );
+            } else {
+              alert("❌ " + data.message);
+              showMessage(data.message, true);
+            }
+          })
+          .catch((err) => {
+            console.error("Error verifying QR:", err);
+            showMessage("Server error while verifying ticket.", true);
+          });
+
+        // Optionally stop scanning after success
         html5QrcodeScanner.clear();
       }
 
       function onScanFailure(error) {
-        // Optional: handle errors here
+        // You can log or silently ignore scan failures
       }
 
       const html5QrcodeScanner = new Html5QrcodeScanner(

@@ -164,6 +164,8 @@ class Ticket(models.Model):
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Store the ticket price
     ticket_number = models.CharField(max_length=100, unique=True)
+    scanned = models.BooleanField(default=False)
+    used_at = models.DateTimeField(null=True, blank=True)
 
 
 
