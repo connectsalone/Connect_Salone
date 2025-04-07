@@ -622,75 +622,61 @@ def download_ticket(request, ticket_id):
 
     return response
 
-import json
-import logging
 from cryptography.fernet import Fernet
-from django.conf import settings
+import json
 from django.http import JsonResponse
-from django.utils.timezone import now
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
 from decouple import config
-from .models import Ticket
+from .models import Ticket  # Ensure you import your Ticket model
 
-logger = logging.getLogger(__name__)
-
-# Load the Fernet encryption key securely
+# Ensure you load the correct key
 fernet_key = config("FERNET_SECRET_KEY")
 cipher_suite = Fernet(fernet_key)
 
-
-@csrf_exempt  # Optional: only needed if your frontend does not send CSRF token
 def scan_ticket(request):
     if request.method == "POST":
         encrypted_data = request.POST.get('qr_data')
 
         if not encrypted_data:
-            return JsonResponse({"status": "error", "message": "No QR code data provided"}, status=400)
+            print("No QR code data provided")  # Debugging
+            return JsonResponse({"error": "No QR code data provided"}, status=400)
 
         try:
-            # Decrypt and load ticket data
+            print(f"Encrypted data received: {encrypted_data}")  # Debugging
             decrypted_data = cipher_suite.decrypt(encrypted_data.encode()).decode()
-            ticket_data = json.loads(decrypted_data)
+            print(f"Decrypted data: {decrypted_data}")  # Debugging
 
+            ticket_data = json.loads(decrypted_data)  # Safely decode JSON
             ticket_id = ticket_data.get('ticket_id')
             website_url = ticket_data.get('website_url')
 
-            # Verify the ticket source
-            if website_url != getattr(settings, 'EXPECTED_WEBSITE_URL', 'https://yourdomain.com'):
-                return JsonResponse({"status": "error", "message": "Invalid website URL"}, status=400)
+            if website_url != 'EXPECTED_WEBSITE_URL':
+                print(f"Invalid website URL: {website_url}")  # Debugging
+                return JsonResponse({"error": "Invalid website URL"}, status=400)
 
             ticket = Ticket.objects.filter(id=ticket_id).first()
-
-            if not ticket:
-                return JsonResponse({"status": "error", "message": "Ticket not found"}, status=404)
-
-            if ticket.scanned:
+            if ticket:
+                print(f"Ticket found: {ticket.id}, Event: {ticket.event.event_name}")  # Debugging
+                ticket.scanned = True  # Mark ticket as scanned
+                ticket.save()
                 return JsonResponse({
-                    "status": "error",
-                    "message": f"Ticket has already been scanned on {ticket.used_at.strftime('%Y-%m-%d %H:%M') if ticket.used_at else 'an earlier date.'}"
-                }, status=400)
-
-            # Mark ticket as scanned
-            ticket.scanned = True
-            ticket.used_at = now()
-            ticket.save()
-
-            return JsonResponse({
-                "status": "success",
-                "data": {
-                    "ticket_id": ticket.id,
-                    "event_name": ticket.event.event_name,
-                    "scanned": ticket.scanned,
-                    "used_at": ticket.used_at.strftime('%Y-%m-%d %H:%M')
-                }
-            })
+                    "status": "success",
+                    "message": "Ticket is valid",
+                    "data": {
+                        "ticket_id": ticket.id,
+                        "event_name": ticket.event.event_name,
+                        "used_at": ticket.used_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.used_at else None,
+                    }
+                }, status=200)
+            else:
+                print("Ticket not found")  # Debugging
+                return JsonResponse({"error": "Ticket not found"}, status=404)
 
         except Exception as e:
-            logger.error(f"[scan_ticket] QR decryption or processing error: {e}")
-            return JsonResponse({"status": "error", "message": "Invalid QR code data"}, status=400)
+            print(f"Error scanning ticket: {e}")  # Debugging
+            return JsonResponse({"error": "Invalid QR code data"}, status=400)
 
-    return render(request, 'payment/live_scanner.html')
+    print("Request method is not POST")  # Debugging
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 def verify_qr(encrypted_data):

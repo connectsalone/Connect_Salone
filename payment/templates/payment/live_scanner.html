@@ -88,18 +88,23 @@
           body: `qr_data=${encodeURIComponent(decodedText)}`,
         })
           .then((res) => res.json())
-          .then((data) => {
-            if (data.status === "success") {
-              playBeep(); // 🔊 Play beep on success
-              alert(`✅ Ticket Verified for event: ${data.data.event_name}`);
-              showMessage(
-                `Ticket ID: ${data.data.ticket_id}<br>Event: ${data.data.event_name}<br>Scanned at: ${data.data.used_at}`
-              );
-            } else {
-              alert("❌ " + data.message);
-              showMessage(data.message, true);
-            }
-          })
+          .then((res) =>
+            res.json().then((data) => {
+              console.log("Response from backend:", data); // Debugging: logs the response from the server
+
+              if (data.status === "success") {
+                playBeep(); // Play beep on success
+                alert(`✅ Ticket Verified for event: ${data.data.event_name}`);
+                showMessage(
+                  `Ticket ID: ${data.data.ticket_id}<br>Event: ${data.data.event_name}<br>Scanned at: ${data.data.used_at}`
+                );
+              } else {
+                alert("❌ " + data.message);
+                showMessage(data.message, true);
+              }
+            })
+          )
+
           .catch((err) => {
             console.error("Error verifying QR:", err);
             showMessage("Server error while verifying ticket.", true);
