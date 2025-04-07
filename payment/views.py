@@ -625,8 +625,11 @@ def download_ticket(request, ticket_id):
 from cryptography.fernet import Fernet
 import json
 from django.http import JsonResponse
+import logging
 from decouple import config
 from .models import Ticket  # Ensure you import your Ticket model
+
+logger = logging.getLogger(__name__)
 
 # Ensure you load the correct key
 fernet_key = config("FERNET_SECRET_KEY")
@@ -637,7 +640,6 @@ def scan_ticket(request):
         encrypted_data = request.POST.get('qr_data')
 
         if not encrypted_data:
-            print("No QR code data provided")  # Debugging
             return JsonResponse({"error": "No QR code data provided"}, status=400)
 
         try:
@@ -645,38 +647,30 @@ def scan_ticket(request):
             decrypted_data = cipher_suite.decrypt(encrypted_data.encode()).decode()
             print(f"Decrypted data: {decrypted_data}")  # Debugging
 
+
             ticket_data = json.loads(decrypted_data)  # Safely decode JSON
             ticket_id = ticket_data.get('ticket_id')
             website_url = ticket_data.get('website_url')
 
             if website_url != 'EXPECTED_WEBSITE_URL':
-                print(f"Invalid website URL: {website_url}")  # Debugging
                 return JsonResponse({"error": "Invalid website URL"}, status=400)
 
             ticket = Ticket.objects.filter(id=ticket_id).first()
+
             if ticket:
                 print(f"Ticket found: {ticket.id}, Event: {ticket.event.event_name}")  # Debugging
-                ticket.scanned = True  # Mark ticket as scanned
-                ticket.save()
-                return JsonResponse({
-                    "status": "success",
-                    "message": "Ticket is valid",
-                    "data": {
-                        "ticket_id": ticket.id,
-                        "event_name": ticket.event.event_name,
-                        "used_at": ticket.used_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.used_at else None,
-                    }
-                }, status=200)
+                return JsonResponse({"status": "success", "message": "Ticket is valid", "ticket_id": ticket.id, "event_name": ticket.event.event_name, "used_at": ticket.used_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.used_at else None}, status=200 )
             else:
                 print("Ticket not found")  # Debugging
                 return JsonResponse({"error": "Ticket not found"}, status=404)
 
         except Exception as e:
+            logger.error(f"Error scanning ticket: {e}")
             print(f"Error scanning ticket: {e}")  # Debugging
             return JsonResponse({"error": "Invalid QR code data"}, status=400)
 
     print("Request method is not POST")  # Debugging
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+    return render(request, 'payment/scan_ticket.html')
 
 
 def verify_qr(encrypted_data):

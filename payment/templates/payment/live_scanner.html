@@ -1,40 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live QR Code Scanner</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        text-align: center;
-      }
-
       #reader {
         width: 300px;
         margin: auto;
       }
-
       #result {
         margin-top: 20px;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         color: green;
-      }
-
-      .error {
-        color: red;
-      }
-
-      .success {
-        color: green;
+        text-align: center;
       }
     </style>
   </head>
   <body>
-    <h2>Live QR Code Scanner</h2>
-
+    <h2 style="text-align: center">Live QR Code Scanner</h2>
     <div id="reader"></div>
     <div id="result"></div>
 
@@ -76,46 +59,12 @@
       }
 
       function onScanSuccess(decodedText, decodedResult) {
-        showMessage(`Scanned: ${decodedText}`);
-
-        // Send scanned data to backend
-        fetch("/scan-ticket/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRFToken": "{{ csrf_token }}", // Injected from Django template
-          },
-          body: `qr_data=${encodeURIComponent(decodedText)}`,
-        })
-          .then((res) => res.json())
-          .then((res) =>
-            res.json().then((data) => {
-              console.log("Response from backend:", data); // Debugging: logs the response from the server
-
-              if (data.status === "success") {
-                playBeep(); // Play beep on success
-                alert(`✅ Ticket Verified for event: ${data.data.event_name}`);
-                showMessage(
-                  `Ticket ID: ${data.data.ticket_id}<br>Event: ${data.data.event_name}<br>Scanned at: ${data.data.used_at}`
-                );
-              } else {
-                alert("❌ " + data.message);
-                showMessage(data.message, true);
-              }
-            })
-          )
-
-          .catch((err) => {
-            console.error("Error verifying QR:", err);
-            showMessage("Server error while verifying ticket.", true);
-          });
-
-        // Optionally stop scanning after success
+        resultEl.innerHTML = `<strong>Scanned QR Code:</strong> ${decodedText}`;
         html5QrcodeScanner.clear();
       }
 
       function onScanFailure(error) {
-        // You can log or silently ignore scan failures
+        // Optional: handle errors here
       }
 
       const html5QrcodeScanner = new Html5QrcodeScanner(
